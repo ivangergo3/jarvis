@@ -39,24 +39,35 @@ struct CompanionPanel: View {
                 Button {
                     ui.confirmNew = true
                 } label: {
-                    Image(systemName: "plus.bubble")
+                    Image(systemName: "arrow.triangle.2.circlepath")
                 }
                 .disabled(chat.phase.busy || voice.recording).accessibilityLabel(
-                    "New Jarvis conversation"
+                    "Switch or reconnect to the selected Codex chat"
                 )
                 .accessibilityIdentifier("companion.newChat")
             }.buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Jarvis chat · \((chat.scope ?? proposedScope).name)")
+                Text("Send to: \((chat.scope ?? proposedScope).name)")
                     .font(.system(size: 12, weight: .medium)).lineLimit(2)
                 Text(
-                    chat.scope == nil
-                        ? "Context locks when you start a draft."
-                        : "Context locked for this conversation."
+                    chat.scope?.threadID == nil
+                        ? "Choose an existing chat from the project team."
+                        : "Linked to the same saved conversation in Codex."
                 )
                 .font(.system(size: 10)).foregroundStyle(HUD.muted)
-                Text("A separate Codex conversation. Team chats above stay view-only.")
-                    .font(.system(size: 10)).foregroundStyle(HUD.muted)
+                HStack {
+                    Text("Busy chats receive messages through Codex’s queue.")
+                    Spacer(minLength: 0)
+                    Button("Open in Codex") { openLinkedChat() }
+                        .disabled(chat.scope?.threadID == nil)
+                        .accessibilityIdentifier("companion.openLinkedChat")
+                }.font(.system(size: 10)).foregroundStyle(HUD.muted)
+                if chat.scope?.threadID != proposedScope.threadID, proposedScope.threadID != nil {
+                    Text(
+                        "Draft stays with \(chat.scope?.name ?? "its original chat"). Use the reconnect button to switch to \(proposedScope.name)."
+                    )
+                    .font(.system(size: 10)).foregroundStyle(HUD.gold)
+                }
             }.frame(maxWidth: .infinity, alignment: .leading)
             Divider().overlay(HUD.line)
             conversation
@@ -83,12 +94,20 @@ struct CompanionPanel: View {
         .padding(18).frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(HUD.panel.opacity(0.28))
         .task { await artwork.load() }
+        .task(id: proposedScope) {
+            if !voice.recording {
+                voice.stopSpeaking()
+                await chat.follow(proposedScope)
+            }
+        }
         .sheet(isPresented: $ui.settings) { CompanionSettings(voice: voice) }
         .confirmationDialog(
-            "Start a new Jarvis chat? This clears the panel, not the saved Codex conversation.",
+            "Switch or reconnect to \(proposedScope.name)? This discards the unsent draft. Previously queued messages stay with their original chat.",
             isPresented: $ui.confirmNew
         ) {
-            Button("Start new chat") { Task { await chat.newConversation() } }
+            Button("Use selected chat") {
+                Task { await chat.follow(proposedScope, discardDraft: true) }
+            }
         }
         .onChange(of: chat.draft) { _, text in
             if !text.isEmpty { chat.pinScope(proposedScope) }
@@ -105,6 +124,15 @@ struct CompanionPanel: View {
             voice.stopSpeaking()
             voice.onTranscript = nil
         }
+    }
+
+    private func openLinkedChat() {
+        guard let id = chat.scope?.threadID else { return }
+        var destination = URLComponents()
+        destination.scheme = "codex"
+        destination.host = "threads"
+        destination.path = "/" + id
+        if let url = destination.url { NSWorkspace.shared.open(url) }
     }
 
     private var companion: some View {
@@ -135,16 +163,19 @@ struct CompanionPanel: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
                     if chat.messages.isEmpty {
-                        Text("Talk to Codex from here.")
+                        Text("This is the same chat.")
                             .font(.system(size: 18, weight: .light)).padding(.top, 12)
                         Text(
-                            "Type a request, or use the microphone to make an editable draft. Nothing is sent until you choose Send."
+                            "Select a chat to read recent saved messages. Typed and dictated messages go to that chat when you choose Send. Approvals are handled in Codex."
                         )
                         .font(.system(size: 12)).foregroundStyle(HUD.muted).lineSpacing(4)
                     }
                     ForEach(chat.messages) { message in
                         VStack(alignment: .leading, spacing: 5) {
-                            Text(message.role == .user ? "YOU" : "CODEX").font(HUD.mono(8))
+                            Text(
+                                message.role == .user
+                                    ? (message.queued ? "YOU · QUEUED" : "YOU") : "CODEX"
+                            ).font(HUD.mono(8))
                                 .foregroundStyle(HUD.gold)
                             Text(message.text).font(.system(size: 12)).textSelection(.enabled)
                                 .lineSpacing(3)
@@ -189,7 +220,10 @@ struct CompanionPanel: View {
                 .frame(height: 64).padding(7).background(
                     Color.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 7)
                 )
-                .disabled(chat.phase.busy || voice.recording || chat.phase == .outcomeUnknown)
+                .disabled(
+                    chat.phase.busy || voice.recording || chat.phase == .outcomeUnknown
+                        || chat.scope?.threadID == nil
+                )
                 .accessibilityLabel("Message to Jarvis chat").accessibilityIdentifier(
                     "companion.draft")
             HStack(spacing: 14) {
@@ -205,7 +239,9 @@ struct CompanionPanel: View {
                 } label: {
                     Image(systemName: voice.recording ? "stop.circle.fill" : "mic")
                 }
-                .disabled(chat.phase.busy || chat.phase == .outcomeUnknown)
+                .disabled(
+                    chat.phase.busy || chat.phase == .outcomeUnknown || chat.scope?.threadID == nil
+                )
                 .accessibilityLabel(
                     voice.recording
                         ? "Stop dictation and review transcript" : "Dictate a message on this Mac"
@@ -224,12 +260,13 @@ struct CompanionPanel: View {
                     if !enabled { voice.stopSpeaking() }
                 }
                 Spacer(minLength: 0)
-                if chat.phase.busy {
+                if chat.phase.busy && chat.scope?.threadID == nil {
                     Button("Stop") { Task { await chat.interrupt() } }.accessibilityIdentifier(
                         "companion.stop")
                 } else {
                     Button("Send") { chat.send(in: proposedScope) }
-                        .disabled(!chat.canSend || voice.recording).keyboardShortcut(
+                        .disabled(!chat.canSend || voice.recording || chat.scope?.threadID == nil)
+                        .keyboardShortcut(
                             .return, modifiers: .command
                         )
                         .accessibilityIdentifier("companion.send")

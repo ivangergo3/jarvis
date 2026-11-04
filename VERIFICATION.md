@@ -59,3 +59,12 @@ Known limits: the task is a latest user request, not a generated summary. Local 
 - Reuses the six idle frames from Greg’s existing Jarvis companion. The original floating Codex pet is not changed. No private screenshots or real conversation fixtures are included in the repository.
 
 Runner availability note: v0.3 CI uses the standard macOS 15 Intel pool after the Apple Silicon job remained queued without acquiring a runner. Standard Mac runners remain free for this public repository. Apple Silicon build/tests were run locally; this adds Intel CI verification without claiming minimum-OS runtime coverage.
+
+
+## Linked existing conversations (v0.4)
+
+- Replaced the UI's standalone-chat destination with the selected existing Codex chat, keyed by its stable ID. The shared queue and read-only saved-history methods do not start or resume another runtime.
+- Local fixture suite: 46 tests across 10 suites, covering duplicate names, renames, draft locks, queue/history deduplication, lost acknowledgements, rejected text preservation, unsupported endpoints and initial speech suppression, alongside the previous parser, graph and transport tests.
+- Installed CLI probe: read recent history without resuming; submitted one labelled routing test through the documented queue command; read back the exact queue receipt through the App Server. No private IDs are included here.
+- Native window check: exact destination label, recent messages from the requested existing conversation, labelled queued test, and a card-switch test that retained the unsent draft's original destination. Cleared the UI test draft, restored the requested chat and the user's spoken-replies preference. No message was sent to a different chat.
+- The receipt establishes queue acceptance, not completion of a new model turn while this turn is running. Saved history can lag until Codex persists it. Unloaded chats may need to be opened in Codex; approvals remain there.

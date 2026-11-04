@@ -1,17 +1,18 @@
 import Combine
 import Foundation
 
-struct ConversationScope: Equatable, Sendable {
+struct ConversationScope: Hashable, Sendable {
     let projectID: String?
     let name: String
     let directory: String?
+    var threadID: String? = nil
 
     static let global = ConversationScope(projectID: nil, name: "Jarvis", directory: nil)
 }
 
 enum ConversationPhase: String, Sendable {
     case ready, connecting, sending, working, needsInput, complete, interrupted, failed,
-        outcomeUnknown
+        outcomeUnknown, queued
 
     var busy: Bool { [.connecting, .sending, .working, .needsInput].contains(self) }
     var label: String {
@@ -25,6 +26,7 @@ enum ConversationPhase: String, Sendable {
         case .interrupted: return "INTERRUPTED"
         case .failed: return "UNAVAILABLE"
         case .outcomeUnknown: return "SEND OUTCOME UNKNOWN"
+        case .queued: return "QUEUED IN CODEX"
         }
     }
 }
@@ -34,6 +36,7 @@ struct CompanionMessage: Identifiable, Equatable {
     let id: String
     let role: Role
     var text: String
+    var queued = false
 }
 
 struct CompanionApproval: Identifiable {
@@ -70,7 +73,7 @@ struct CompanionApproval: Identifiable {
     }
 }
 
-/// One conversation owned by this app. Existing desktop chats remain observation-only (INT-02).
+/// Existing chats use Codex's shared queue, without creating a second runtime owner.
 @MainActor final class CompanionModel: ObservableObject {
     @Published var draft = ""
     @Published private(set) var scope: ConversationScope?
@@ -81,6 +84,7 @@ struct CompanionApproval: Identifiable {
     @Published private(set) var threadID: String?
     @Published private(set) var completedReply: String?
     @Published private(set) var answeringApproval = false
+    @Published private(set) var historyUnavailable = false
     private(set) var turnID: String?
     private let makeConnection: @Sendable () -> any CodexConnection
     private var connection: (any CodexConnection)?
@@ -92,6 +96,11 @@ struct CompanionApproval: Identifiable {
     private var dispatched = false
     private var replyIDs: Set<String> = []
     private var fileChangeReviews: [String: String] = [:]
+    private var refreshingHistory = false
+    private var lastQueuedClientID: String?
+    private var historyBaselineLoaded = false
+    private var lastCompletedReplyID: String?
+    private var historyRevision = 0
 
     init(
         makeConnection: @escaping @Sendable () -> any CodexConnection = {
@@ -100,20 +109,98 @@ struct CompanionApproval: Identifiable {
     ) { self.makeConnection = makeConnection }
 
     var canSend: Bool {
-        !phase.busy && phase != .outcomeUnknown
+        !phase.busy && phase != .outcomeUnknown && !historyUnavailable
             && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && draft.count <= 16_000
     }
 
     func pinScope(_ proposed: ConversationScope) { if scope == nil { scope = proposed } }
 
+    /// Following a card never silently discards a draft or abandons an uncertain submission.
+    func follow(_ target: ConversationScope, discardDraft: Bool = false) async {
+        guard let id = target.threadID, !id.isEmpty, !phase.busy else { return }
+        if scope?.threadID == id && !discardDraft {
+            scope = target  // A rename changes the label, never the destination ID.
+            return
+        }
+        guard discardDraft || (draft.isEmpty && phase != .outcomeUnknown) else { return }
+        await newConversation()
+        scope = target
+        threadID = id
+        phase = .connecting
+        await refreshLinkedHistory(initial: true)
+        if phase == .connecting { phase = historyUnavailable ? .failed : .ready }
+    }
+
+    func refreshLinkedHistory(initial: Bool = false) async {
+        guard let target = scope?.threadID, !refreshingHistory, !historyUnavailable,
+            initial || !phase.busy
+        else { return }
+        refreshingHistory = true
+        let token = generation
+        let revision = historyRevision
+        defer { if token == generation { refreshingHistory = false } }
+        do {
+            let connection = try await prepareConnection(generation: token)
+            let history = try await connection.request(
+                "thread/turns/list",
+                params: .object([
+                    "threadId": .string(target), "limit": .number(12),
+                    "sortDirection": .string("desc"), "itemsView": .string("summary"),
+                ]))
+            let queue = try await connection.request(
+                "thread/queue/list",
+                params: .object([
+                    "threadId": .string(target), "limit": .number(100),
+                ]))
+            guard token == generation, scope?.threadID == target, revision == historyRevision else {
+                return
+            }
+            guard case .array = history["data"], case .array = queue["data"] else {
+                throw ConnectionFailure.invalidRecord
+            }
+            let snapshot = LinkedConversationSnapshot.decode(history: history, queue: queue)
+            messages = snapshot.messages
+            if let clientID = lastQueuedClientID,
+                let received = messages.first(where: { $0.id == clientID })
+            {
+                if phase == .outcomeUnknown {
+                    phase = received.queued ? .queued : .ready
+                    draft = ""
+                    dispatched = false
+                    notice =
+                        received.queued
+                        ? "Confirmed in Codex's queue. It was not resent."
+                        : "Confirmed in this Codex conversation. It was not resent."
+                }
+            }
+            if let reply = snapshot.latestCompletedReply {
+                if historyBaselineLoaded, reply.id != lastCompletedReplyID {
+                    completedReply = reply.text
+                }
+                lastCompletedReplyID = reply.id
+            }
+            historyBaselineLoaded = true
+        } catch {
+            guard token == generation else { return }
+            historyUnavailable = true
+            if phase == .connecting { phase = .failed }
+            notice =
+                "Conversation refresh unavailable: \(error.localizedDescription) Reconnect to the selected chat or open it in Codex. No new conversation was created."
+        }
+    }
+
     @discardableResult
     func send(in proposed: ConversationScope) -> Task<Void, Never>? {
         guard canSend else { return nil }
         pinScope(proposed)
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        draft = ""
-        messages.append(CompanionMessage(id: UUID().uuidString, role: .user, text: text))
+        if scope?.threadID == nil {
+            draft = ""
+            messages.append(CompanionMessage(id: UUID().uuidString, role: .user, text: text))
+        } else {
+            historyRevision += 1
+        }
         if messages.count > 100 { messages.removeFirst(messages.count - 100) }
         phase = .connecting
         notice = nil
@@ -126,35 +213,72 @@ struct CompanionApproval: Identifiable {
         return sendTask
     }
 
-    private func performSend(_ text: String, generation token: UUID) async {
-        do {
-            if connection == nil {
-                eventTask?.cancel()
-                let epoch = UUID()
-                connectionID = epoch
-                let connection = makeConnection()
-                self.connection = connection
-                let stream = await connection.events()
-                eventTask = Task { [weak self] in
-                    for await event in stream {
-                        guard !Task.isCancelled else { break }
-                        await self?.consume(event, generation: token, connectionID: epoch)
-                    }
+    private func prepareConnection(generation token: UUID) async throws -> any CodexConnection {
+        if connection == nil {
+            eventTask?.cancel()
+            let epoch = UUID()
+            connectionID = epoch
+            let connection = makeConnection()
+            self.connection = connection
+            let stream = await connection.events()
+            eventTask = Task { [weak self] in
+                for await event in stream {
+                    guard !Task.isCancelled else { break }
+                    await self?.consume(event, generation: token, connectionID: epoch)
                 }
             }
-            guard let connection else { throw ConnectionFailure.unavailable }
-            if !initialized {
-                _ = try await connection.request(
-                    "initialize",
+        }
+        guard let connection else { throw ConnectionFailure.unavailable }
+        if !initialized {
+            _ = try await connection.request(
+                "initialize",
+                params: .object([
+                    "capabilities": .object(["experimentalApi": .bool(scope?.threadID != nil)]),
+                    "clientInfo": .object([
+                        "name": .string("jarvis_macos"),
+                        "title": .string("Jarvis"), "version": .string("0.4.0"),
+                    ]),
+                ]))
+            try await connection.notify("initialized")
+            guard token == generation else { throw CancellationError() }
+            initialized = true
+        }
+        return connection
+    }
+
+    private func performSend(_ text: String, generation token: UUID) async {
+        do {
+            let connection = try await prepareConnection(generation: token)
+            if let target = scope?.threadID {
+                threadID = target
+                let clientID = UUID().uuidString
+                lastQueuedClientID = clientID
+                phase = .sending
+                dispatched = true
+                let response = try await connection.request(
+                    "thread/queue/add",
                     params: .object([
-                        "clientInfo": .object([
-                            "name": .string("jarvis_macos"),
-                            "title": .string("Jarvis"), "version": .string("0.3.0"),
-                        ])
+                        "threadId": .string(target), "clientUserMessageId": .string(clientID),
+                        "input": .array([.object(["type": .string("text"), "text": .string(text)])]
+                        ),
                     ]))
-                try await connection.notify("initialized")
                 guard token == generation else { return }
-                initialized = true
+                let submission = response["queuedSubmission"]
+                guard submission["clientUserMessageId"].text == clientID,
+                    submission["id"].text != nil,
+                    let queued = LinkedConversationSnapshot.queuedMessage(submission)
+                else {
+                    throw ConnectionFailure.invalidRecord
+                }
+                if !messages.contains(where: { $0.id == queued.id }) { messages.append(queued) }
+                draft = ""
+                messages = Array(messages.suffix(100))
+                phase = .queued
+                dispatched = false
+                notice =
+                    "Queued for \(scope?.name ?? "this chat"). Codex will handle it in that conversation. Approvals stay in Codex."
+                await refreshLinkedHistory()
+                return
             }
             if threadID == nil {
                 var params: [String: WireValue] = [:]
@@ -329,6 +453,8 @@ struct CompanionApproval: Identifiable {
     }
 
     func interrupt() async {
+        // This process does not own linked desktop work or its approval requests.
+        guard scope?.threadID == nil else { return }
         guard phase.busy else { return }
         guard let threadID, let turnID, let connection else {
             notice = "Still waiting for acknowledgement; a stop cannot yet be confirmed."
@@ -363,6 +489,12 @@ struct CompanionApproval: Identifiable {
         phase = .ready
         dispatched = false
         answeringApproval = false
+        refreshingHistory = false
+        historyUnavailable = false
+        lastQueuedClientID = nil
+        historyBaselineLoaded = false
+        lastCompletedReplyID = nil
+        historyRevision = 0
     }
 
     func shutdown() async {
