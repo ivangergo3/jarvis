@@ -2,7 +2,9 @@ import SwiftUI
 import AppKit
 
 @MainActor final class DashboardState: ObservableObject {
-    @Published var selection: String?
+    @Published var selection: String? {
+        didSet { UserDefaults.standard.set(selection, forKey: "selectedChat") }
+    }
     @Published var projectID: String? {
         didSet { UserDefaults.standard.set(projectID ?? "__all__", forKey: "selectedProject") }
     }
@@ -13,6 +15,7 @@ import AppKit
     @Published var hoveredNodeID: String?
     @Published var showCompanion = true
     init() {
+        selection = UserDefaults.standard.string(forKey: "selectedChat")
         let stored = UserDefaults.standard.string(forKey: "selectedProject")
         projectID = stored == "__all__" ? nil : stored
     }
@@ -74,13 +77,14 @@ struct Dashboard: View {
                     Rectangle().fill(HUD.line).frame(width: 1)
                     VStack(spacing: 0) {
                         Picker("Right panel", selection: $ui.showCompanion) {
-                            Text("Jarvis chat").tag(true)
+                            Text("Conversation").tag(true)
                             Text("Task details").tag(false)
                         }.pickerStyle(.segmented).padding(12).accessibilityIdentifier("dashboard.rightPanel")
                         if ui.showCompanion {
                             CompanionPanel(chat: companion, voice: voice,
-                                proposedScope: ConversationScope(projectID: project?.id,
-                                    name: project?.name ?? "Jarvis", directory: project?.roots.first), motion: motion)
+                                proposedScope: ConversationScope(projectID: selected?.projectID,
+                                    name: selected?.name ?? "Choose a chat", directory: project?.roots.first,
+                                    threadID: selected?.id), motion: motion)
                         } else { detail }
                     }.frame(width: 380)
                 }
@@ -91,10 +95,12 @@ struct Dashboard: View {
         .frame(minWidth: 1180, minHeight: 760)
         .task {
             await store.refresh()
+            await companion.refreshLinkedHistory()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(3))
                 if Task.isCancelled { break }
                 await store.refresh()
+                await companion.refreshLinkedHistory()
             }
         }
     }
@@ -154,7 +160,7 @@ struct Dashboard: View {
             VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 7) { Image(systemName: "lock.shield"); Text("LOCAL CONNECTION") }.font(HUD.mono(9)).tracking(0.5).foregroundStyle(HUD.cyan.opacity(0.8))
                 Text("Your Mac. Your workspace.").font(.system(size: 11)).foregroundStyle(HUD.muted)
-                Text("TEAM VIEW ONLY   /   v0.3").font(HUD.mono(8)).tracking(1.2).foregroundStyle(HUD.muted.opacity(0.7))
+                Text("TEAM SNAPSHOT   /   v0.4").font(HUD.mono(8)).tracking(1.2).foregroundStyle(HUD.muted.opacity(0.7))
             }
         }.padding(.horizontal, 27).padding(.top, 32).padding(.bottom, 27).background(Color.black.opacity(0.15))
     }
@@ -447,7 +453,7 @@ struct Dashboard: View {
             if let snapshot = store.snapshot {
                 Text("SYNC \(snapshot.readAt.formatted(date: .omitted, time: .standard))   /   3s").font(HUD.mono(8)).foregroundStyle(HUD.muted)
             }
-            Text("TEAM VIEW ONLY · JARVIS CHAT ENABLED").font(HUD.mono(8)).tracking(1).foregroundStyle(HUD.gold.opacity(0.7))
+            Text("TEAM SNAPSHOT · LINKED CHAT").font(HUD.mono(8)).tracking(1).foregroundStyle(HUD.gold.opacity(0.7))
         }.padding(.horizontal, 30).frame(height: 34).overlay(alignment: .top) { Rectangle().fill(HUD.line).frame(height: 1) }
     }
 }
