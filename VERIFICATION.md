@@ -57,3 +57,5 @@ Known limits: the task is a latest user request, not a generated summary. Local 
 - The installed Codex CLI accepted initialization and an ephemeral-thread setup probe without a model turn or persistent chat. Normal tests use only fake connections and disposable fixtures.
 - Real-account model streaming and microphone/speaker hardware acceptance are not claimed. No account-backed generation, microphone recording or paid voice API test was silently performed. Existing desktop chat control remains disabled; shared ownership is still the INT-02 gate.
 - Reuses the six idle frames from Greg’s existing Jarvis companion. The original floating Codex pet is not changed. No private screenshots or real conversation fixtures are included in the repository.
+
+Runner availability note: v0.3 CI uses the standard macOS 15 Intel pool after the Apple Silicon job remained queued without acquiring a runner. Standard Mac runners remain free for this public repository. Apple Silicon build/tests were run locally; this adds Intel CI verification without claiming minimum-OS runtime coverage.
