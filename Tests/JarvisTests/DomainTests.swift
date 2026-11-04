@@ -41,6 +41,8 @@ struct ObservationTests {
         "<send_user_message_question_reply>yes</send_user_message_question_reply>",
         "<external_codex_apps_open_page>page</external_codex_apps_open_page>",
         "<permissions>settings</permissions>",
+        "<skill><name>example</name>Injected instructions</skill>",
+        "<skills_instructions>Injected instructions</skills_instructions>",
         "<codex_context>settings</codex_context>",
         "<realtime_delegation><source>transcript_tail_flush</source></realtime_delegation>",
         "   \n ",

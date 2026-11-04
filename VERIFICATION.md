@@ -46,3 +46,14 @@ Known limits: the task is a latest user request, not a generated summary. Local 
 - GitHub Actions is configured for pull requests, pushes/merges to main, merge groups and manual runs on macOS 15 ARM64 with Xcode 16.4. Hosted run results are authoritative for that toolchain.
 - GitHub rejected private-repository branch protection on the current account plan (HTTP 403); passing checks are not an enforced merge requirement yet.
 - No native UI automation or minimum-OS runtime test is claimed. Swift 6 migration, formatter enforcement and the full Xcode scheme remain pending.
+
+
+## Docked companion (v0.3)
+
+- Added a window-owned Jarvis pet and independent chat panel, with native Edit menu shortcuts and the existing mission brief still available.
+- Local `swift test`: 37 tests across eight suites passed, including subprocess framing/cleanup, literal prompt transport, duplicate/uncertain sends, pinned contexts, foreign/stale events, approval decisions, required answers, withheld file grants without a review, and cancelled speech callbacks. The installed command-line SDK needed its bundled Testing macro plugin path supplied locally; that machine-specific path is not committed into the package or CI.
+- Release app compiled for macOS 14; plist and ad-hoc signature validated. CI also checks all six pet frames and both permission descriptions.
+- Native window checks verified visible pet artwork, full-screen layout, editable draft and Send enablement, project changes retaining the original conversation context, settings, Select All/Delete and resetting the unused conversation. No message was sent in these UI checks.
+- The installed Codex CLI accepted initialization and an ephemeral-thread setup probe without a model turn or persistent chat. Normal tests use only fake connections and disposable fixtures.
+- Real-account model streaming and microphone/speaker hardware acceptance are not claimed. No account-backed generation, microphone recording or paid voice API test was silently performed. Existing desktop chat control remains disabled; shared ownership is still the INT-02 gate.
+- Reuses the six idle frames from Greg’s existing Jarvis companion. The original floating Codex pet is not changed. No private screenshots or real conversation fixtures are included in the repository.

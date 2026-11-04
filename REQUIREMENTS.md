@@ -1,6 +1,6 @@
 # Jarvis macOS engineering requirements
 
-Research date: **4 November 2026**. Status: **requirements baseline; initial automated tests/CI implemented, other phases pending**.
+Research date: **4 November 2026**. Status: **requirements baseline; automated tests/CI and a bounded docked companion implemented; wider phases pending**.
 
 This is the engineering baseline for turning the personal dashboard into a maintainable Mac app with a docked Jarvis companion, typed and spoken interaction, and eventual Codex coordination. It does **not** authorize implementing those features or refactoring the prototype. The current app has not been audited for compliance with every requirement below.
 
@@ -138,8 +138,8 @@ This is a preliminary source-based gap list, **not** a full audit or a claim tha
 | --- | --- | --- |
 | 1 | **Foundation hardening.** The package and shell build currently select Swift 5 language mode. The app is manually bundled; resources and deployment compatibility need a proper build/test contract. A separate fixture-based Swift Testing target and GitHub Actions build/tests now exist. The legacy in-executable tests have been migrated; a full Xcode app scheme, Swift 6 migration and formatter enforcement remain pending. | Reproducible app target, fixtures/test targets, staged Swift 6 migration and a recorded baseline. |
 | 2 | **UI and data separation.** `Dashboard.swift` combines navigation, feature UI and derived state. State parsing still relies on internal Codex files. Accessibility, graph scale and task-preview filtering require systematic coverage. | Clear boundaries, role-aware decoding, native keyboard/VoiceOver checks and bounded work. |
-| 3 | **Typed Codex connection spike.** Shared access to existing desktop chats, app-server ownership and authentication remain unverified for Jarvis. | One disposable existing chat can receive a typed command, return streamed output and preserve approvals without duplicate dispatch. |
-| 4 | **Docked companion and voice.** The app has reactor artwork, but no interactive voice companion or provider/capability design. | Implement only after the typed command path works; satisfy VOI requirements and preserve typed operation. |
+| 3 | **Typed Codex connection spike.** The dedicated Jarvis connection has handshake/ephemeral setup verification; shared access to existing desktop chats and ownership remain unverified. | One disposable existing chat can receive a typed command, return streamed output and preserve approvals without duplicate dispatch. |
+| 4 | **Docked companion and voice.** The docked companion, typed chat, on-device dictation drafts and optional macOS spoken replies are implemented. First-party live voice remains unimplemented; real microphone acceptance is pending. | Implement only after the typed command path works; satisfy VOI requirements and preserve typed operation. |
 | 5 | **Coordinator and distribution.** Global view is currently observation-only, and builds are ad-hoc signed. | Explicit authority model, reliable lifecycle/cost reporting, and a separately approved distribution route before sharing. |
 
 Do not perform these phases automatically. The next user-authorized implementation should pick a bounded phase, state its acceptance criteria, preserve the working prototype and record any deviation with the affected requirement IDs, reason, owner and follow-up. Requirements may be revised when evidence changes; they must not be silently weakened to make a build pass.
@@ -147,3 +147,12 @@ Do not perform these phases automatically. The next user-authorized implementati
 ## Research notes
 
 Primary sources only: Apple's Human Interface Guidelines and developer documentation, Swift's language/migration/API guidance, the swiftlang formatter repository, and official OpenAI App Server documentation. Apple Markdown versions were retrieved where the normal web pages required JavaScript. No third-party blog architecture was treated as a platform requirement. Source links are placed by the requirements they informed. Recheck version-sensitive APIs and protocol capabilities when implementation begins.
+
+
+## v0.3 implementation scope and remaining gates
+
+The docked companion renders our own bundled artwork (MAC-04). A dedicated new Jarvis conversation uses the documented stdio App Server protocol; existing desktop chats remain read-only. The installed CLI passed initialization and an ephemeral-thread setup probe without any model turn. Model streaming, approval and failure behaviour are tested with fixtures; no paid turn is silently sent as a test. **INT-02 is not marked passed:** continuing existing desktop chats, shared ownership and cross-chat coordination remain disabled/pending.
+
+Voice is an editable, on-device dictation draft plus optional macOS spoken replies, with no cloud audio fallback or first-party pet embedding. Full-duplex Codex Voice is not implemented. Microphone permission, real speech recognition/synthesis and minimum-OS runtime behaviour still need human acceptance on the intended Mac; ordinary CI never requests those permissions.
+
+The current package still uses Swift 5 language mode (SW-01 migration remains pending); new connection state is actor-owned and UI state is main-actor isolated. Formatter enforcement and an Xcode UI-test scheme remain pending, not waived. The native checks cover visible artwork, full-screen layout, draft/send enablement, context locking across a project change, settings and keyboard text editing. Synthetic tests cover the protocol, replies/approvals, stale/foreign events, duplicate/uncertain sends, child-process boundaries and dictation generations. No screenshot of personal chat contents is included in the public repository.
