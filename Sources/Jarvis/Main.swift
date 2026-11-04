@@ -29,6 +29,8 @@ import SwiftUI
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
+    private let companion = CompanionModel()
+    private let voice = LocalVoice()
     func applicationDidFinishLaunching(_ notification: Notification) {
         let menu = NSMenu()
         let appItem = NSMenuItem(); menu.addItem(appItem)
@@ -36,6 +38,16 @@ import SwiftUI
         appMenu.addItem(withTitle: "About Jarvis", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit Jarvis", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let editItem = NSMenuItem(); editItem.title = "Edit"; menu.addItem(editItem)
+        let editMenu = NSMenu(); editItem.submenu = editMenu
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]; editMenu.addItem(redo)
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         let viewItem = NSMenuItem(); viewItem.title = "View"; menu.addItem(viewItem)
         let viewMenu = NSMenu(); viewItem.submenu = viewMenu
         let fullscreen = NSMenuItem(title: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f")
@@ -47,7 +59,7 @@ import SwiftUI
         window.titleVisibility = .hidden
         window.backgroundColor = NSColor(red: 0.025, green: 0.045, blue: 0.065, alpha: 1)
         window.minSize = NSSize(width: 1180, height: 760)
-        window.contentView = NSHostingView(rootView: Dashboard())
+        window.contentView = NSHostingView(rootView: Dashboard(companion: companion, voice: voice))
         window.collectionBehavior = [.fullScreenPrimary]
         window.setFrameAutosaveName("JarvisMissionControl")
         window.center(); window.makeKeyAndOrderFront(nil)
@@ -55,6 +67,15 @@ import SwiftUI
         self.window = window
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        voice.cancel()
+        voice.stopSpeaking()
+        Task {
+            await companion.shutdown()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         window?.makeKeyAndOrderFront(nil); return true
     }

@@ -10,3 +10,5 @@ Read [REQUIREMENTS.md](REQUIREMENTS.md) before implementing or reviewing a chang
 - Keep secrets out of source/preferences/logs; use fixtures for normal tests. Do not run paid or state-changing integration tests implicitly.
 - Implement the formatter, test-target and CI requirements only when that work is authorized; do not claim those checks are configured today.
 - Verify changes according to risk. Report checks actually run and limitations. Record justified deviations by requirement ID rather than weakening requirements silently.
+
+Greg’s Jarvis experiment: he specifies behaviour and tests the app without writing or reviewing the source. Agents still review the implementation and maintain meaningful tests; do not treat this as a waiver of engineering checks or require Greg to inspect code for acceptance.

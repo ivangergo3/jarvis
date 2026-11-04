@@ -18,11 +18,11 @@ swift test
 ./build/Jarvis.app/Contents/MacOS/Jarvis --diagnose
 ```
 
-Requires the installed Apple command-line tools; no third-party packages or API keys.
+Building requires the installed Apple command-line tools; there are no third-party Swift packages. The chat feature requires an installed, signed-in Codex CLI/App Server. Jarvis itself has no API-key entry or credential store.
 
 ## Automated quality checks
 
-GitHub Actions runs **macOS build and tests** on every pull request, push/merge to `main`, merge-queue group and manual dispatch. It uses the `macos-15` ARM64 runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
+GitHub Actions runs **macOS build and tests** on every pull request, push/merge to `main`, merge-queue group and manual dispatch. It uses the standard `macos-15-intel` runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
 
 `swift test` runs a separate Swift Testing target. It checks lifecycle/task parsing, project assignments, graph routes and pulse movement, plus the read-only adapter against temporary SQLite databases and JSONL files. Fixtures cover incremental and partial writes, truncation, missing logs/history fallback, stale activity, invalid schemas, and rejected paths. Tests never need your Codex account, live chats, network or credentials. The old `--self-test` option now prints the replacement command and exits; `--diagnose` remains an explicit, local-only diagnostic that reads real records and is not run in CI.
 
@@ -44,7 +44,21 @@ Jarvis reads `~/.codex/state_5.sqlite` with SQLite read-only flags, selected pro
 
 The root Jarvis view is an organisational workspace view. It shows the intended hierarchy of you → Jarvis → projects → chats, while clearly marking the coordinator as observation-only. It does not create a boss agent, send instructions, or imply delegation between peer chats. Actual subagents appear under their recorded parent. Historical subagents can remain listed after finishing; the top counter counts only active ones.
 
-Everything stays on this Mac. The app does not read credentials, make model calls, modify Codex records, start chats, send messages, or spend API tokens. This is an experimental adapter to Codex's internal local record format, not an officially supported live monitoring API. An update to Codex can require an adapter update. Errors keep the last snapshot visible and show a disconnected banner.
+The team-observation adapter stays read-only and local. It never edits Codex databases or starts work in existing desktop chats. The separate Jarvis chat connects to the installed Codex App Server over stdio and can start real Codex turns only when you choose Send. This is still an experimental adapter to Codex's internal monitoring records; an update may require an adapter update. Observation errors keep the last snapshot visible and show a disconnected banner.
+
+## Docked Jarvis chat and voice (v0.3)
+
+The right panel now contains our Jarvis artwork, rendered inside this app so it stays with the window and its Space. **Task details** switches back to the mission brief. The original floating Codex pet and its settings are untouched; no foreign window is embedded or moved.
+
+- Type in **Jarvis chat** and choose **Send** or **Command–Return**. The first draft or dictation locks the project folder context, shown above the conversation. Switching the dashboard project cannot reroute that draft. **New chat** explicitly clears the panel/context and disconnects its old connection; it does not delete the saved Codex chat.
+- This version creates a dedicated Jarvis conversation through `thread/start`. It does **not** resume, control or impersonate your existing desktop chats; shared ownership remains the INT-02 gate. Existing team cards are observation-only.
+- The connection settings detect common Codex installations or let you choose the executable. Jarvis launches it with an argument array, never a shell prompt. Codex handles its own sign-in, provider configuration and permissions. No credentials are copied into Jarvis, no network listener is opened, and no model request is made on launch.
+- Chat uses your configured Codex account/provider limits; it is not a free or independently bundled model service. A closed or timed-out send is not replayed. An uncertain outcome disables sending in that conversation; inspect it in Codex before starting a new one.
+- Supported command/network and file approvals wait for an explicit decision. File grants are unavailable if complete change details were not received. Questions support option selection and typed answers. Unsupported approval methods return an error without granting access. Existing Codex policies are not broadened or changed.
+- The microphone starts **on-device dictation**, not ChatGPT Live Voice. It asks for microphone/speech permissions at first use. Choose a supported language in connection settings. There is no cloud audio fallback. Stop to get an editable transcript, then choose Send yourself. Cancelled/old callbacks cannot fill a later draft. Recording stops on cancel, hiding the chat panel, sleep or quit, and has a 45-second limit. Raw audio is not saved.
+- **Read replies** is off by default and uses macOS speech synthesis when enabled. The adjacent speaker button stops speech. This is not the built-in Codex pet's voice or a natural full-duplex voice session.
+
+The app owns one chat connection and cleans up its child app-server/audio resources on exit. Closing Jarvis can interrupt work in its own conversation; independent Codex desktop chats are not stopped. Chat history shown in the panel is bounded and kept only in memory; Codex owns its persisted conversation. No prompt/audio logging or telemetry is added.
 
 ## Source
 
@@ -54,7 +68,7 @@ Everything stays on this Mac. The app does not read credentials, make model call
 - `Sources/Jarvis/Theme.swift`: animated HUD, reactor and connections.
 - `Sources/Jarvis/Main.swift`: app lifecycle and acceptance checks.
 
-No login item, background service or external infrastructure is installed. Quitting the app stops polling.
+No login item, background service or external infrastructure is installed. Quitting the app stops polling, audio and its owned App Server connection.
 
 ## License
 

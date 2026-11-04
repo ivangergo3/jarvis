@@ -17,7 +17,7 @@ concurrency:
 jobs:
   quality:
     name: macOS build and tests
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 15
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
@@ -42,3 +42,8 @@ jobs:
           test -x build/Jarvis.app/Contents/MacOS/Jarvis
           test -s build/Jarvis.app/Contents/Resources/reactor.png
           test -s build/Jarvis.app/Contents/Resources/AppIcon.icns
+          for frame in 0 1 2 3 4 5; do
+            test -s "build/Jarvis.app/Contents/Resources/CompanionIdle${frame}.png"
+          done
+          /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' build/Jarvis.app/Contents/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print :NSSpeechRecognitionUsageDescription' build/Jarvis.app/Contents/Info.plist

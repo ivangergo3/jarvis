@@ -106,7 +106,7 @@ struct LogObservation {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
         let wrappers = ["<environment_context>", "<heartbeat>", "<send_user_message_question_reply>",
-                        "<external_codex_apps_open_page>", "<codex", "<permissions"]
+                        "<external_codex_apps_open_page>", "<codex", "<permissions", "<skill>", "<skills_instructions>"]
         guard !wrappers.contains(where: { text.hasPrefix($0) }) else { return nil }
         if text.contains("<source>transcript_tail_flush</source>") { return nil }
         if text.hasPrefix("<realtime_delegation>"),
