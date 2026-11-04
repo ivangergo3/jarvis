@@ -14,11 +14,21 @@ Open `build/Jarvis.app`. Use **Control–Command–F** or the top-right expand b
 
 ```sh
 ./build.sh
-./build/Jarvis.app/Contents/MacOS/Jarvis --self-test
+swift test
 ./build/Jarvis.app/Contents/MacOS/Jarvis --diagnose
 ```
 
 Requires the installed Apple command-line tools; no third-party packages or API keys.
+
+## Automated quality checks
+
+GitHub Actions runs **macOS build and tests** on every pull request, push/merge to `main`, merge-queue group and manual dispatch. It uses the `macos-15-arm64` runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
+
+`swift test` runs a separate Swift Testing target. It checks lifecycle/task parsing, project assignments, graph routes and pulse movement, plus the read-only adapter against temporary SQLite databases and JSONL files. Fixtures cover incremental and partial writes, truncation, missing logs/history fallback, stale activity, invalid schemas, and rejected paths. Tests never need your Codex account, live chats, network or credentials. The old `--self-test` option now prints the replacement command and exits; `--diagnose` remains an explicit, local-only diagnostic that reads real records and is not run in CI.
+
+CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. These checks do not yet exercise native UI, VoiceOver or a macOS 14 runtime. Swift 6 migration, formatting enforcement and a full Xcode app/test scheme remain later foundation work; see [REQUIREMENTS.md](REQUIREMENTS.md).
+
+**Merge enforcement:** GitHub currently rejects branch protection for this private repository on the account's plan. Checks run and report failures, but GitHub does not block merging on them. Once the account supports private-repository protection, make **macOS build and tests** required for `main`. Do not change repository visibility to work around this.
 
 ## Data and meaning
 

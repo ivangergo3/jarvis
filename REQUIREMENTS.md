@@ -1,6 +1,6 @@
 # Jarvis macOS engineering requirements
 
-Research date: **4 November 2026**. Status: **requirements recorded; implementation pending**.
+Research date: **4 November 2026**. Status: **requirements baseline; initial automated tests/CI implemented, other phases pending**.
 
 This is the engineering baseline for turning the personal dashboard into a maintainable Mac app with a docked Jarvis companion, typed and spoken interaction, and eventual Codex coordination. It does **not** authorize implementing those features or refactoring the prototype. The current app has not been audited for compliance with every requirement below.
 
@@ -136,7 +136,7 @@ This is a preliminary source-based gap list, **not** a full audit or a claim tha
 
 | Order | Phase / gap | Completion gate |
 | --- | --- | --- |
-| 1 | **Foundation hardening.** The package and shell build currently select Swift 5 language mode. The app is manually bundled; resources and deployment compatibility need a proper build/test contract. Tests currently live in `Main.swift` and include live local integration. | Reproducible app target, fixtures/test targets, staged Swift 6 migration and a recorded baseline. |
+| 1 | **Foundation hardening.** The package and shell build currently select Swift 5 language mode. The app is manually bundled; resources and deployment compatibility need a proper build/test contract. A separate fixture-based Swift Testing target and GitHub Actions build/tests now exist. The legacy in-executable tests have been migrated; a full Xcode app scheme, Swift 6 migration and formatter enforcement remain pending. | Reproducible app target, fixtures/test targets, staged Swift 6 migration and a recorded baseline. |
 | 2 | **UI and data separation.** `Dashboard.swift` combines navigation, feature UI and derived state. State parsing still relies on internal Codex files. Accessibility, graph scale and task-preview filtering require systematic coverage. | Clear boundaries, role-aware decoding, native keyboard/VoiceOver checks and bounded work. |
 | 3 | **Typed Codex connection spike.** Shared access to existing desktop chats, app-server ownership and authentication remain unverified for Jarvis. | One disposable existing chat can receive a typed command, return streamed output and preserve approvals without duplicate dispatch. |
 | 4 | **Docked companion and voice.** The app has reactor artwork, but no interactive voice companion or provider/capability design. | Implement only after the typed command path works; satisfy VOI requirements and preserve typed operation. |

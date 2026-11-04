@@ -36,3 +36,13 @@ Known limits: the task is a latest user request, not a generated summary. Local 
 - Geometry regression checks passed for 4, 7 and 20 nodes at narrow and wide viewport sizes, sampling each route to reject intersections with other cards.
 - Release build, existing acceptance checks and signature verification passed.
 - Native full-screen visual check confirmed money's seven-card routing and matching gold Coding box/connection highlighting; the active cyan Xiaomi route and destination glow were visible.
+
+## Automated quality baseline (4 November 2026)
+
+- Moved the useful in-executable acceptance checks into an independent Swift Testing target, replacing live personal-account assertions with disposable SQLite/JSONL fixtures.
+- `swift test`: 20 tests across four suites passed locally, including parameterized lifecycle, role/filter and graph-size cases. Graph checks cover every connector segment against other cards for 0, 1, 4, 7, 20 and 100 nodes at two viewport sizes.
+- Reader tests cover read-only database enforcement, literal parameter binding, visible chat/agent filtering, desktop assignments, incremental/partial logs, truncation, history fallback, stale work, out-of-scope symlinks and invalid catalogs/schemas.
+- Release app compiled with an explicit macOS 14 deployment target. Bundle plist lint and ad-hoc signature verification passed.
+- GitHub Actions is configured for pull requests, pushes/merges to main, merge groups and manual runs on macOS 15 ARM64 with Xcode 16.4. Hosted run results are authoritative for that toolchain.
+- GitHub rejected private-repository branch protection on the current account plan (HTTP 403); passing checks are not an enforced merge requirement yet.
+- No native UI automation or minimum-OS runtime test is claimed. Swift 6 migration, formatter enforcement and the full Xcode scheme remain pending.
