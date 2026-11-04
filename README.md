@@ -28,7 +28,7 @@ GitHub Actions runs **macOS build and tests** on every pull request, push/merge 
 
 CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. These checks do not yet exercise native UI, VoiceOver or a macOS 14 runtime. Swift 6 migration, formatting enforcement and a full Xcode app/test scheme remain later foundation work; see [REQUIREMENTS.md](REQUIREMENTS.md).
 
-**Merge enforcement:** GitHub currently rejects branch protection for this private repository on the account's plan. Checks run and report failures, but GitHub does not block merging on them. Once the account supports private-repository protection, make **macOS build and tests** required for `main`. Do not change repository visibility to work around this.
+**Merge enforcement:** Checks run and report failures, but are not yet enforced as a merge requirement. Private-repository protection was unavailable on the account's plan when CI was added. The project is now public for building in public and open-source collaboration; branch protection can be configured separately to require **macOS build and tests** for `main`.
 
 ## Data and meaning
 
@@ -55,3 +55,7 @@ Everything stays on this Mac. The app does not read credentials, make model call
 - `Sources/Jarvis/Main.swift`: app lifecycle and acceptance checks.
 
 No login item, background service or external infrastructure is installed. Quitting the app stops polling.
+
+## License
+
+Open source under the [MIT License](LICENSE).
