@@ -52,7 +52,7 @@ struct TeamGraphLayout {
     }
 }
 
-struct GraphConnection {
+struct GraphConnection: Equatable {
     let points: [CGPoint]
     var destination: CGPoint { points.last! }
 

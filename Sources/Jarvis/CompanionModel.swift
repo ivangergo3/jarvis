@@ -37,6 +37,7 @@ struct CompanionMessage: Identifiable, Equatable {
     let role: Role
     var text: String
     var queued = false
+    var attachments: [ChatAttachment] = []
 }
 
 struct CompanionApproval: Identifiable {
@@ -76,6 +77,10 @@ struct CompanionApproval: Identifiable {
 /// Existing chats use Codex's shared queue, without creating a second runtime owner.
 @MainActor final class CompanionModel: ObservableObject {
     @Published var draft = ""
+    @Published private(set) var draftImages: [ChatAttachment] = []
+    @Published private(set) var importingImage = false
+    private var imageImportTask: Task<Void, Never>?
+    private var chatImageDrafts: [String: [ChatAttachment]] = [:]
     @Published private(set) var scope: ConversationScope?
     @Published private(set) var phase: ConversationPhase = .ready
     @Published private(set) var messages: [CompanionMessage] = []
@@ -83,6 +88,7 @@ struct CompanionApproval: Identifiable {
     @Published private(set) var notice: String?
     @Published private(set) var threadID: String?
     @Published private(set) var completedReply: String?
+    @Published private(set) var completionID: String?
     @Published private(set) var answeringApproval = false
     @Published private(set) var historyUnavailable = false
     private(set) var turnID: String?
@@ -101,6 +107,7 @@ struct CompanionApproval: Identifiable {
     private var historyBaselineLoaded = false
     private var lastCompletedReplyID: String?
     private var historyRevision = 0
+    private var chatDrafts: [String: String] = [:]
 
     init(
         makeConnection: @escaping @Sendable () -> any CodexConnection = {
@@ -110,23 +117,66 @@ struct CompanionApproval: Identifiable {
 
     var canSend: Bool {
         !phase.busy && phase != .outcomeUnknown && !historyUnavailable
-            && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !importingImage
+            && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !draftImages.isEmpty)
             && draft.count <= 16_000
+    }
+
+    @discardableResult
+    func pasteImage(_ image: ClipboardImage, store: ComposerImageStore = .shared) -> Task<Void, Never>? {
+        guard !phase.busy, phase != .outcomeUnknown, !importingImage, scope?.threadID != nil else { return nil }
+        guard draftImages.count < 6 else { notice = "Attach up to six images per message."; return nil }
+        importingImage = true
+        let token = generation
+        imageImportTask = Task { [weak self] in
+            do {
+                let saved = try await store.save(image)
+                guard let self, token == self.generation, !Task.isCancelled else { return }
+                self.draftImages.append(saved)
+                self.importingImage = false
+            } catch {
+                guard let self, token == self.generation else { return }
+                self.importingImage = false
+                if !(error is CancellationError) { self.notice = error.localizedDescription }
+            }
+        }
+        return imageImportTask
+    }
+
+    func removeDraftImage(_ id: String) {
+        guard !phase.busy, phase != .outcomeUnknown else { return }
+        draftImages.removeAll { $0.id == id }
     }
 
     func pinScope(_ proposed: ConversationScope) { if scope == nil { scope = proposed } }
 
-    /// Following a card never silently discards a draft or abandons an uncertain submission.
+    /// Switch destinations explicitly while retaining unsent text under its original chat ID.
     func follow(_ target: ConversationScope, discardDraft: Bool = false) async {
-        guard let id = target.threadID, !id.isEmpty, !phase.busy else { return }
+        guard let id = target.threadID, !id.isEmpty, !phase.busy, !importingImage else { return }
         if scope?.threadID == id && !discardDraft {
             scope = target  // A rename changes the label, never the destination ID.
             return
         }
-        guard discardDraft || (draft.isEmpty && phase != .outcomeUnknown) else { return }
+        guard discardDraft || phase != .outcomeUnknown else { return }
+        if !discardDraft, let current = scope?.threadID {
+            if draft.isEmpty && draftImages.isEmpty { chatDrafts.removeValue(forKey: current); chatImageDrafts.removeValue(forKey: current) }
+            else {
+                guard chatDrafts[current] != nil || chatDrafts.count < 100 else {
+                    notice = "Send or clear an existing draft before opening more chats."
+                    return
+                }
+                chatDrafts[current] = draft
+                chatImageDrafts[current] = draftImages
+            }
+        }
+        if discardDraft { chatDrafts.removeValue(forKey: id); chatImageDrafts.removeValue(forKey: id) }
+        let restoredDraft = chatDrafts[id] ?? ""
+        let restoredImages = chatImageDrafts[id] ?? []
         await newConversation()
         scope = target
         threadID = id
+        draft = restoredDraft
+        draftImages = restoredImages
         phase = .connecting
         await refreshLinkedHistory(initial: true)
         if phase == .connecting { phase = historyUnavailable ? .failed : .ready }
@@ -160,13 +210,14 @@ struct CompanionApproval: Identifiable {
                 throw ConnectionFailure.invalidRecord
             }
             let snapshot = LinkedConversationSnapshot.decode(history: history, queue: queue)
-            messages = snapshot.messages
+            if messages != snapshot.messages { messages = snapshot.messages }
             if let clientID = lastQueuedClientID,
                 let received = messages.first(where: { $0.id == clientID })
             {
                 if phase == .outcomeUnknown {
                     phase = received.queued ? .queued : .ready
                     draft = ""
+                    draftImages = []
                     dispatched = false
                     notice =
                         received.queued
@@ -177,6 +228,7 @@ struct CompanionApproval: Identifiable {
             if let reply = snapshot.latestCompletedReply {
                 if historyBaselineLoaded, reply.id != lastCompletedReplyID {
                     completedReply = reply.text
+                    completionID = reply.id
                 }
                 lastCompletedReplyID = reply.id
             }
@@ -195,9 +247,11 @@ struct CompanionApproval: Identifiable {
         guard canSend else { return nil }
         pinScope(proposed)
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let images = draftImages
         if scope?.threadID == nil {
             draft = ""
-            messages.append(CompanionMessage(id: UUID().uuidString, role: .user, text: text))
+            draftImages = []
+            messages.append(CompanionMessage(id: UUID().uuidString, role: .user, text: text, attachments: images))
         } else {
             historyRevision += 1
         }
@@ -205,11 +259,12 @@ struct CompanionApproval: Identifiable {
         phase = .connecting
         notice = nil
         completedReply = nil
+        completionID = nil
         dispatched = false
         replyIDs.removeAll()
         fileChangeReviews.removeAll()
         let token = generation
-        sendTask = Task { [weak self] in await self?.performSend(text, generation: token) }
+        sendTask = Task { [weak self] in await self?.performSend(text, images: images, generation: token) }
         return sendTask
     }
 
@@ -246,7 +301,11 @@ struct CompanionApproval: Identifiable {
         return connection
     }
 
-    private func performSend(_ text: String, generation token: UUID) async {
+    private func performSend(_ text: String, images: [ChatAttachment], generation token: UUID) async {
+        var input: [WireValue] = text.isEmpty ? [] : [.object(["type": .string("text"), "text": .string(text)])]
+        input += images.compactMap { image in
+            image.localURL.map { .object(["type": .string("localImage"), "path": .string($0.path)]) }
+        }
         do {
             let connection = try await prepareConnection(generation: token)
             if let target = scope?.threadID {
@@ -259,8 +318,7 @@ struct CompanionApproval: Identifiable {
                     "thread/queue/add",
                     params: .object([
                         "threadId": .string(target), "clientUserMessageId": .string(clientID),
-                        "input": .array([.object(["type": .string("text"), "text": .string(text)])]
-                        ),
+                        "input": .array(input),
                     ]))
                 guard token == generation else { return }
                 let submission = response["queuedSubmission"]
@@ -272,6 +330,7 @@ struct CompanionApproval: Identifiable {
                 }
                 if !messages.contains(where: { $0.id == queued.id }) { messages.append(queued) }
                 draft = ""
+                draftImages = []
                 messages = Array(messages.suffix(100))
                 phase = .queued
                 dispatched = false
@@ -299,7 +358,7 @@ struct CompanionApproval: Identifiable {
                 "turn/start",
                 params: .object([
                     "threadId": .string(threadID),
-                    "input": .array([.object(["type": .string("text"), "text": .string(text)])]),
+                    "input": .array(input),
                 ]))
             guard token == generation else { return }
             guard let id = result["turn"]["id"].text else { throw ConnectionFailure.invalidRecord }
@@ -400,6 +459,7 @@ struct CompanionApproval: Identifiable {
             approvals.removeAll()
             if status == "completed" {
                 phase = .complete
+                completionID = event.params["turn"]["id"].text ?? turnID
                 completedReply =
                     messages.last(where: { $0.role == .assistant && replyIDs.contains($0.id) })?
                     .text
@@ -479,6 +539,7 @@ struct CompanionApproval: Identifiable {
         phase = .connecting
         await shutdown()
         draft = ""
+        draftImages = []
         scope = nil
         messages = []
         approvals = []
@@ -486,6 +547,7 @@ struct CompanionApproval: Identifiable {
         threadID = nil
         turnID = nil
         completedReply = nil
+        completionID = nil
         phase = .ready
         dispatched = false
         answeringApproval = false
@@ -498,6 +560,9 @@ struct CompanionApproval: Identifiable {
     }
 
     func shutdown() async {
+        imageImportTask?.cancel()
+        imageImportTask = nil
+        importingImage = false
         generation = UUID()
         connectionID = UUID()
         eventTask?.cancel()

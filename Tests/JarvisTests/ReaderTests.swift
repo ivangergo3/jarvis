@@ -60,6 +60,43 @@ struct ReaderTests {
         #expect(Set(snapshot.projects.map(\.id)) == ["demo", "unassigned"])
     }
 
+    @Test func sidebarFollowsSavedOrderAcrossActivityChangesAndLegacyProjectIDs() async throws {
+        let fixture = try SessionFixture()
+        for id in ["coding", "jarvis", "marketing", "new"] { try fixture.addThread(id) }
+        try fixture.setAssignments([
+            "local-projects": ["legacy": ["rootPaths": ["/work/demo"]]],
+            "sidebar-project-thread-orders": ["legacy": ["threadIds": ["archived-or-moved", "marketing", "jarvis", "coding", "coding"]]],
+        ])
+        let reader = CodexReader(home: fixture.home)
+        let first = try await reader.read()
+        #expect(MissionNavigation.ordered(first.missions).map(\.id) == ["marketing", "jarvis", "coding", "new"])
+        try fixture.execute("UPDATE threads SET updated_at=999999999 WHERE id='coding'")
+        let next = try await reader.read()
+        #expect(MissionNavigation.ordered(next.missions).map(\.id) == ["marketing", "jarvis", "coding", "new"])
+        // A deliberate Codex reorder is reflected on the next refresh.
+        try fixture.setAssignments(["sidebar-project-thread-orders": ["demo": ["threadIds": ["coding", "marketing", "jarvis"]]]])
+        let reordered = try await reader.read()
+        #expect(MissionNavigation.ordered(reordered.missions).map(\.id) == ["coding", "marketing", "jarvis", "new"])
+    }
+
+    @Test func sidebarFallbackAndMigratedOrderAreDeterministic() async throws {
+        let fixture = try SessionFixture()
+        for id in ["b", "a", "z"] { try fixture.addThread(id) }
+        try fixture.execute("UPDATE threads SET name='Alpha' WHERE id='z'")
+        let reader = CodexReader(home: fixture.home)
+        let initial = try await reader.read()
+        #expect(MissionNavigation.ordered(initial.missions).map(\.id) == ["z", "a", "b"])
+        try fixture.setAssignments([
+            "local-projects": ["legacy": ["rootPaths": ["/work/demo"]]],
+            "sidebar-project-thread-orders": [
+                "legacy": ["threadIds": ["a", "b", "z"]],
+                "demo": ["threadIds": ["b", "z", "a"]],
+            ],
+        ])
+        let migrated = try await reader.read()
+        #expect(MissionNavigation.ordered(migrated.missions).map(\.id) == ["b", "z", "a"])
+    }
+
     @Test func incrementalReadsKeepPartialRecordsAndResetAfterTruncation() async throws {
         let fixture = try SessionFixture()
         let file = try fixture.addThread(log: SessionFixture.message("Original request") + "\n")

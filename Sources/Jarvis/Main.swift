@@ -31,6 +31,9 @@ import SwiftUI
     private var window: NSWindow?
     private let companion = CompanionModel()
     private let voice = LocalVoice()
+    private let windowControls = WindowControls()
+    func applicationDidBecomeActive(_ notification: Notification) { windowControls.applicationActive = true }
+    func applicationDidResignActive(_ notification: Notification) { windowControls.applicationActive = false }
     func applicationDidFinishLaunching(_ notification: Notification) {
         let menu = NSMenu()
         let appItem = NSMenuItem(); menu.addItem(appItem)
@@ -50,7 +53,8 @@ import SwiftUI
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         let viewItem = NSMenuItem(); viewItem.title = "View"; menu.addItem(viewItem)
         let viewMenu = NSMenu(); viewItem.submenu = viewMenu
-        let fullscreen = NSMenuItem(title: "Enter Full Screen", action: #selector(NSWindow.toggleFullScreen(_:)), keyEquivalent: "f")
+        let fullscreen = NSMenuItem(title: "Toggle Full Screen", action: #selector(WindowControls.toggleFullScreen(_:)), keyEquivalent: "f")
+        fullscreen.target = windowControls
         fullscreen.keyEquivalentModifierMask = [.control, .command]; viewMenu.addItem(fullscreen)
         NSApp.mainMenu = menu
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1500, height: 940), styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
@@ -59,7 +63,8 @@ import SwiftUI
         window.titleVisibility = .hidden
         window.backgroundColor = NSColor(red: 0.025, green: 0.045, blue: 0.065, alpha: 1)
         window.minSize = NSSize(width: 1180, height: 760)
-        window.contentView = NSHostingView(rootView: Dashboard(companion: companion, voice: voice))
+        windowControls.attach(to: window)
+        window.contentView = NSHostingView(rootView: Dashboard(windowControls: windowControls, companion: companion, voice: voice))
         window.collectionBehavior = [.fullScreenPrimary]
         window.setFrameAutosaveName("JarvisMissionControl")
         window.center(); window.makeKeyAndOrderFront(nil)
@@ -69,7 +74,7 @@ import SwiftUI
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         voice.cancel()
-        voice.stopSpeaking()
+        voice.stopAudio()
         Task {
             await companion.shutdown()
             sender.reply(toApplicationShouldTerminate: true)
