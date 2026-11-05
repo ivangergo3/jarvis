@@ -11,10 +11,15 @@ import AppKit
     @Published var tab = "Overview"
     @Published var motion = true
     @Published var board = false
-    @Published var copied = false
-    @Published var hoveredNodeID: String?
-    @Published var showCompanion = true
+    let graphHover = GraphHoverState()
+    @Published var conversationVisible = true
+    @Published var globalSettingsVisible = false
+    @Published var projectPickerVisible = false
+    @Published var refreshInterval: RefreshInterval = .normal {
+        didSet { UserDefaults.standard.set(refreshInterval.rawValue, forKey: "refreshIntervalSeconds") }
+    }
     init() {
+        refreshInterval = RefreshInterval.restoring(UserDefaults.standard.integer(forKey: "refreshIntervalSeconds"))
         selection = UserDefaults.standard.string(forKey: "selectedChat")
         let stored = UserDefaults.standard.string(forKey: "selectedProject")
         projectID = stored == "__all__" ? nil : stored
@@ -22,15 +27,16 @@ import AppKit
 }
 
 struct Dashboard: View {
+    @ObservedObject var windowControls: WindowControls
     @ObservedObject var companion: CompanionModel
     @ObservedObject var voice: LocalVoice
     @StateObject private var store = FleetStore()
     @StateObject private var ui = DashboardState()
+    @StateObject private var imagePreview = ImagePreviewPresentation()
     private var selection: String? { get { ui.selection } nonmutating set { ui.selection = newValue } }
     private var tab: String { get { ui.tab } nonmutating set { ui.tab = newValue } }
     private var motion: Bool { get { ui.motion } nonmutating set { ui.motion = newValue } }
     private var board: Bool { get { ui.board } nonmutating set { ui.board = newValue } }
-    private var copied: Bool { get { ui.copied } nonmutating set { ui.copied = newValue } }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var projects: [WorkspaceProject] { store.snapshot?.projects ?? [] }
     private var rootProjects: [WorkspaceProject] { projects.filter { !$0.isUnassigned } }
@@ -53,16 +59,18 @@ struct Dashboard: View {
         guard store.error == nil else { return Array(repeating: false, count: nodeCount) }
         return isGlobal ? rootProjects.map { p in allMissions.contains { $0.projectID == p.id && $0.status == .working } } : graphMissions.map { $0.status == .working }
     }
-    private var graphFocused: [Bool] {
-        isGlobal ? rootProjects.map { $0.id == ui.hoveredNodeID } : graphMissions.map { $0.id == ui.hoveredNodeID || $0.id == selected?.id }
-    }
-
     private func chooseProject(_ id: String?) {
-        ui.projectID = id; selection = nil; copied = false; ui.hoveredNodeID = nil; tab = "Overview"
+        ui.projectID = id; selection = nil; ui.graphHover.clear(); tab = "Overview"
     }
     private func chooseMission(_ mission: Mission) {
         if isGlobal { ui.projectID = mission.projectID }
-        selection = mission.id; copied = false
+        selection = mission.id
+    }
+
+    private var pollingSeconds: Int {
+        RefreshPolicy.seconds(configured: ui.refreshInterval.rawValue,
+            active: windowControls.applicationActive, visible: windowControls.windowVisible,
+            lowPower: windowControls.lowPowerMode)
     }
 
     var body: some View {
@@ -72,32 +80,39 @@ struct Dashboard: View {
             VStack(spacing: 0) {
                 header
                 Rectangle().fill(HUD.line).frame(height: 1)
-                HStack(spacing: 0) {
-                    mainContent.frame(maxWidth: .infinity, maxHeight: .infinity)
-                    Rectangle().fill(HUD.line).frame(width: 1)
-                    VStack(spacing: 0) {
-                        Picker("Right panel", selection: $ui.showCompanion) {
-                            Text("Conversation").tag(true)
-                            Text("Task details").tag(false)
-                        }.pickerStyle(.segmented).padding(12).accessibilityIdentifier("dashboard.rightPanel")
-                        if ui.showCompanion {
-                            CompanionPanel(chat: companion, voice: voice,
-                                proposedScope: ConversationScope(projectID: selected?.projectID,
-                                    name: selected?.name ?? "Choose a chat", directory: project?.roots.first,
-                                    threadID: selected?.id), motion: motion)
-                        } else { detail }
-                    }.frame(width: 380)
+                HSplitView {
+                    mainContent.frame(minWidth: 500, maxWidth: .infinity, maxHeight: .infinity)
+                    if ui.conversationVisible {
+                        CompanionPanel(chat: companion, voice: voice,
+                            proposedScope: ConversationScope(projectID: selected?.projectID,
+                                name: selected?.name ?? "Choose a chat", directory: project?.roots.first,
+                                threadID: selected?.id),
+                            mission: allMissions.first { $0.id == (companion.scope?.threadID ?? selected?.id) },
+                            sourceUnavailable: store.error != nil, motion: motion && windowControls.decorativeMotion)
+                            .frame(minWidth: 340, idealWidth: 440, maxWidth: .infinity)
+                    }
+
                 }
-                footer
             }
         }
         .background(HUD.background).foregroundStyle(HUD.text).preferredColorScheme(.dark)
         .frame(minWidth: 1180, minHeight: 760)
-        .task {
+        .environmentObject(imagePreview)
+        .accessibilityHidden(imagePreview.file != nil)
+        .overlay {
+            if let file = imagePreview.file {
+                AttachmentImagePreview(file: file) { imagePreview.file = nil }
+                    .id(file.id)
+            }
+        }
+        .onChange(of: companion.completionID) { _, id in
+            if id != nil { voice.announceCompletion(companion.completedReply) }
+        }
+        .task(id: pollingSeconds) {
             await store.refresh()
             await companion.refreshLinkedHistory()
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(3))
+                try? await Task.sleep(for: .seconds(pollingSeconds))
                 if Task.isCancelled { break }
                 await store.refresh()
                 await companion.refreshLinkedHistory()
@@ -115,20 +130,6 @@ struct Dashboard: View {
                 }
             }.padding(.bottom, 28)
             projectSelector.padding(.bottom, 28)
-            Eyebrow(text: "WORKSPACE").padding(.bottom, 16)
-            ForEach([("Overview", "square.grid.2x2"), ("Activity", "waveform.path")], id: \.0) { name, icon in
-                Button { tab = name } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: icon).frame(width: 18)
-                        Text(name).font(.system(size: 13, weight: .medium))
-                        Spacer()
-                        if tab == name { RoundedRectangle(cornerRadius: 1).fill(HUD.cyan).frame(width: 3, height: 16) }
-                    }.foregroundStyle(tab == name ? HUD.cyan : HUD.muted)
-                        .padding(.horizontal, 12).padding(.vertical, 13)
-                        .background(tab == name ? HUD.cyan.opacity(0.07) : .clear, in: RoundedRectangle(cornerRadius: 7))
-                }.buttonStyle(.plain).padding(.horizontal, -10)
-            }
-            Rectangle().fill(HUD.line).frame(height: 1).padding(.vertical, 28)
             HStack { Eyebrow(text: isGlobal ? "PROJECTS" : "PROJECT TEAM"); Spacer(); Text(String(format: "%02d", nodeCount)).font(HUD.mono(10)).foregroundStyle(HUD.muted) }.padding(.bottom, 14)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -144,7 +145,7 @@ struct Dashboard: View {
                             }.buttonStyle(.plain)
                         }
                     } else {
-                        ForEach(missions) { mission in
+                        ForEach(MissionNavigation.ordered(missions)) { mission in
                             Button { chooseMission(mission); tab = "Overview" } label: {
                                 HStack(spacing: 10) {
                                     Circle().fill(HUD.color(mission.status)).frame(width: 5, height: 5)
@@ -158,47 +159,107 @@ struct Dashboard: View {
             }
             Spacer(minLength: 24)
             VStack(alignment: .leading, spacing: 9) {
-                HStack(spacing: 7) { Image(systemName: "lock.shield"); Text("LOCAL CONNECTION") }.font(HUD.mono(9)).tracking(0.5).foregroundStyle(HUD.cyan.opacity(0.8))
+                HStack(spacing: 7) { Image(systemName: "lock.shield"); Text("LOCAL CONNECTION") }
+                    .font(HUD.mono(9)).tracking(0.5).foregroundStyle(HUD.cyan.opacity(0.8))
                 Text("Your Mac. Your workspace.").font(.system(size: 11)).foregroundStyle(HUD.muted)
                 Text("TEAM SNAPSHOT   /   v0.4").font(HUD.mono(8)).tracking(1.2).foregroundStyle(HUD.muted.opacity(0.7))
             }
+
+
         }.padding(.horizontal, 27).padding(.top, 32).padding(.bottom, 27).background(Color.black.opacity(0.15))
     }
 
     private var projectSelector: some View {
-        Menu {
-            Button("All projects · Jarvis overview") { chooseProject(nil) }
-            Divider()
-            ForEach(projects) { p in
-                Button { chooseProject(p.id) } label: {
-                    if project?.id == p.id { Label(p.name, systemImage: "checkmark") }
-                    else { Text(p.name) }
+        Button { ui.projectPickerVisible.toggle() } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: isGlobal ? "square.stack.3d.up" : "folder")
+                        .font(.system(size: 10)).foregroundStyle(HUD.gold)
+                    Text("SWITCH PROJECT").font(HUD.mono(8)).tracking(0.6).foregroundStyle(HUD.gold)
+                }
+                HStack(spacing: 6) {
+                    Text(scopeName).font(.system(size: 13, weight: .medium))
+                        .lineLimit(2).multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .layoutPriority(1)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 10))
+                        .foregroundStyle(HUD.cyan).fixedSize()
                 }
             }
-        } label: {
-            HStack(spacing: 9) {
-                Image(systemName: isGlobal ? "square.stack.3d.up" : "folder").foregroundStyle(HUD.gold)
-                Text(scopeName).font(.system(size: 12, weight: .medium)).lineLimit(1)
-                Spacer(minLength: 4)
-                Image(systemName: "chevron.down").font(.system(size: 9))
-            }.foregroundStyle(HUD.text).padding(11).background(HUD.gold.opacity(0.06), in: RoundedRectangle(cornerRadius: 7))
-                .overlay(RoundedRectangle(cornerRadius: 7).stroke(HUD.gold.opacity(0.20), lineWidth: 0.7))
-        }.menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize(horizontal: false, vertical: true)
-            .accessibilityLabel("Project selector: \(scopeName)").help("Choose a Codex project or the Jarvis overview")
+            .foregroundStyle(HUD.text).padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(HUD.panel, in: RoundedRectangle(cornerRadius: 7))
+            .overlay(RoundedRectangle(cornerRadius: 7)
+                .stroke(HUD.gold.opacity(ui.projectPickerVisible ? 0.65 : 0.35), lineWidth: 0.8))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Switch project: \(scopeName)")
+        .accessibilityIdentifier("dashboard.projectSelector")
+        .help("Switch between projects or the Jarvis overview")
+        .popover(isPresented: $ui.projectPickerVisible, arrowEdge: .trailing) {
+            ProjectChooser(projects: projects, selectedID: project?.id) { id in
+                chooseProject(id)
+                ui.projectPickerVisible = false
+            } close: { ui.projectPickerVisible = false }
+            .presentationBackground(HUD.background)
+        }
     }
 
     private var header: some View {
         HStack(spacing: 18) {
             HStack(spacing: 9) { Rectangle().fill(HUD.gold).frame(width: 3, height: 16); Eyebrow(text: "MISSION CONTROL", color: HUD.text) }
-            Text("/  \(scopeName)").font(HUD.mono(10)).lineLimit(1).foregroundStyle(HUD.muted)
+            Text("/  \(scopeName)").font(HUD.mono(12)).lineLimit(1).foregroundStyle(HUD.text.opacity(0.85)).layoutPriority(1)
             Spacer()
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                Text(context.date, format: .dateTime.hour().minute().second()).font(HUD.mono(11)).monospacedDigit().foregroundStyle(HUD.muted)
+            if windowControls.windowVisible {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    Text(context.date, format: .dateTime.hour().minute().second())
+                        .font(HUD.mono(11)).monospacedDigit().foregroundStyle(HUD.muted)
+                }
+            } else {
+                Text(Date.now, format: .dateTime.hour().minute().second())
+                    .font(HUD.mono(11)).monospacedDigit().foregroundStyle(HUD.muted)
             }
             Rectangle().fill(HUD.line).frame(width: 1, height: 18)
-            Button { motion.toggle() } label: { Image(systemName: motion ? "pause" : "play").frame(width: 20) }.buttonStyle(.plain).help(motion ? "Pause ambient animation" : "Resume ambient animation").accessibilityLabel("Toggle ambient animation")
-            Button { Task { await store.refresh() } } label: { Image(systemName: "arrow.clockwise").frame(width: 20) }.buttonStyle(.plain).keyboardShortcut("r", modifiers: .command).help("Refresh local activity")
-            Button { (NSApp.keyWindow ?? NSApp.windows.first { $0.title == "Jarvis — Mission Control" })?.toggleFullScreen(nil) } label: { Image(systemName: "arrow.up.left.and.arrow.down.right").frame(width: 20) }.buttonStyle(.plain).keyboardShortcut("f", modifiers: [.command, .shift]).help("Toggle full screen")
+            Button { ui.conversationVisible.toggle() } label: {
+                Image(systemName: "sidebar.right").font(.system(size: 14))
+            }
+            .buttonStyle(HUDControlStyle(selected: ui.conversationVisible))
+            .help(ui.conversationVisible ? "Hide conversation" : "Show conversation")
+            .accessibilityLabel(ui.conversationVisible ? "Hide conversation" : "Show conversation")
+            .accessibilityIdentifier("dashboard.toggleConversation")
+            Button {
+                Task { await store.refresh(); await companion.refreshLinkedHistory() }
+            } label: {
+                Image(systemName: "arrow.clockwise").frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }.buttonStyle(.plain).keyboardShortcut("r", modifiers: .command)
+                .help("Refresh now; automatic updates every \(ui.refreshInterval.rawValue) seconds")
+                .accessibilityLabel("Refresh activity and conversation")
+            Button { ui.globalSettingsVisible.toggle() } label: {
+                Image(systemName: "gearshape").frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+                    .foregroundStyle(ui.globalSettingsVisible ? HUD.cyan : HUD.muted)
+            }
+            .buttonStyle(.plain)
+            .help("Global settings")
+            .accessibilityLabel("Global settings")
+            .accessibilityIdentifier("dashboard.globalSettings")
+            .sheet(isPresented: $ui.globalSettingsVisible) {
+                GlobalSettingsPanel(interval: $ui.refreshInterval) {
+                    ui.globalSettingsVisible = false
+                }
+                .presentationBackground(HUD.background)
+            }
+            Button { windowControls.toggleFullScreen(nil) } label: {
+                Image(systemName: windowControls.isFullScreen
+                    ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                    .frame(width: 28, height: 28).contentShape(Rectangle())
+            }.buttonStyle(.plain).keyboardShortcut("f", modifiers: [.control, .command])
+                .disabled(windowControls.transitioning)
+                .help(windowControls.isFullScreen ? "Exit full screen" : "Enter full screen")
+                .accessibilityLabel(windowControls.isFullScreen ? "Exit full screen" : "Enter full screen")
+                .accessibilityIdentifier("dashboard.fullScreen")
         }.foregroundStyle(HUD.muted).padding(.horizontal, 30).frame(height: 76)
     }
 
@@ -213,9 +274,9 @@ struct Dashboard: View {
                 Spacer()
                 if tab == "Overview" {
                     HStack(spacing: 2) {
-                        modeButton("point.3.connected.trianglepath.dotted", selected: !board) { board = false }
-                        modeButton("rectangle.grid.1x2", selected: board) { board = true }
-                    }.padding(4).background(HUD.panel, in: RoundedRectangle(cornerRadius: 7)).overlay(RoundedRectangle(cornerRadius: 7).stroke(HUD.line, lineWidth: 0.6))
+                        modeButton("point.3.connected.trianglepath.dotted", name: "Team map", id: "graph", selected: !board) { board = false }
+                        modeButton("rectangle.grid.1x2", name: "Card view", id: "cards", selected: board) { board = true }
+                    }.padding(4).background(HUD.panel, in: RoundedRectangle(cornerRadius: 7)).overlay(RoundedRectangle(cornerRadius: 7).stroke(HUD.line, lineWidth: 0.6).allowsHitTesting(false))
                 }
             }.padding(.top, 29).padding(.horizontal, 30).padding(.bottom, 24)
             HStack(spacing: 0) {
@@ -236,8 +297,21 @@ struct Dashboard: View {
         }
     }
 
-    private func modeButton(_ icon: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) { Image(systemName: icon).font(.system(size: 12)).foregroundStyle(selected ? HUD.cyan : HUD.muted).frame(width: 30, height: 26).background(selected ? HUD.cyan.opacity(0.09) : .clear, in: RoundedRectangle(cornerRadius: 4)) }.buttonStyle(.plain).help(icon.contains("triangle") ? "Team map" : "Card view")
+    private func modeButton(_ icon: String, name: String, id: String, selected: Bool,
+        action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: 13))
+                .foregroundStyle(selected ? HUD.cyan : HUD.muted)
+                .frame(width: 40, height: 34)
+                .background(selected ? HUD.cyan.opacity(0.09) : .clear,
+                    in: RoundedRectangle(cornerRadius: 4))
+                // Plain buttons otherwise only hit-test the visible glyph/background.
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain).help(name).accessibilityLabel(name)
+        .accessibilityValue(selected ? "Selected" : "")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("dashboard.viewMode.\(id)")
     }
     private func stat(_ value: String, _ label: String, _ color: Color) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) { Text(value).font(.system(size: 27, weight: .light, design: .monospaced)).foregroundStyle(color); Eyebrow(text: label).tracking(0).lineLimit(2) }.frame(maxWidth: .infinity, alignment: .leading)
@@ -249,7 +323,7 @@ struct Dashboard: View {
             ScrollView([.horizontal, .vertical]) {
                 ZStack(alignment: .topLeading) {
                     GridBackdrop().mask(LinearGradient(colors: [.clear, .white, .white, .clear], startPoint: .top, endPoint: .bottom))
-                    TopologyLines(active: graphActive, highlighted: graphFocused, motion: motion && !reduceMotion, connections: layout.connections)
+                    HoverTopology(hover: ui.graphHover, nodeIDs: isGlobal ? rootProjects.map(\.id) : graphMissions.map(\.id), selectedID: isGlobal ? nil : selected?.id, active: graphActive, motion: motion && windowControls.decorativeMotion && !reduceMotion, connections: layout.connections)
                     if isGlobal {
                         ForEach(Array(rootProjects.enumerated()), id: \.element.id) { index, p in
                             projectCard(p).frame(width: layout.cardWidth)
@@ -266,36 +340,29 @@ struct Dashboard: View {
                         }
                     }
                     VStack(spacing: 0) {
-                        Reactor(motion: motion).frame(width: min(270, layout.size.height * 0.55), height: min(270, layout.size.height * 0.55))
+                        Reactor(motion: motion && windowControls.decorativeMotion).frame(width: min(270, layout.size.height * 0.55), height: min(270, layout.size.height * 0.55))
                         Text("J.A.R.V.I.S.").font(HUD.mono(13, weight: .light)).tracking(5).foregroundStyle(HUD.cyan).padding(.top, -17)
                         Eyebrow(text: isGlobal ? "GLOBAL OVERVIEW" : "PROJECT OVERVIEW").scaleEffect(0.8).padding(.top, 8)
                     }.position(layout.center)
                 }.frame(width: layout.size.width, height: layout.size.height)
             }.id(project?.id ?? "__all__")
-                .overlay(alignment: .topTrailing) {
-                    if nodeCount > 4 {
-                        Label("\(nodeCount) \(isGlobal ? "projects" : "chats") · scroll to explore", systemImage: "arrow.up.and.down")
-                            .font(HUD.mono(9)).foregroundStyle(HUD.muted).padding(10)
-                            .background(HUD.background.opacity(0.9), in: RoundedRectangle(cornerRadius: 6)).padding(8)
-                    }
-                }
+
         }.padding(.horizontal, 12).padding(.bottom, 10)
     }
 
-    private func destination(index: Int, layout: TeamGraphLayout) -> GraphDestination {
-        GraphDestination(active: graphActive[index], highlighted: graphFocused[index], motion: motion && !reduceMotion,
+    private func destination(index: Int, layout: TeamGraphLayout) -> HoverDestination {
+        HoverDestination(hover: ui.graphHover, nodeID: isGlobal ? rootProjects[index].id : graphMissions[index].id, selected: !isGlobal && graphMissions[index].id == selected?.id, active: graphActive[index], motion: motion && windowControls.decorativeMotion && !reduceMotion,
                          index: index, left: layout.nodes[index].x < layout.center.x)
     }
     private func hoverNode(_ id: String, inside: Bool) {
-        if inside { ui.hoveredNodeID = id }
-        else if ui.hoveredNodeID == id { ui.hoveredNodeID = nil }
+        ui.graphHover.update(id, inside: inside)
     }
 
     private var boardView: some View {
         ScrollView {
             VStack(spacing: 16) {
                 HStack(spacing: 22) {
-                    Reactor(motion: motion).frame(width: 125, height: 125)
+                    Reactor(motion: motion && windowControls.decorativeMotion).frame(width: 180, height: 180).padding(.vertical, 16)
                     VStack(alignment: .leading, spacing: 8) {
                         Eyebrow(text: isGlobal ? "JARVIS · GLOBAL OVERVIEW" : "JARVIS · PROJECT OVERVIEW", color: HUD.cyan)
                         Text(scopeName).font(.system(size: 22, weight: .light))
@@ -308,7 +375,7 @@ struct Dashboard: View {
                     if isGlobal { ForEach(rootProjects) { p in projectCard(p) } }
                     else { ForEach(missions) { mission in missionCard(mission) } }
                 }
-            }.padding(.horizontal, 30).padding(.bottom, 24)
+            }.padding(.horizontal, 30).padding(.top, 12).padding(.bottom, 24)
         }
     }
 
@@ -326,6 +393,13 @@ struct Dashboard: View {
                 Text("\(team.count) chats · \(active) in progress").font(.system(size: 12)).foregroundStyle(HUD.muted)
                 HStack { Eyebrow(text: "VIEW PROJECT TEAM").scaleEffect(0.72, anchor: .leading); Spacer(minLength: 0); Image(systemName: "arrow.up.right").font(.system(size: 10)).foregroundStyle(HUD.cyan) }
             }.padding(18).modifier(HUDPanel())
+                .overlay {
+                    if store.error == nil && active > 0 {
+                        HeaderActivityBorder(active: true,
+                            motion: motion && windowControls.decorativeMotion, cornerRadius: 12)
+                            .allowsHitTesting(false).accessibilityHidden(true)
+                    }
+                }
         }.buttonStyle(.plain).accessibilityLabel("Open project \(p.name), \(team.count) chats, \(active) in progress")
     }
 
@@ -338,12 +412,15 @@ struct Dashboard: View {
                 }
                 Text(mission.name).font(.system(size: 17, weight: .medium)).foregroundStyle(HUD.text).lineLimit(2)
                 Text(taskPreview(mission.task)).font(.system(size: 11)).foregroundStyle(HUD.muted).lineLimit(2).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
-                HStack {
-                    Eyebrow(text: mission.role).scaleEffect(0.72, anchor: .leading).frame(height: 10)
-                    Spacer(minLength: 0)
-                    Image(systemName: "arrow.up.right").font(.system(size: 9)).foregroundStyle(HUD.muted)
-                }
             }.padding(16).modifier(HUDPanel(selected: selected?.id == mission.id))
+                .overlay {
+                    if store.error == nil && mission.status == .working {
+                        HeaderActivityBorder(active: true,
+                            motion: motion && windowControls.decorativeMotion, cornerRadius: 12)
+                            .allowsHitTesting(false).accessibilityHidden(true)
+                    }
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 12))
         }.buttonStyle(.plain).accessibilityLabel("\(mission.name), \(mission.status.label), \(String(taskPreview(mission.task).prefix(140)))")
     }
 
@@ -405,55 +482,4 @@ struct Dashboard: View {
         }
     }
 
-    private var detail: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack { Eyebrow(text: "MISSION BRIEF"); Spacer(); Image(systemName: "viewfinder").foregroundStyle(HUD.cyan.opacity(0.6)) }.padding(.bottom, 30)
-            if isGlobal {
-                globalBrief
-            } else if let mission = selected {
-                HStack { Image(systemName: mission.symbol).font(.system(size: 25, weight: .ultraLight)).foregroundStyle(HUD.cyan); Spacer(); StatusBadge(status: store.error == nil ? mission.status : .unknown) }.padding(.bottom, 20)
-                Text(mission.name).font(.system(size: 25, weight: .light)).padding(.bottom, 8)
-                Eyebrow(text: mission.role, color: HUD.gold).scaleEffect(0.85, anchor: .leading).padding(.bottom, 26)
-                Rectangle().fill(HUD.line).frame(height: 1).padding(.bottom, 23)
-                Eyebrow(text: mission.sourceLabel == "SESSION LOG" ? "LATEST REQUEST" : "LATEST SAVED REQUEST").padding(.bottom, 12)
-                if mission.sourceLabel != "SESSION LOG" {
-                    Text("Saved history · live session unavailable").font(.system(size: 10)).foregroundStyle(HUD.gold).padding(.bottom, 12)
-                }
-                ScrollView {
-                    Text(mission.task).font(.system(size: 13)).lineSpacing(6).foregroundStyle(HUD.text.opacity(0.86)).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
-                }.frame(maxHeight: .infinity)
-                Button {
-                    NSPasteboard.general.clearContents(); NSPasteboard.general.setString(mission.task, forType: .string); copied = true
-                } label: { Label(copied ? "Copied" : "Copy request", systemImage: copied ? "checkmark" : "doc.on.doc").font(.system(size: 11)).foregroundStyle(HUD.cyan).padding(.vertical, 10).frame(maxWidth: .infinity).background(HUD.cyan.opacity(0.07), in: RoundedRectangle(cornerRadius: 6)) }.buttonStyle(.plain).padding(.vertical, 16)
-                Rectangle().fill(HUD.line).frame(height: 1).padding(.bottom, 18)
-                HStack { Eyebrow(text: "SUBAGENTS"); Spacer(); Text("\(mission.agents.count)").font(HUD.mono(11)).foregroundStyle(HUD.gold) }.padding(.bottom, 10)
-                if mission.agents.isEmpty {
-                    Text("No delegated agents recorded.").font(.system(size: 11)).foregroundStyle(HUD.muted)
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 9) {
-                            ForEach(mission.agents) { agent in
-                                HStack { Circle().fill(HUD.color(agent.status)).frame(width: 4, height: 4); Text(agent.name).font(HUD.mono(10)); Spacer(); Text(agent.status.label).font(HUD.mono(7)).foregroundStyle(HUD.color(agent.status)) }
-                            }
-                        }
-                    }.frame(maxHeight: 85)
-                }
-                Spacer(minLength: 20)
-                Text("Last activity").font(.system(size: 10)).foregroundStyle(HUD.muted)
-                Text(mission.updated, format: .dateTime.day().month(.abbreviated).hour().minute()).font(HUD.mono(10)).foregroundStyle(HUD.text).padding(.top, 6)
-            } else { Text("Choose a chat to see its task.").font(.system(size: 13)).foregroundStyle(HUD.muted); Spacer() }
-        }.padding(26).background(HUD.panel.opacity(0.28))
-    }
-
-    private var footer: some View {
-        HStack(spacing: 9) {
-            Circle().fill(store.error == nil && store.snapshot != nil ? HUD.cyan : HUD.gold).frame(width: 4, height: 4)
-            Text(store.error != nil ? "CONNECTION LOST · SHOWING LAST SNAPSHOT" : store.snapshot == nil ? "CONNECTING" : "LOCAL RECORDS CONNECTED").font(HUD.mono(8)).tracking(1).foregroundStyle(HUD.muted)
-            Spacer()
-            if let snapshot = store.snapshot {
-                Text("SYNC \(snapshot.readAt.formatted(date: .omitted, time: .standard))   /   3s").font(HUD.mono(8)).foregroundStyle(HUD.muted)
-            }
-            Text("TEAM SNAPSHOT · LINKED CHAT").font(HUD.mono(8)).tracking(1).foregroundStyle(HUD.gold.opacity(0.7))
-        }.padding(.horizontal, 30).frame(height: 34).overlay(alignment: .top) { Rectangle().fill(HUD.line).frame(height: 1) }
-    }
 }

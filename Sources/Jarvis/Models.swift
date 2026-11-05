@@ -24,6 +24,19 @@ struct Mission: Identifiable, Codable, Equatable {
     let sourcePath: String
     let sourceLabel: String
     var agents: [Agent] = []
+    var sidebarPosition: Int? = nil
+}
+
+/// Navigation must not follow activity timestamps or transient working status.
+enum MissionNavigation {
+    static func ordered(_ missions: [Mission]) -> [Mission] {
+        missions.sorted {
+            let a = $0.sidebarPosition ?? Int.max, b = $1.sidebarPosition ?? Int.max
+            if a != b { return a < b }
+            let comparison = $0.name.localizedStandardCompare($1.name)
+            return comparison == .orderedSame ? $0.id < $1.id : comparison == .orderedAscending
+        }
+    }
 }
 
 struct Agent: Identifiable, Codable, Equatable {
@@ -37,6 +50,9 @@ struct FleetSnapshot: Codable {
     let missions: [Mission]
     let readAt: Date
     let notices: [String]
+    func hasSameDisplayContent(as other: FleetSnapshot) -> Bool {
+        projects == other.projects && missions == other.missions && notices == other.notices
+    }
     var activeCount: Int { missions.filter { $0.status == .working }.count }
     var activeAgents: Int { missions.flatMap(\.agents).filter { $0.status == .working }.count }
 }
@@ -54,6 +70,7 @@ struct ProjectMembership {
     var aliases: [String: String] = [:]
     var assignments: [String: String] = [:]
     var unassigned: Set<String> = []
+    var threadOrders: [String: [String]] = [:]
 
     func projectID(threadID: String, explicitID: String?, cwd: String) -> String {
         if unassigned.contains(threadID) { return "unassigned" }

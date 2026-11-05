@@ -6,6 +6,7 @@ swiftc -swift-version 5 -target "$(uname -m)-apple-macosx14.0" -O -parse-as-libr
 cp Resources/reactor.png build/Jarvis.app/Contents/Resources/reactor.png
 cp Resources/AppIcon.icns build/Jarvis.app/Contents/Resources/AppIcon.icns
 cp Resources/CompanionIdle*.png build/Jarvis.app/Contents/Resources/
+cp Resources/CompletionChime.wav build/Jarvis.app/Contents/Resources/CompletionChime.wav
 cp Info.plist build/Jarvis.app/Contents/Info.plist
 codesign --force --deep --sign - build/Jarvis.app
 echo "Built $PWD/build/Jarvis.app"

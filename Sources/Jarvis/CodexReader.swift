@@ -56,7 +56,8 @@ actor CodexReader {
             }
             missions.append(Mission(id: id, projectID: projectID, name: name, role: role, symbol: symbol,
                                     task: observation.task ?? "No recent task is available in the local record.",
-                                    status: state, updated: date, sourcePath: path, sourceLabel: sourceLabel, agents: agents))
+                                    status: state, updated: date, sourcePath: path, sourceLabel: sourceLabel, agents: agents,
+                                    sidebarPosition: membership.threadOrders[projectID]?.firstIndex(of: id)))
         }
         var projects = membership.projects
         if missions.contains(where: { $0.projectID == "unassigned" }) {
@@ -108,6 +109,19 @@ actor CodexReader {
         let assignments = state["thread-project-assignments"] as? [String: [String: Any]] ?? [:]
         for (thread, assignment) in assignments where assignment["projectKind"] as? String == "local" {
             catalog.assignments[thread] = assignment["projectId"] as? String
+        }
+        // Manual sidebar order is separate from activity timestamps. Resolve old project
+        // IDs exactly as for membership; native-key records win during migration.
+        let orders = state["sidebar-project-thread-orders"] as? [String: [String: Any]] ?? [:]
+        for key in orders.keys.sorted() {
+            if let native = catalog.aliases[key], let ids = orders[key]?["threadIds"] as? [String] {
+                catalog.threadOrders[native] = ids
+            }
+        }
+        for project in projects {
+            if let ids = orders[project.id]?["threadIds"] as? [String] {
+                catalog.threadOrders[project.id] = ids
+            }
         }
         catalog.unassigned = Set(state["projectless-thread-ids"] as? [String] ?? [])
         return catalog
@@ -213,12 +227,16 @@ final class ReadOnlyDatabase {
 @MainActor final class FleetStore: ObservableObject {
     @Published var snapshot: FleetSnapshot?
     @Published var error: String?
-    @Published var refreshing = false
+    private(set) var refreshing = false
     private let reader = CodexReader()
     func refresh() async {
         guard !refreshing else { return }
         refreshing = true; defer { refreshing = false }
-        do { snapshot = try await reader.read(); error = nil }
+        do {
+            let next = try await reader.read()
+            if snapshot?.hasSameDisplayContent(as: next) != true { snapshot = next }
+            if error != nil { error = nil }
+        }
         catch { self.error = error.localizedDescription }
     }
 }

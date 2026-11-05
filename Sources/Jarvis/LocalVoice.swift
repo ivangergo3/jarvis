@@ -45,7 +45,15 @@ struct DictationSession {
 @MainActor final class LocalVoice: NSObject, ObservableObject {
     @Published private(set) var session = DictationSession()
     @Published private(set) var error: String?
-    @Published var readReplies = false
+    @Published var completionChime = UserDefaults.standard.object(forKey: "completionChime") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(completionChime, forKey: "completionChime") }
+    }
+    @Published var readReplies = UserDefaults.standard.bool(forKey: "readReplies") {
+        didSet {
+            UserDefaults.standard.set(readReplies, forKey: "readReplies")
+            if !readReplies { speechTask?.cancel(); speaker.stopSpeaking(at: .immediate) }
+        }
+    }
     @Published var language = "en-GB"
     var onTranscript: ((String) -> Void)?
     private var engine: AVAudioEngine?
@@ -54,7 +62,13 @@ struct DictationSession {
     private var tapInstalled = false
     private var limitTask: Task<Void, Never>?
     private var finishTask: Task<Void, Never>?
+    private let chime: NSSound? = {
+        if let url = Bundle.main.url(forResource: "CompletionChime", withExtension: "wav"),
+           let sound = NSSound(contentsOf: url, byReference: true) { return sound }
+        return NSSound(named: NSSound.Name("Glass"))
+    }()
     private let speaker = AVSpeechSynthesizer()
+    private var speechTask: Task<Void, Never>?
     private var workspaceObserver: NSObjectProtocol?
 
     override init() {
@@ -64,7 +78,7 @@ struct DictationSession {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.cancel()
-                self?.stopSpeaking()
+                self?.stopAudio()
             }
         }
     }
@@ -76,11 +90,10 @@ struct DictationSession {
     }
 
     var recording: Bool { [.authorizing, .listening, .finishing].contains(session.phase) }
-    var speaking: Bool { speaker.isSpeaking }
 
     func start() async {
         guard !recording else { return }
-        stopSpeaking()
+        stopAudio()
         error = nil
         let token = session.begin()
         let microphone = await AVCaptureDevice.requestAccess(for: .audio)
@@ -206,12 +219,35 @@ struct DictationSession {
         engine = nil
     }
 
-    func speak(_ text: String) {
-        guard readReplies else { return }
-        stopSpeaking()
-        let utterance = AVSpeechUtterance(string: String(text.prefix(8_000)))
-        utterance.voice = AVSpeechSynthesisVoice(language: language)
-        speaker.speak(utterance)
+    func playCompletionChime() {
+        guard completionChime else { return }
+        chime?.stop()
+        chime?.play()
     }
-    func stopSpeaking() { speaker.stopSpeaking(at: .immediate) }
+    func announceCompletion(_ text: String?) {
+        stopAudio()
+        playCompletionChime()
+        guard readReplies, let text, !text.isEmpty else { return }
+        let delay = completionChime
+        speechTask = Task { [weak self] in
+            if delay {
+                do { try await Task.sleep(for: .milliseconds(550)) }
+                catch { return }
+            }
+            guard !Task.isCancelled, let self, self.readReplies else { return }
+            let raw = String(text.prefix(64_000))
+            let spoken: String
+            do { spoken = String(try AttributedString(markdown: raw).characters) }
+            catch { spoken = raw }
+            let utterance = AVSpeechUtterance(string: spoken)
+            utterance.voice = AVSpeechSynthesisVoice(language: self.language)
+            self.speaker.speak(utterance)
+        }
+    }
+    func stopAudio() {
+        speechTask?.cancel()
+        speechTask = nil
+        speaker.stopSpeaking(at: .immediate)
+        chime?.stop()
+    }
 }

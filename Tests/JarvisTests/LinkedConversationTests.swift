@@ -89,18 +89,25 @@ actor LinkedFixtureConnection: CodexConnection {
         await model.shutdown()
     }
 
-    @Test func changingCardsCannotMoveAnUnsentDraft() async {
+    @Test func switchingChatsRetainsSeparateDraftsWithoutSending() async {
         let connection = LinkedFixtureConnection()
         let model = CompanionModel(makeConnection: { connection })
         await model.follow(first)
         model.draft = "Keep this in the first chat"
         await model.follow(second)
-        #expect(model.scope?.threadID == "chat-a")
+        #expect(model.scope?.threadID == "chat-b")
+        #expect(model.draft.isEmpty)
+        model.draft = "Second draft"
+        await model.follow(first)
+        #expect(model.draft == "Keep this in the first chat")
+        await model.follow(second)
+        #expect(model.draft == "Second draft")
+        #expect(await connection.calls.filter { $0.method == "thread/queue/add" }.isEmpty)
         await model.send(in: second)?.value
-        #expect(
-            await connection.calls.last(where: { $0.method == "thread/queue/add" })?.params[
-                "threadId"
-            ].text == "chat-a")
+        await model.follow(first)
+        await model.follow(second)
+        #expect(model.draft.isEmpty)
+        #expect(await connection.calls.last(where: { $0.method == "thread/queue/add" })?.params["threadId"].text == "chat-b")
         await model.shutdown()
     }
 
@@ -129,6 +136,8 @@ actor LinkedFixtureConnection: CodexConnection {
         #expect(model.phase == .outcomeUnknown)
         #expect(model.draft == "One submission")
         #expect(!model.canSend)
+        await model.follow(second)
+        #expect(model.scope?.threadID == "chat-a")
         await model.refreshLinkedHistory()
         #expect(model.phase == .queued)
         #expect(model.draft.isEmpty)
@@ -165,16 +174,34 @@ actor LinkedFixtureConnection: CodexConnection {
         await model.shutdown()
     }
 
-    @Test func refreshingHistoryDoesNotSpeakOldReplies() async {
+    @Test func refreshingHistoryDoesNotAlertForOldReplies() async {
         let connection = LinkedFixtureConnection()
         await connection.setHistory([turn(replyID: "old", text: "Old saved reply")])
         let model = CompanionModel(makeConnection: { connection })
         await model.follow(first)
         #expect(model.messages.last?.text == "Old saved reply")
         #expect(model.completedReply == nil)
+        #expect(model.completionID == nil)
         await connection.setHistory([turn(replyID: "new", text: "New shared reply")])
         await model.refreshLinkedHistory()
         #expect(model.completedReply == "New shared reply")
+        #expect(model.completionID == "new")
+        await model.refreshLinkedHistory()
+        #expect(model.completionID == "new")
+        await model.shutdown()
+    }
+
+    @Test func identicalReplyTextStillHasDistinctCompletionSignals() async {
+        let connection = LinkedFixtureConnection()
+        let model = CompanionModel(makeConnection: { connection })
+        await model.follow(first)
+        await connection.setHistory([turn(replyID: "first-result", text: "Done")])
+        await model.refreshLinkedHistory()
+        #expect(model.completionID == "first-result")
+        await connection.setHistory([turn(replyID: "second-result", text: "Done")])
+        await model.refreshLinkedHistory()
+        #expect(model.completedReply == "Done")
+        #expect(model.completionID == "second-result")
         await model.shutdown()
     }
 
