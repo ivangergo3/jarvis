@@ -6,6 +6,10 @@ A personal native SwiftUI macOS dashboard for Greg. Designed for full screen, wi
 
 [REQUIREMENTS.md](REQUIREMENTS.md) records the researched macOS and Swift guardrails, future Codex/voice boundaries, acceptance criteria and proposed hardening order. These are target requirements, not a claim of current compliance. [AGENTS.md](AGENTS.md) points future coding work to that baseline. This documentation update does not implement the requirements or change the running app.
 
+## Capability and skill planning
+
+The [capability map](docs/planning/CAPABILITY_MAP.md), [prioritised skill backlog](docs/planning/SKILL_BACKLOG.md), and [GitHub ticket index](docs/planning/GITHUB_TICKETS.md) describe the next planning phase. The original eight P0 families are split into 19 portable skill drafts under `skills/`, each with evaluation cases. One agent can combine several skills; the [boundaries](docs/planning/SKILL_BOUNDARIES.md) do not prescribe a team or provider. The [P0 evaluation results](evaluations/p0-2026-11-08/REPORT.md) preserve baseline failures, two skill corrections, rechecks and composition exercises. The definitions await review/merge and are not installed globally. App implementation and team setup remain separate future work.
+
 ## Open
 
 Open `build/Jarvis.app`. Use **Control–Command–F** or the top-right expand button for full screen. **Command–R** refreshes. Choose a chat to read its latest request; switch between team map and card view in the main pane.

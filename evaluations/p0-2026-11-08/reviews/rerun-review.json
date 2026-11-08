@@ -1,0 +1,68 @@
+[
+  {
+    "id": "S03a",
+    "task": "normal",
+    "assessment": "pass",
+    "evidence_quotations": [
+      "Flag gaps such as exported columns, ordering, CSV formatting, and whether export includes all filtered rows or a page; do not silently make them requirements."
+    ],
+    "explanation": "Corrects the earlier unsupported schema: export-contract details are discovery gaps rather than fixed scope. Implementation/checks depend on that contract. Index work remains conditional and shared migration contention is addressed before edits. Local PR authority and plan-only limits are preserved.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null
+  },
+  {
+    "id": "S03a",
+    "task": "boundary",
+    "assessment": "pass",
+    "evidence_quotations": [
+      "One task is sufficient for this change."
+    ],
+    "explanation": "Keeps the tooltip correction to one coherent task with exact wording, interaction/accessibility preservation and focused checks. No API/data work or new test infrastructure is added; no implementation is claimed.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null
+  },
+  {
+    "id": "S03a",
+    "task": "holdout",
+    "assessment": "pass",
+    "evidence_quotations": [
+      "without inventing permissions, roles, invitation states, or user actions."
+    ],
+    "explanation": "Separates useful outline/evidence-intake work available now from drafting and factual review blocked by the owner record. Workflow authority remains with the owner. No implementation, screenshots, publishing or agent assignment is introduced.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null
+  },
+  {
+    "id": "S03c",
+    "task": "normal",
+    "assessment": "pass",
+    "evidence_quotations": [
+      "The full acceptance criteria and permissions specification were not supplied; retrieve the original brief and any accepted specification before asserting complete coverage."
+    ],
+    "explanation": "Corrects the earlier unsupported field schema. Preserves PR/commit/fixture, limited reported passing checks and the unperformed Excel opening. Review can start with visible gaps; full delivery readiness is not asserted. Excel is appropriately proposed rather than made a supplied criterion.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null
+  },
+  {
+    "id": "S03c",
+    "task": "boundary",
+    "assessment": "pass",
+    "evidence_quotations": [
+      "do not interpret a missing history row alone as proof of failure."
+    ],
+    "explanation": "Preserves attempted dispatch and absent acknowledgement without asserting acceptance, failure or completion. Stable-ID reconciliation is the next bounded action; unresolved state and retry-contract uncertainty prevent blind retry. No dispatch/retry is claimed.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null
+  },
+  {
+    "id": "S03c",
+    "task": "holdout",
+    "assessment": "pass",
+    "evidence_quotations": [
+      "Their absence is recorded here; the supplied brief does not establish that screenshots or a recipient list are mandatory review criteria."
+    ],
+    "explanation": "Reports spelling as author-supplied evidence and distinguishes editorial work from workflow sign-off. Calls for the exact guide revision and missing accepted workflow record, with conditional permissions evidence where relevant. Does not invent product steps or publication authority.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null
+  }
+]
