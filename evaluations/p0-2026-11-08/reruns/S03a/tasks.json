@@ -1,0 +1,8 @@
+{
+  "id": "S03a",
+  "skill": "task-decomposition",
+  "skill_sha256": "5f16fb73cc6acb4e8ea2e23034aaa5d5a5a3182fcf27fab3b91880dea9a1ca78",
+  "normal": "Decompose the agreed CSV export feature into reviewable tasks. Existing API returns filtered report rows. One shared database migration may be needed only if discovery proves a missing index. Another ongoing task is editing that migration folder. Deliverable: local implementation, relevant checks, PR. No deployment or agent assignment is requested.",
+  "boundary": "Decompose a request to fix a tooltip typo in one existing component. Acceptance: display “Approved hours,” preserve interaction and accessibility label meaning. There is no evidence of data or API changes. Keep the work proportionate; plan only.",
+  "holdout": "Plan tasks for an offline onboarding guide. Supplied brief: produce a reviewable document explaining the existing team-invite workflow. Capabilities are not enumerated; a product owner will provide the accepted workflow record. No implementation, screenshots, publishing, or agent assignment is authorized. Identify work possible now and what needs the record; do not decide the workflow for the owner."
+}

@@ -8,7 +8,7 @@ A personal native SwiftUI macOS dashboard for Greg. Designed for full screen, wi
 
 ## Capability and skill planning
 
-The [capability map](docs/planning/CAPABILITY_MAP.md), [prioritised skill backlog](docs/planning/SKILL_BACKLOG.md), and [GitHub ticket index](docs/planning/GITHUB_TICKETS.md) describe the next planning phase. The original eight P0 families are split into 19 portable skill drafts under `skills/`, each with evaluation cases. One agent can combine several skills; the [boundaries](docs/planning/SKILL_BOUNDARIES.md) do not prescribe a team or provider. The drafts await behavioural evaluation and are not installed globally. App implementation and team setup remain separate future work.
+The [capability map](docs/planning/CAPABILITY_MAP.md), [prioritised skill backlog](docs/planning/SKILL_BACKLOG.md), and [GitHub ticket index](docs/planning/GITHUB_TICKETS.md) describe the next planning phase. The original eight P0 families are split into 19 portable skill drafts under `skills/`, each with evaluation cases. One agent can combine several skills; the [boundaries](docs/planning/SKILL_BOUNDARIES.md) do not prescribe a team or provider. The [P0 evaluation results](evaluations/p0-2026-11-08/REPORT.md) preserve baseline failures, two skill corrections, rechecks and composition exercises. The definitions await review/merge and are not installed globally. App implementation and team setup remain separate future work.
 
 ## Open
 

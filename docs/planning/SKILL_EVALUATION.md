@@ -24,3 +24,7 @@ Do not close a definition ticket solely because files exist or a structural vali
 ## Initial verification record
 
 The first drafting pass creates instructions and evaluation fixtures only. Structural validation and link checks are reported separately in the delivery record. No model-run behavioural result, external integration readiness, app acceptance, or team configuration is established by these documents.
+
+## First behavioural evaluation
+
+The [8 November results](../../evaluations/p0-2026-11-08/REPORT.md) include 38 baseline outputs, two evidence-based skill corrections, six recheck/held-out outputs and two composition exercises. Raw prompts, version hashes, outputs and qualitative reviews are preserved. See the report for limitations and pending acceptance.

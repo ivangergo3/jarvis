@@ -1,6 +1,6 @@
 # Jarvis prioritised skill backlog
 
-Status: 8 November 2026. P0 definitions are drafts awaiting behavioural evaluation. P1 and P2 entries are candidate families to refine before authoring.
+Status: 8 November 2026. P0 definitions have completed a bounded behavioural evaluation and await review/merge. P1 and P2 entries are candidate families to refine before authoring.
 
 ## Priorities
 
@@ -16,25 +16,25 @@ The original eight families are decomposed into 19 portable skills. Family names
 
 | ID | Family | Skill | Definition status |
 | --- | --- | --- | --- |
-| S01a | Discovery and mission briefing | [Mission briefing](../../skills/mission-briefing/SKILL.md) | Draft; evaluation pending |
-| S01b | Discovery and mission briefing | [Acceptance criteria](../../skills/acceptance-criteria/SKILL.md) | Draft; evaluation pending |
-| S02a | Prioritisation and tradeoff analysis | [Option analysis](../../skills/option-analysis/SKILL.md) | Draft; evaluation pending |
-| S02b | Prioritisation and tradeoff analysis | [Work prioritisation](../../skills/work-prioritisation/SKILL.md) | Draft; evaluation pending |
-| S03a | Task planning and handoffs | [Task decomposition](../../skills/task-decomposition/SKILL.md) | Draft; evaluation pending |
-| S03b | Task planning and handoffs | [Dependency planning](../../skills/dependency-planning/SKILL.md) | Draft; evaluation pending |
-| S03c | Task planning and handoffs | [Work handoffs](../../skills/work-handoffs/SKILL.md) | Draft; evaluation pending |
-| S04a | Evidence based research | [Source assessment](../../skills/source-assessment/SKILL.md) | Draft; evaluation pending |
-| S04b | Evidence based research | [Evidence synthesis](../../skills/evidence-synthesis/SKILL.md) | Draft; evaluation pending |
-| S05a | Decision and project knowledge management | [Project context curation](../../skills/project-context-curation/SKILL.md) | Draft; evaluation pending |
-| S05b | Decision and project knowledge management | [Decision recording](../../skills/decision-recording/SKILL.md) | Draft; evaluation pending |
-| S06a | Risk based quality planning | [Delivery risk assessment](../../skills/delivery-risk-assessment/SKILL.md) | Draft; evaluation pending |
-| S06b | Risk based quality planning | [Verification planning](../../skills/verification-planning/SKILL.md) | Draft; evaluation pending |
-| S07a | Marketing and business economics | [Metric definition](../../skills/metric-definition/SKILL.md) | Draft; evaluation pending |
-| S07b | Marketing and business economics | [Unit economics analysis](../../skills/unit-economics-analysis/SKILL.md) | Draft; evaluation pending |
-| S07c | Marketing and business economics | [Concept coaching](../../skills/concept-coaching/SKILL.md) | Draft; evaluation pending |
-| S08a | Audience problem and positioning discovery | [Customer segmentation](../../skills/customer-segmentation/SKILL.md) | Draft; evaluation pending |
-| S08b | Audience problem and positioning discovery | [Customer problem validation](../../skills/customer-problem-validation/SKILL.md) | Draft; evaluation pending |
-| S08c | Audience problem and positioning discovery | [Product positioning](../../skills/product-positioning/SKILL.md) | Draft; evaluation pending |
+| S01a | Discovery and mission briefing | [Mission briefing](../../skills/mission-briefing/SKILL.md) | Evaluated; in review |
+| S01b | Discovery and mission briefing | [Acceptance criteria](../../skills/acceptance-criteria/SKILL.md) | Evaluated; in review |
+| S02a | Prioritisation and tradeoff analysis | [Option analysis](../../skills/option-analysis/SKILL.md) | Evaluated; in review |
+| S02b | Prioritisation and tradeoff analysis | [Work prioritisation](../../skills/work-prioritisation/SKILL.md) | Evaluated; in review |
+| S03a | Task planning and handoffs | [Task decomposition](../../skills/task-decomposition/SKILL.md) | Evaluated; in review |
+| S03b | Task planning and handoffs | [Dependency planning](../../skills/dependency-planning/SKILL.md) | Evaluated; in review |
+| S03c | Task planning and handoffs | [Work handoffs](../../skills/work-handoffs/SKILL.md) | Evaluated; in review |
+| S04a | Evidence based research | [Source assessment](../../skills/source-assessment/SKILL.md) | Evaluated; in review |
+| S04b | Evidence based research | [Evidence synthesis](../../skills/evidence-synthesis/SKILL.md) | Evaluated; in review |
+| S05a | Decision and project knowledge management | [Project context curation](../../skills/project-context-curation/SKILL.md) | Evaluated; in review |
+| S05b | Decision and project knowledge management | [Decision recording](../../skills/decision-recording/SKILL.md) | Evaluated; in review |
+| S06a | Risk based quality planning | [Delivery risk assessment](../../skills/delivery-risk-assessment/SKILL.md) | Evaluated; in review |
+| S06b | Risk based quality planning | [Verification planning](../../skills/verification-planning/SKILL.md) | Evaluated; in review |
+| S07a | Marketing and business economics | [Metric definition](../../skills/metric-definition/SKILL.md) | Evaluated; in review |
+| S07b | Marketing and business economics | [Unit economics analysis](../../skills/unit-economics-analysis/SKILL.md) | Evaluated; in review |
+| S07c | Marketing and business economics | [Concept coaching](../../skills/concept-coaching/SKILL.md) | Evaluated; in review |
+| S08a | Audience problem and positioning discovery | [Customer segmentation](../../skills/customer-segmentation/SKILL.md) | Evaluated; in review |
+| S08b | Audience problem and positioning discovery | [Customer problem validation](../../skills/customer-problem-validation/SKILL.md) | Evaluated; in review |
+| S08c | Audience problem and positioning discovery | [Product positioning](../../skills/product-positioning/SKILL.md) | Evaluated; in review |
 
 Recommended authoring and evaluation sequence: S01a–b for outcomes, S04a–b for evidence, S05a–b for durable context, S02a–b and S03a–c for decisions/plans, S06a–b for quality, then S07a–c and S08a–c for business understanding. This is a useful starting order, not a mandatory dependency chain.
 
@@ -76,3 +76,5 @@ S16 should assess greg-content-ideas and greg-personal-brand for reuse rather th
 ## GitHub tracking
 
 The existing repository is https://github.com/ivangergo3/jarvis. The private planning board is https://github.com/users/ivangergo3/projects/3. See [ticket index](GITHUB_TICKETS.md) for the per-item links and current drafting state.
+
+See [evaluation results](../../evaluations/p0-2026-11-08/REPORT.md) and the [work board guide](BOARD_GUIDE.md).

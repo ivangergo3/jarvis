@@ -1,0 +1,73 @@
+{
+  "date": "2026-11-08",
+  "runtime": "Codex collaboration temporary subagent executions",
+  "model": "Inherited session model; exact provider/model identifier not exposed by the collaboration tool; no cross-model comparison claimed.",
+  "baseline_commit": "f803de9",
+  "execution_groups": {
+    "/root/p0_planning_eval": [
+      "S01a",
+      "S01b",
+      "S02a",
+      "S02b",
+      "S03a",
+      "S03b",
+      "S03c"
+    ],
+    "/root/p0_evidence_eval": [
+      "S04a",
+      "S04b",
+      "S05a",
+      "S05b",
+      "S06a",
+      "S06b"
+    ],
+    "/root/p0_business_eval": [
+      "S07a",
+      "S07b",
+      "S07c",
+      "S08a",
+      "S08b",
+      "S08c"
+    ]
+  },
+  "reviewer": "/root/p0_result_review plus coordinator review",
+  "rerun_executors": {
+    "S03a": "/root/p0_decomposition_rerun",
+    "S03c": "/root/p0_handoffs_rerun"
+  },
+  "composition_executor": "/root/p0_composition_eval",
+  "baseline_task_count": 38,
+  "baseline_pass_count": 36,
+  "baseline_needs_revision_count": 2,
+  "revised_skill_rerun_and_holdout_count": 6,
+  "composition_task_count": 2,
+  "limitations": [
+    "Two cases per skill in baseline; not a statistical reliability estimate.",
+    "Grouped baseline execution shared context within each group; two outputs imported unsupported details. Revised affected skills were rerun in separate fresh skill contexts.",
+    "No baseline without skills, cross-provider comparison, live integration, app execution, or lasting team configuration.",
+    "Expected-answer references were withheld during execution and review; snapshot reference files were archived after baseline execution to retain complete packages.",
+    "Independent reviewer initially overlooked two provenance issues; coordinator challenge led to focused review and recorded revisions."
+  ],
+  "baseline_case_sha256": "0f283533b407a0b376e4165393832d1b753d05d14825c98a87e5111579a6afdf",
+  "final_skill_sha256": {
+    "S01a": "03c69efb4ecbc73ade57e2d293bf2305abc75f6963b0193d1a173de0401926c1",
+    "S01b": "e50ef5cbe97c666c35b9ec370d8ea24482a8a7ee07298f47f6b7964187a9370e",
+    "S02a": "c82bc3d3766cfab3a04cb61edc4448f4142e2680b4a2c6f4fd07bd7b27fe8929",
+    "S02b": "abbc9bca03656d17a7fab308477c5205066c7642921b0b59de59b9fcb52ef210",
+    "S03a": "5f16fb73cc6acb4e8ea2e23034aaa5d5a5a3182fcf27fab3b91880dea9a1ca78",
+    "S03b": "7f2cd893384cfac25085c0b04fe1a0c892cfc931318badbdaec6380955a87d75",
+    "S03c": "f82274b74c2cf127dd96d7c5502481687cbe841f0e1665beba9ec66a57310210",
+    "S04a": "4235b4d31bb793be8d1952bdd4f1248333d32618f14fbe95faacf2bc319b5c0c",
+    "S04b": "0fa175d4a310c21f67d25f46ba4f5c6f9c53eded47127c32668edfa670e1ee68",
+    "S05a": "a508050ad4ddcd9bfa37a323314e6e170b6c18218933bcfc8b33fa0804a0d051",
+    "S05b": "0e4149786f77db4e91c2a7f3bd58ea5a989e1b504dbef2bcee30e2a3e2e51384",
+    "S06a": "61adab08d3b13d598bcf63855cfa2775e30f290bed188191f4254aa3c0ad04b7",
+    "S06b": "80fb73de9e933c3c57cea95f41718123584217ffb7acae2b49f2a66e94340a18",
+    "S07a": "99615bba483d8d40f41c760582bae7c3e549f2c4674515cdd0339dc98f99df3a",
+    "S07b": "caa56b753c751236682e9573dbc3623d0574fa7a7abf2d732fbadc62b6256288",
+    "S07c": "cc913aea97e0f20d6e6a82d09405d023507ff84c9168707ccaefa9c7be7d68c6",
+    "S08a": "d51341d1e7d9760fded45bfb06f48d93d33411ecb95ff2fa315f543486f33f90",
+    "S08b": "0ceced5f2dbf84e4c3e1d3fea58f8954c1998b956b24e58b89463edeaad6ac2b",
+    "S08c": "665592923b21b2dca468475d318beefeec8b3585282ea04928a761800005c545"
+  }
+}

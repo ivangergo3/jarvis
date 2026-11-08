@@ -12,6 +12,7 @@ Mission brief, acceptance criteria, relevant system boundaries, and known depend
 ## Procedure
 
 Group work by coherent deliverable and ownership boundary. Give each task enough context, an expected output, relevant criteria, and exclusions.
+Derive requirements from the current brief and explicitly linked accepted artifacts. If criteria or a schema are missing, reference that gap or label a proposed discovery check; do not turn plausible details from another task into mandatory scope.
 Keep the smallest useful assignments; avoid splitting trivial edits into bureaucracy. Identify shared-file or shared-resource contention and discovery work needed before a reliable implementation estimate.
 Allow one executor to handle multiple tasks or skills. Do not assign an agent per task unless separately requested.
 

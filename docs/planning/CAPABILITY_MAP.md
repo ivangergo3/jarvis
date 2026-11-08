@@ -1,6 +1,6 @@
 # Jarvis capability map
 
-Status: planning baseline, 8 November 2026. Skill definitions are being drafted; agent organisation and app implementation are not selected by this plan.
+Status: planning baseline, 8 November 2026. P0 skill definitions have completed an initial bounded evaluation and await review/merge; agent organisation and app implementation are not selected by this plan. See the [evaluation results](../../evaluations/p0-2026-11-08/REPORT.md).
 
 Jarvis should help a solo founder run a small company through one conversation. It should turn agreed outcomes into coordinated work, preserve decisions, make progress and evidence visible, and involve the founder in meaningful decisions.
 
