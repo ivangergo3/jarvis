@@ -1,0 +1,33 @@
+{
+  "exercises": [
+    {
+      "cwd": "/private/tmp/jarvis-library-eval/engineering/artifacts/parse_limit",
+      "command": "python3 -m unittest -v test_limits",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "ae8bfb",
+          "wall_time_seconds": 0.000012083,
+          "exit_code": 0,
+          "original_token_count": 114,
+          "output": "[local-home]/.rvm/scripts/rvm:29: operation not permitted: ps\ntest_accepted_values (test_limits.ParseLimitTests.test_accepted_values) ... ok\ntest_invalid_syntax (test_limits.ParseLimitTests.test_invalid_syntax) ... ok\ntest_non_string_input (test_limits.ParseLimitTests.test_non_string_input) ... ok\ntest_range (test_limits.ParseLimitTests.test_range) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.001s\n\nOK\n"
+        }
+      }
+    },
+    {
+      "cwd": "/private/tmp/jarvis-library-eval/engineering/artifacts/normalize_tag",
+      "command": "python3 -m unittest -v test_tags",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "445462",
+          "wall_time_seconds": 0.00001025,
+          "exit_code": 0,
+          "original_token_count": 160,
+          "output": "[local-home]/.rvm/scripts/rvm:29: operation not permitted: ps\ntest_already_normalized (test_tags.NormalizeTagTests.test_already_normalized) ... ok\ntest_empty (test_tags.NormalizeTagTests.test_empty) ... ok\ntest_lowercase (test_tags.NormalizeTagTests.test_lowercase) ... ok\ntest_preserve_internal_spaces (test_tags.NormalizeTagTests.test_preserve_internal_spaces) ... ok\ntest_trim_outer_whitespace (test_tags.NormalizeTagTests.test_trim_outer_whitespace) ... ok\ntest_whitespace_only (test_tags.NormalizeTagTests.test_whitespace_only) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK\n"
+        }
+      }
+    }
+  ],
+  "note": "Initial shell invocation emitted an unrelated shell-startup ps permission warning before unittest. Both unittest runs completed with exit code 0. Subsequent commands disable login shell startup."
+}

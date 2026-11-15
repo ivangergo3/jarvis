@@ -2,7 +2,7 @@
 
 [Jarvis planning board](https://github.com/users/ivangergo3/projects/3) tracks definition and evaluation work in the existing public [Jarvis repository](https://github.com/ivangergo3/jarvis). The board is private; repository issues and the planning documents are public.
 
-P0 tickets stay open in In review pending acceptance/merge, with reviewed exercise evidence. P1/P2 families remain proposed in Backlog. Skill tickets do not establish agent assignments or authorize app implementation.
+All 38 definition tickets remain open in In review pending acceptance/merge. The 19 P0 tickets have current safety/regression evidence; the 19 P1/P2 family tickets list 49 focused definitions and their reviewed outcomes. Skill tickets do not establish agent assignments or authorize app implementation.
 
 | ID | Priority | Ticket | Definition status |
 | --- | --- | --- | --- |
@@ -25,24 +25,24 @@ P0 tickets stay open in In review pending acceptance/merge, with reviewed exerci
 | S08a | P0 | [#20 Define and evaluate customer segmentation](https://github.com/ivangergo3/jarvis/issues/20) | Evaluated; in review |
 | S08b | P0 | [#21 Define and evaluate customer problem validation](https://github.com/ivangergo3/jarvis/issues/21) | Evaluated; in review |
 | S08c | P0 | [#22 Define and evaluate product positioning](https://github.com/ivangergo3/jarvis/issues/22) | Evaluated; in review |
-| S09 | P1 | [#23 Define technical design and architecture assessment skills](https://github.com/ivangergo3/jarvis/issues/23) | Proposed family |
-| S10 | P1 | [#24 Define software implementation and debugging skills](https://github.com/ivangergo3/jarvis/issues/24) | Proposed family |
-| S11 | P1 | [#25 Define test design and automation skills](https://github.com/ivangergo3/jarvis/issues/25) | Proposed family |
-| S12 | P1 | [#26 Define code review skills](https://github.com/ivangergo3/jarvis/issues/26) | Proposed family |
-| S13 | P1 | [#27 Define exploratory and acceptance verification skills](https://github.com/ivangergo3/jarvis/issues/27) | Proposed family |
-| S14 | P1 | [#28 Define PR preparation and delivery reporting skills](https://github.com/ivangergo3/jarvis/issues/28) | Proposed family |
-| S15 | P1 | [#29 Define offer and conversion copywriting skills](https://github.com/ivangergo3/jarvis/issues/29) | Proposed family |
-| S16 | P1 | [#30 Define personal brand ideation and writing skills](https://github.com/ivangergo3/jarvis/issues/30) | Proposed family |
-| S17 | P1 | [#31 Define prospect research and qualification skills](https://github.com/ivangergo3/jarvis/issues/31) | Proposed family |
-| S18 | P1 | [#32 Define cold outreach and follow-up writing skills](https://github.com/ivangergo3/jarvis/issues/32) | Proposed family |
-| S19 | P1 | [#33 Define marketing and sales review skills](https://github.com/ivangergo3/jarvis/issues/33) | Proposed family |
-| S20 | P2 | [#34 Define customer interviews and feedback synthesis skills](https://github.com/ivangergo3/jarvis/issues/34) | Proposed family |
-| S21 | P2 | [#35 Define funnels and growth experiments skills](https://github.com/ivangergo3/jarvis/issues/35) | Proposed family |
-| S22 | P2 | [#36 Define SEO research and content planning skills](https://github.com/ivangergo3/jarvis/issues/36) | Proposed family |
-| S23 | P2 | [#37 Define paid campaign planning and analysis skills](https://github.com/ivangergo3/jarvis/issues/37) | Proposed family |
-| S24 | P2 | [#38 Define sales conversations and pipeline management skills](https://github.com/ivangergo3/jarvis/issues/38) | Proposed family |
-| S25 | P2 | [#39 Define customer onboarding support and retention skills](https://github.com/ivangergo3/jarvis/issues/39) | Proposed family |
-| S26 | P2 | [#40 Define release and operational verification skills](https://github.com/ivangergo3/jarvis/issues/40) | Proposed family |
-| S27 | P2 | [#41 Define skill authoring and evaluation skills](https://github.com/ivangergo3/jarvis/issues/41) | Proposed family |
+| S09 | P1 | [#23 Define technical design and architecture assessment skills](https://github.com/ivangergo3/jarvis/issues/23) | Evaluated; in review |
+| S10 | P1 | [#24 Define software implementation and debugging skills](https://github.com/ivangergo3/jarvis/issues/24) | Evaluated; in review |
+| S11 | P1 | [#25 Define test design and automation skills](https://github.com/ivangergo3/jarvis/issues/25) | Evaluated; in review |
+| S12 | P1 | [#26 Define code review skills](https://github.com/ivangergo3/jarvis/issues/26) | Evaluated; in review |
+| S13 | P1 | [#27 Define exploratory and acceptance verification skills](https://github.com/ivangergo3/jarvis/issues/27) | Evaluated; in review |
+| S14 | P1 | [#28 Define PR preparation and delivery reporting skills](https://github.com/ivangergo3/jarvis/issues/28) | Evaluated; in review |
+| S15 | P1 | [#29 Define offer and conversion copywriting skills](https://github.com/ivangergo3/jarvis/issues/29) | Evaluated; in review |
+| S16 | P1 | [#30 Define personal brand ideation and writing skills](https://github.com/ivangergo3/jarvis/issues/30) | Evaluated; in review |
+| S17 | P1 | [#31 Define prospect research and qualification skills](https://github.com/ivangergo3/jarvis/issues/31) | Evaluated; in review |
+| S18 | P1 | [#32 Define cold outreach and follow-up writing skills](https://github.com/ivangergo3/jarvis/issues/32) | Evaluated; in review |
+| S19 | P1 | [#33 Define marketing and sales review skills](https://github.com/ivangergo3/jarvis/issues/33) | Evaluated; in review |
+| S20 | P2 | [#34 Define customer interviews and feedback synthesis skills](https://github.com/ivangergo3/jarvis/issues/34) | Evaluated; in review |
+| S21 | P2 | [#35 Define funnels and growth experiments skills](https://github.com/ivangergo3/jarvis/issues/35) | Evaluated; in review |
+| S22 | P2 | [#36 Define SEO research and content planning skills](https://github.com/ivangergo3/jarvis/issues/36) | Evaluated; in review |
+| S23 | P2 | [#37 Define paid campaign planning and analysis skills](https://github.com/ivangergo3/jarvis/issues/37) | Evaluated; in review |
+| S24 | P2 | [#38 Define sales conversations and pipeline management skills](https://github.com/ivangergo3/jarvis/issues/38) | Evaluated; in review |
+| S25 | P2 | [#39 Define customer onboarding support and retention skills](https://github.com/ivangergo3/jarvis/issues/39) | Evaluated; in review |
+| S26 | P2 | [#40 Define release and operational verification skills](https://github.com/ivangergo3/jarvis/issues/40) | Evaluated; in review |
+| S27 | P2 | [#41 Define skill authoring and evaluation skills](https://github.com/ivangergo3/jarvis/issues/41) | Evaluated; in review |
 
-See [evaluation results](../../evaluations/p0-2026-11-08/REPORT.md) and the [work board guide](BOARD_GUIDE.md).
+See the [full catalogue](SKILL_CATALOG.md), [current evaluation results](../../evaluations/library-2026-11-15/REPORT.md) and the [work board guide](BOARD_GUIDE.md).

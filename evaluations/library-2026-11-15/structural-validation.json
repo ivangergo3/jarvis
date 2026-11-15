@@ -1,0 +1,342 @@
+[
+  {
+    "skill": "acceptance-criteria",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "acceptance-verification",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "account-research",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "architecture-assessment",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "campaign-measurement-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "code-review",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "cold-outreach-writing",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "concept-coaching",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "content-ideation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "conversion-journey-review",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "customer-interview-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "customer-problem-validation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "customer-segmentation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "decision-recording",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "defect-diagnosis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "defect-reproduction",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "delivery-reporting",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "delivery-risk-assessment",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "dependency-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "deployed-verification",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "evidence-synthesis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "exploratory-testing",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "feedback-synthesis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "follow-up-writing",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "funnel-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "growth-experiment-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "growth-experiment-design",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "incident-diagnosis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "landing-page-copy",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "lifecycle-email-writing",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "marketing-claims-review",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "metric-definition",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "mission-briefing",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "objection-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "offer-design",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "onboarding-design",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "option-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "paid-campaign-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "paid-campaign-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "personal-brand-strategy",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "personal-content-writing",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "pipeline-hygiene",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "portable-skill-authoring",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "product-positioning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "project-context-curation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "prospect-qualification",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "pull-request-preparation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "recovery-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "release-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "research-evidence-capture",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "retention-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "sales-call-preparation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "search-intent-research",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "seo-content-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "skill-evaluation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "software-implementation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "source-assessment",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "support-response-preparation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "task-decomposition",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "technical-design",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "technical-seo-review",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "test-automation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "test-design",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "test-maintenance",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "unit-economics-analysis",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "verification-planning",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "work-handoffs",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  },
+  {
+    "skill": "work-prioritisation",
+    "exit_code": 0,
+    "output": "Skill is valid!"
+  }
+]

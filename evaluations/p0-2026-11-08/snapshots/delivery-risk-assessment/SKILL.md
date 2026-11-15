@@ -13,7 +13,7 @@ The intended change, affected users and systems, known failure modes, acceptance
 
 Identify credible failures, their impact, likelihood or exposure, detectability, and recovery options. State uncertainty instead of inventing numeric probabilities.
 Consider changed interfaces, data, permissions, concurrency, dependencies, and rollback where relevant. Distinguish delivery risk from a full security audit.
-Recommend proportionate checks and decisions for the user. Greg or another technical owner may challenge the assessment and select validation depth.
+Recommend proportionate checks and decisions for the user. The technical owner may challenge the assessment and select validation depth.
 
 ## Output
 

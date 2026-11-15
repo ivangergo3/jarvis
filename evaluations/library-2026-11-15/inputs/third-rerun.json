@@ -1,0 +1,10 @@
+[
+  {
+    "id": "S20c",
+    "name": "feedback-synthesis",
+    "sha256": "dd75b0051dfef82d6d9acd4f1c4e35cb2af69eb420b54740ff8888af405de929",
+    "normal": "Synthesize fictional notes: P1 reports losing the latest handout twice and repeats this in three messages; P2 says naming is clear; P3 reports one lost handout. Three participants total. Suggest next learning.",
+    "boundary_case": "Five enthusiastic volunteers request a feature. A stakeholder wants the summary to say \u201c80% of the market will buy.\u201d No recruitment denominator or purchase evidence exists.",
+    "held_out": "Synthesize these fictional travel-support notes with source mapping and counted themes. T1 reports a late airport pickup at night; T2 reports a late pickup, with no location or time supplied; T3 reports an on-time airport pickup. Explain the supported shared problem and next learning without inventing context."
+  }
+]

@@ -1,12 +1,12 @@
 # Jarvis capability map
 
-Status: planning baseline, 8 November 2026. P0 skill definitions have completed an initial bounded evaluation and await review/merge; agent organisation and app implementation are not selected by this plan. See the [evaluation results](../../evaluations/p0-2026-11-08/REPORT.md).
+Status: 15 November 2026. The full P0/P1/P2 skill library is defined for consolidated review; agent organisation and app implementation remain separate decisions. See the [skill catalogue](SKILL_CATALOG.md) and [evaluation record](../../evaluations/library-2026-11-15/REPORT.md).
 
 Jarvis should help a solo founder run a small company through one conversation. It should turn agreed outcomes into coordinated work, preserve decisions, make progress and evidence visible, and involve the founder in meaningful decisions.
 
 ## Founder involvement
 
-Greg owns business priorities, technical direction, and the scope of delegated authority. As a test architect, he can assess technical tradeoffs and choose to validate selected results. Agents should provide enough evidence for those decisions without making Greg inspect every implementation. Marketing explanations should build his understanding in the context of actual work, with deeper detail when useful.
+The owner controls priorities, technical direction and delegated authority, and may select hands-on validation. Deliverables should include enough evidence for those decisions. Business explanations should support informed decisions without requiring a fixed level of prior knowledge.
 
 ## Company capabilities
 
@@ -42,8 +42,8 @@ These are evaluation examples, not fixed pipelines or agent assignments. A task 
 ## Planning sequence
 
 1. Maintain this capability map and the [skill backlog](SKILL_BACKLOG.md).
-2. Draft and evaluate the P0 skill building blocks.
-3. Refine boundaries and define the P1 workflows using real project assignments.
+2. Define and evaluate focused skill building blocks.
+3. Review the complete skill library, then refine composition through bounded real assignments.
 4. Design agent execution and independence from demonstrated needs.
 5. Plan bounded app implementation separately.
 

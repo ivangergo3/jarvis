@@ -1,3 +1,7 @@
 .build/
 build/
 .DS_Store
+
+# Local-only context; never put a private skill checkout under skills/.
+.local-skills/
+.private-context/

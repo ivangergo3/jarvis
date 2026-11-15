@@ -1,6 +1,6 @@
 # Jarvis skill evaluation
 
-Each P0 skill includes synthetic normal and boundary cases in its references/evaluation.md. These cases define what to exercise; they do not establish that an execution passed.
+Each skill includes synthetic normal and boundary cases in its references/evaluation.md. These cases define what to exercise; they do not establish that an execution passed.
 
 ## Review before behavioural evaluation
 
@@ -12,7 +12,7 @@ Use a realistic prompt and the relevant skill plus minimum raw artifacts. Use fi
 
 Record the exact skill version, model/runtime if used, prompt, supplied artifacts, actual output, reviewer assessment, and changes supported by the result. Review usefulness, factual grounding, output completeness, authority, and the skill’s specific boundary. Do not score exact phrasing as correctness.
 
-Do not close a definition ticket solely because files exist or a structural validator passed. Keep the ticket open until the planned cases have reviewed outcomes or a clearly justified acceptance decision. Greg can review technical reasoning and choose validation depth; marketing exercises should also assess whether the explanation supports his understanding.
+Do not close a definition ticket solely because files exist or a structural validator passed. Keep the ticket open until the planned cases have reviewed outcomes or a clearly justified acceptance decision. The owner can review technical reasoning and choose validation depth; marketing exercises should also assess whether the explanation supports their understanding.
 
 ## Composition exercises
 
@@ -28,3 +28,7 @@ The first drafting pass creates instructions and evaluation fixtures only. Struc
 ## First behavioural evaluation
 
 The [8 November results](../../evaluations/p0-2026-11-08/REPORT.md) include 38 baseline outputs, two evidence-based skill corrections, six recheck/held-out outputs and two composition exercises. Raw prompts, version hashes, outputs and qualitative reviews are preserved. See the report for limitations and pending acceptance.
+
+## Full-library evaluation
+
+The [15 November record](../../evaluations/library-2026-11-15/REPORT.md) covers the 49 new focused P1/P2 skills, targeted exercises for the updated P0 safety text and cross-skill composition. Version snapshots, exact prompts, actual outputs, review decisions and structural checks are retained. The P0 historical results do not automatically transfer to changed files. Public evidence is synthetic; personal adaptations and their evaluation remain outside this repository.

@@ -22,4 +22,4 @@ Record the expected result, acceptance criteria, next action, evidence links and
 
 ## Current scope
 
-The board can track future engineering, marketing and company work when authorized. This phase evaluates skills and maintains planning only. The 19 P0 tickets move to In review with their results; the 19 P1/P2 families remain in Backlog. Empty Blocked and Done columns are intentional until actual work belongs there.
+The board can track future engineering, marketing and company work when authorized. This phase evaluates skills and maintains planning only. All 38 skill-definition tickets are In review with their source and evaluation links. The 19 P1/P2 family cards group 49 focused definitions; separate child cards can be added when work needs independent scheduling. Backlog, In progress, Blocked and Done remain available for the next real assignments. Definition completion does not establish live execution readiness.

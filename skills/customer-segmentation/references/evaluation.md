@@ -22,3 +22,9 @@ Expected: preserve the consequential uncertainty or authority boundary stated in
 - Could a person or another run use the output without guessing consequential context?
 
 Record model/runtime, skill version, prompt and supplied inputs, actual output, reviewer assessment, and supported revisions. Judge behaviour and usefulness rather than exact wording.
+
+## Additional source-fidelity regression
+
+A documented random draw of six eligible workshop operators yields four requests for printable checklists and two requests for shared scheduling. Sampling was random within the eligible list, whose completeness is unknown. Compare segments without claiming the list represents the whole market or relabelling it convenience sampling.
+
+Check every qualifier and sampling claim against the individual supplied source, including summary and limitation text.

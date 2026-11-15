@@ -26,7 +26,7 @@ A skill can accept an existing artifact without requiring the sibling skill that
 
 Independent review is an execution property, not a different skill name. Reusing the same skill in a fresh run can provide a separate assessment; a self-check must not be called independent. Model diversity alone does not prove independence or correctness. Decide the required separation from the consequence and uncertainty of the work.
 
-Greg retains technical decision authority and may select validation work. The skills should support that involvement without requiring routine manual handoffs or repeated approval for already-authorized actions.
+The owner retains technical decision authority and may select validation work. The skills should support that involvement without requiring routine manual handoffs or repeated approval for already-authorized actions.
 
 ## Shared expectations
 
@@ -36,10 +36,14 @@ Explain unfamiliar business concepts when they affect a recommendation, without 
 
 ## Packaging and lifecycle
 
-Repository drafts live in skills/<skill-name>/SKILL.md with portable evaluation cases in references/evaluation.md. They are not automatically installed globally or activated by this documentation. Stable family IDs remain in the backlog; suffixes identify focused skill definitions. P1/P2 family tickets may be split later without renumbering the families.
+Repository drafts live in skills/<skill-name>/SKILL.md with portable evaluation cases in references/evaluation.md. They are not automatically installed globally or activated by this documentation. Stable family IDs remain in the backlog; suffixes identify focused skill definitions. P1/P2 family tickets list their focused child definitions and may be split later without renumbering the families.
 
 Status progresses from proposed → draft → evaluated → ready, with retirement or revision as needed. Draft means instructions exist. Evaluated means a recorded behavioural exercise was reviewed. Ready means the applicable criteria were met and consequential gaps addressed. Frontmatter validation alone cannot establish readiness.
 
 ## Current authorization
 
-This phase saves planning documents, drafts first-party P0 skills, defines evaluation cases, and tracks work in GitHub. It does not implement the app, configure teams or models, install skills globally, execute campaigns, or authorize future backlog work.
+This phase authors and evaluates the full first-party P0/P1/P2 skill backlog and tracks review in GitHub. It does not implement the app, configure teams or models, install skills globally, execute campaigns, or authorize future backlog work.
+
+## Public and private placement
+
+Keep reusable instructions generic. Project workflow belongs in the applicable AGENTS.md; personal voice, biography and other private reusable context belong in separate local/private skills. Public skills must not depend on private files or identify private repositories. See [local-use safety](SKILL_SAFETY.md) for the placement and authority rules and [research provenance](SKILL_RESEARCH.md) for inspected external inspiration.

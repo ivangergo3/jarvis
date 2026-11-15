@@ -56,3 +56,7 @@ C02 combines metric definition, unit economics analysis, and concept coaching fo
 ## Remaining acceptance
 
 The definitions and evaluation evidence are ready for review. P0 tickets remain open in In review while PR 42 is unmerged. Merge and any user-selected technical validation remain separate decisions. Later operational use should add real failures and regression scenarios; these exercises did not verify tool execution, production integrations, or autonomous coordination.
+
+## Publication privacy correction — 15 November 2026
+
+Two personal-name references were replaced by generic technical-owner wording in the published archive. [Redaction manifest](privacy-redactions.json) records original and published hashes. The original tested hashes remain in the run metadata; those two published files are explicitly redacted derivatives, not byte-identical originals. No result or verdict changed, and history was not rewritten.
