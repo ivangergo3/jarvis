@@ -80,6 +80,13 @@ observable conditions. Stable identifiers are attached to existing native
 controls. The recorded fake transport receipt is independent of the displayed
 chat name, so duplicate names cannot conceal a wrong destination.
 
+The static background grid uses a stroked `Shape` with the same spacing, color
+and line width as the original `Canvas`. The populated-workspace CI journeys
+exposed a Metal/RenderBox abort in `Canvas` on the Intel runner, matching the
+[runner image report](https://github.com/actions/runner-images/issues/15251).
+This rendering change applies to the normal app too; verification does not hide
+the grid or skip those journeys. It is not a GPU rendering/performance certification.
+
 ## Isolation and cleanup
 
 Fixtures are in-memory constants; no user home, database, transcript or arbitrary
