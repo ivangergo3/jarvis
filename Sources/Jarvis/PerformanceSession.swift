@@ -4,6 +4,10 @@ import Foundation
 import JarvisDomain
 import SwiftUI
 
+@MainActor final class PerformanceProgress: ObservableObject {
+    @Published var stage = "Preparing synthetic performance recording"
+}
+
 /// Instrumentation does not publish. Enabled only by an explicitly prepared fixture bundle.
 @MainActor final class PerformanceSession {
     enum Work: String, Codable, CaseIterable {
@@ -63,6 +67,9 @@ import SwiftUI
     }
 
     let dashboard = DashboardState()
+    let progress = PerformanceProgress()
+    let manual: Bool
+    private var manualStarted = false
     private var counts: [Work: Int] = [:]
     private let enteredMain: Double
     private let output: URL
@@ -78,10 +85,11 @@ import SwiftUI
     private var phases: [Phase] = []
     private var task: Task<Void, Never>?
 
-    init(enteredMain: Double, output: URL, fixture: [String: Int]) {
+    init(enteredMain: Double, output: URL, fixture: [String: Int], manual: Bool = false) {
         self.enteredMain = enteredMain
         self.output = output
         self.fixture = fixture
+        self.manual = manual
         Self.current = self
     }
 
@@ -108,6 +116,19 @@ import SwiftUI
         subscriptions = []
     }
 
+    func startManual() { manualStarted = true }
+
+    private func status(_ stage: String, nodes: Int) throws {
+        progress.stage = stage
+        let data = [
+            "stage": stage, "nodes": String(nodes),
+            "pid": String(ProcessInfo.processInfo.processIdentifier),
+        ]
+        try JSONEncoder().encode(data).write(
+            to: output.deletingLastPathComponent()
+                .appendingPathComponent("performance-status.json"), options: .atomic)
+    }
+
     private func waitUntil(_ predicate: () -> Bool, seconds: Double) async throws {
         let deadline = ProcessInfo.processInfo.systemUptime + seconds
         while !predicate() {
@@ -129,6 +150,7 @@ import SwiftUI
     }
 
     private func phase(_ name: String, nodes: Int, seconds: Double, hover: Bool) async throws {
+        try status(name, nodes: nodes)
         let expectedProject = dashboard.projectID
         let ids =
             store?.snapshot?.missions.filter { $0.projectID == expectedProject }.map(\.id) ?? []
@@ -198,20 +220,28 @@ import SwiftUI
         var failure: String?
         do {
             try await waitUntil({ self.firstPopulatedBody != nil }, seconds: 15)
+            try await waitUntil({ NSApp.isActive && self.window?.isVisible == true }, seconds: 60)
             let expected = Set([0, 1, 4, 20, 100].map { "perf-\($0)" })
             guard Set(store?.snapshot?.projects.map(\.id) ?? []) == expected else {
                 throw PerformanceFailure(
                     "Performance probe requires its generated synthetic workspace")
             }
             try await Task.sleep(for: .seconds(2))
-            for _ in 0..<2 { for nodes in [0, 1, 4, 20, 100] { try await select(nodes) } }
-            try await select(20)
-            try await phase("idle", nodes: 20, seconds: 4, hover: false)
-            for nodes in [4, 20, 100] {
-                try await select(nodes)
-                try await phase("hover-state", nodes: nodes, seconds: 8, hover: true)
+            if manual {
+                try await select(20)
+                try status("Ready for the one-minute physical cursor recording", nodes: 20)
+                try await waitUntil({ self.manualStarted }, seconds: 300)
+                try await phase("manual-pointer", nodes: 20, seconds: 60, hover: false)
+            } else {
+                for _ in 0..<2 { for nodes in [0, 1, 4, 20, 100] { try await select(nodes) } }
+                try await select(20)
+                try await phase("idle", nodes: 20, seconds: 4, hover: false)
+                for nodes in [4, 20, 100] {
+                    try await select(nodes)
+                    try await phase("hover-state", nodes: nodes, seconds: 8, hover: true)
+                }
+                try await phase("bounded-soak", nodes: 100, seconds: 30, hover: true)
             }
-            try await phase("bounded-soak", nodes: 100, seconds: 30, hover: true)
         } catch {
             failure = error.localizedDescription
         }
@@ -243,12 +273,28 @@ import SwiftUI
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(report).write(to: output, options: .atomic)
+            progress.stage =
+                failure == nil ? "Performance recording complete" : "Performance recording failed"
             window?.title =
                 failure == nil ? "Performance probe complete" : "Performance probe failed"
         } catch {
             FileHandle.standardError.write(
                 Data("Could not write synthetic performance report.\n".utf8))
         }
+    }
+}
+
+struct PerformanceStatusView: View {
+    @ObservedObject var progress: PerformanceProgress
+    let session: PerformanceSession
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(progress.stage).font(HUD.mono(10))
+            if session.manual, progress.stage.hasPrefix("Ready") {
+                Button("Start 60-second cursor recording") { session.startManual() }
+                    .accessibilityIdentifier("performance.startManual")
+            }
+        }.padding(8).foregroundStyle(HUD.gold).background(HUD.background)
     }
 }
 

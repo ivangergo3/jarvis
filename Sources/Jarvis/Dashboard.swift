@@ -36,6 +36,7 @@ struct Dashboard: View {
     @ObservedObject var voice: LocalVoice
     @ObservedObject var store: FleetStore
     var workspaceFixture = false
+    private let performance: PerformanceSession?
     @StateObject private var ui = DashboardState()
     @StateObject private var imagePreview = ImagePreviewPresentation()
     init(
@@ -47,6 +48,7 @@ struct Dashboard: View {
         self.voice = voice
         self.store = store
         self.workspaceFixture = workspaceFixture
+        self.performance = performance
         _ui = StateObject(wrappedValue: performance?.dashboard ?? DashboardState())
     }
     private var selection: String? {
@@ -146,6 +148,11 @@ struct Dashboard: View {
         .background(HUD.background).foregroundStyle(HUD.text).preferredColorScheme(.dark)
         .frame(minWidth: 1180, minHeight: 760)
         .accessibilityIdentifier("workspace.dashboard")
+        .overlay(alignment: .top) {
+            if let performance {
+                PerformanceStatusView(progress: performance.progress, session: performance)
+            }
+        }
         .overlay(alignment: .bottomLeading) {
             if workspaceFixture {
                 Text("WORKSPACE FIXTURE").font(HUD.mono(9)).foregroundStyle(HUD.gold)

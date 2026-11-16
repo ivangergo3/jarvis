@@ -16,7 +16,7 @@ reviewable changes; no broad optimization is presumed necessary.
 - Seven measured repetitions after an explicit warm-up for parser framing,
   graph routing (0/1/4/20/100 nodes), fresh-adapter workspace reads and cached
   unchanged reads. Record all samples, not only the fastest.
-- Three separately identified fixture app launches. Measure process-main entry
+- Three fresh fixture process launches with isolated/reset fixture preferences. Measure process-main entry
   to first native draw and first populated workspace body evaluation. These exclude work
   before main/LaunchServices and are not cold-disk launch claims.
   Project-switch timings stop at the target SwiftUI body evaluation, not GPU
@@ -24,6 +24,9 @@ reviewable changes; no broad optimization is presumed necessary.
   layer-backed update (revision d9f36a6); that failed run is retained and excluded
   from successful baselines. The revised boundary is explicit, not a fabricated
   substitute for an unobserved draw.
+  A background-only run at 0e584df is retained separately: its foreground flag
+  was false throughout, so its different animation policy is not silently pooled
+  with the foreground baseline. Measured phases now wait for explicit activation.
 - Exercise the real displayed hover state at a fixed cadence, then a bounded
   soak. Record root/conversation/card/topology work and connector rebuilds,
   own-process user+system CPU, resident memory, and main-actor heartbeat delay.

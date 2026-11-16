@@ -77,7 +77,9 @@ import SwiftUI
                     from: Data(contentsOf: home.appendingPathComponent("performance-fixture.json")))
                 performance = PerformanceSession(
                     enteredMain: enteredMain,
-                    output: URL(fileURLWithPath: output), fixture: fixture)
+                    output: URL(fileURLWithPath: output), fixture: fixture,
+                    manual: Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceManual")
+                        as? Bool == true)
             } else {
                 performance = nil
             }

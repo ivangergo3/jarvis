@@ -41,6 +41,9 @@ enum QualityGate {
                 try FaultProbe.run(root: root, swiftArguments: swiftArguments, output: destination)
             case "architecture":
                 try WorkspaceArchitecture.check(root: root, output: destination)
+            case "hover-fault":
+                try HoverFaultProbe.run(
+                    root: root, swiftArguments: swiftArguments, output: destination)
             default:
                 throw QualityFailure("Unknown quality-gate command: \(mode)")
             }
