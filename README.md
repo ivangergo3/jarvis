@@ -30,9 +30,11 @@ Building requires the installed Apple command-line tools; there are no third-par
 
 GitHub Actions runs **macOS build and tests** on every pull request, push/merge to `main`, merge-queue group and manual dispatch. It uses the standard `macos-15-intel` runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
 
+Run `./scripts/format.sh bootstrap` once to build the pinned official formatter, then `./scripts/check.sh` for the same formatting, Swift 6 concurrency probes, fixture tests and release build used in CI. `./scripts/format.sh check` checks without edits; `./scripts/format.sh fix` applies formatting explicitly. See [Swift quality gates](docs/engineering/SWIFT_QUALITY.md) for exact tool pins, the diagnostic baseline and validation limits. App targets and the release script use Swift 6; compiler warnings fail the check command. No additional correctness linter is installed.
+
 `swift test` runs a separate Swift Testing target. It checks lifecycle/task parsing, project assignments, graph routes and pulse movement, plus the read-only adapter against temporary SQLite databases and JSONL files. Fixtures cover incremental and partial writes, truncation, missing logs/history fallback, stale activity, invalid schemas, and rejected paths. Tests never need your Codex account, live chats, network or credentials. The old `--self-test` option now prints the replacement command and exits; `--diagnose` remains an explicit, local-only diagnostic that reads real records and is not run in CI.
 
-CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. These checks do not yet exercise native UI, VoiceOver or a macOS 14 runtime. Swift 6 migration, formatting enforcement and a full Xcode app/test scheme remain later foundation work; see [REQUIREMENTS.md](REQUIREMENTS.md).
+CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. These checks do not yet exercise native UI, VoiceOver or a macOS 14 runtime. A full Xcode app/test scheme remains later foundation work; see [REQUIREMENTS.md](REQUIREMENTS.md).
 
 **Merge enforcement:** Checks run and report failures, but are not yet enforced as a merge requirement. Private-repository protection was unavailable on the account's plan when CI was added. The project is now public for building in public and open-source collaboration; branch protection can be configured separately to require **macOS build and tests** for `main`.
 

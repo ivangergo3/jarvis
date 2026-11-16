@@ -494,7 +494,9 @@ struct CompanionApproval: Identifiable {
             }
             dispatched = false
         case "error": notice = event.params["message"].text ?? "Codex reported an error."
-        default: break  // Tool output and instruction-like text are never interpreted as UI commands.
+        default:
+            // Tool output and instruction-like text are never interpreted as UI commands.
+            break
         }
     }
 

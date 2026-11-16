@@ -55,7 +55,7 @@ import SwiftUI
     }
     private func stopAnimations(_ parent: CALayer?) {
         parent?.removeAllAnimations()
-        parent?.sublayers?.forEach { stopAnimations($0) }
+        for sublayer in parent?.sublayers ?? [] { stopAnimations(sublayer) }
     }
 }
 
@@ -167,7 +167,7 @@ struct CompositorReactor: NSViewRepresentable {
         super.init(frame: frameRect)
         layer?.addSublayer(minorTicks)
         layer?.addSublayer(majorTicks)
-        rings.enumerated().forEach { index, ring in
+        for (index, ring) in rings.enumerated() {
             ring.name = "reactorRing\(index)"
             layer?.addSublayer(ring)
         }
@@ -307,14 +307,14 @@ struct CompositorTopology: NSViewRepresentable {
         HUDLayers.change { updateStyles() }
     }
     private func rebuildGeometry() {
-        layer?.sublayers?.forEach { $0.removeFromSuperlayer() }
+        for sublayer in layer?.sublayers ?? [] { sublayer.removeFromSuperlayer() }
         lines = []
         dots = []
         for route in routes {
             let path = CGMutablePath()
             if let first = route.points.first {
                 path.move(to: first)
-                route.points.dropFirst().forEach { path.addLine(to: $0) }
+                for point in route.points.dropFirst() { path.addLine(to: point) }
             }
             let line = HUDLayers.stroke(HUDLayers.muted, width: 0.8)
             line.name = "connectorLine"
