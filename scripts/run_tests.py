@@ -17,7 +17,9 @@ LIMIT = 128 * 1024
 def redact(text):
     text = text.replace(str(Path.home()), "<home>")
     text = re.sub(r"/(?:private/)?(?:var/folders|tmp)/[^\s\"<>]+", "<temporary-path>", text)
-    return re.sub(r"(?i)(authorization|token|password|secret)(\s*[:=]\s*)\S+", r"\1\2<redacted>", text)
+    return re.sub(
+        r'''(?im)(["']?(?:authorization|token|password|secret)["']?\s*[:=]\s*)(?:"[^"\n]*"|'[^'\n]*'|[^\n,}]+)''',
+        r"\1<redacted>", text)
 
 
 def test_id(value):

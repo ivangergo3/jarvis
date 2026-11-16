@@ -52,6 +52,8 @@ class GateTests(unittest.TestCase):
             self.assertLessEqual(len(result), gate.LIMIT)
             self.assertNotIn(str(Path.home()), result)
             self.assertNotIn("synthetic-secret", result)
+            for private in ('{"token":"synthetic-secret"}', "Authorization: Bearer synthetic-secret", "password='synthetic-secret'"):
+                self.assertNotIn("synthetic-secret", gate.redact(private))
 
     def test_main_never_trusts_green_xml_after_a_failed_process(self):
         with tempfile.TemporaryDirectory() as directory:
