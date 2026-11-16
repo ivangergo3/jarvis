@@ -41,13 +41,14 @@ if [[ "${1:-check}" == tool-path ]]; then
     exit 0
 fi
 
-[[ -f Package.swift && -d Sources && -d Tests ]] || {
+[[ -f Package.swift && -d Sources && -d Tests \
+    && -d Tools/QualityGate && -d Tools/QualitySupport ]] || {
     echo "Missing owned Swift source roots." >&2; exit 1;
 }
 files=(Package.swift)
 while IFS= read -r -d '' file; do
     files+=("$file")
-done < <(find Sources Tests -type f -name '*.swift' -print0)
+done < <(find Sources Tests Tools/QualityGate Tools/QualitySupport -type f -name '*.swift' -print0)
 case "${1:-check}" in
     check) "$tool" lint --strict --configuration .swift-format "${files[@]}" ;;
     fix) "$tool" format --in-place --configuration .swift-format "${files[@]}" ;;

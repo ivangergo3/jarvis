@@ -15,12 +15,15 @@ notification observer ownership; mechanical formatting is reviewed separately.
 ```
 
 The complete check runs formatting, negative/positive gate probes, fixture-based
-Swift tests with compiler warnings as errors, and the release build. Existing CI
+Swift tests through the native `quality-gate` with compiler warnings as errors,
+and the release build. The test gate preserves discovery, required-test inventory,
+skip/failure rejection and bounded diagnostics from #44. Existing CI
 bundle/resource/signature checks still run afterwards. These commands do not
 read live Codex records, send messages, start dictation, or run `--diagnose`.
 
-Formatting covers `Package.swift` and every `.swift` file under `Sources/` and
-`Tests/`, including new local files. Build products, personal demo folders and
+Formatting covers `Package.swift` and every `.swift` file under `Sources/`,
+`Tests/`, `Tools/QualityGate/` and `Tools/QualitySupport/`, including new local files.
+Build products, downloaded formatter sources, personal demo folders and
 historical Python evaluation fixtures are outside these owned-source roots.
 No owned Swift file is excluded. Style is four spaces and a 100-column preferred
 width; literals may exceed that width when splitting would change their content.
@@ -29,7 +32,7 @@ width; literals may exceed that width when splitting would change their content.
 
 | Component | Selection |
 | --- | --- |
-| CI | Existing `macos-15-intel`, Xcode 16.4 (16F6) via `DEVELOPER_DIR` |
+| CI | Existing `macos-15-intel`, Xcode 16.4 (16F6), Swift 6.1.2 via `DEVELOPER_DIR` |
 | Language | Swift 6 for SwiftPM and release build; includes full concurrency checking |
 | Formatter | Official swiftlang/swift-format 601.0.0 at ffbb3225ffda37b62c7283c70e87e8bc7e8e202a |
 | Formatter dependencies | Exact versions/revisions in `Tools/SwiftFormat/Package.resolved` |
@@ -94,6 +97,12 @@ Separate bundle checks passed plist validation, signature verification and all
 required resource checks; the executable records a macOS 14.0 minimum target.
 Four animation `forEach` calls were converted to equivalent `for` loops and one
 comment was moved to satisfy formatter findings that are not automatically fixed.
+
+After rebasing onto #58 (`8f1ce53`), the combined local check passed 101 tests
+through the native test gate, formatting of app/tests/quality tools, both
+concurrency/format probes and the release build. Bundle validation also passed.
+The injected clock, critical-test inventory, diagnostic upload and required CI
+check from #44 are retained. This supersedes the earlier 87-test count.
 
 Local CLT emits linker search-path warnings about absent full-Xcode directories.
 Those are environment diagnostics, not compiler concurrency warnings; they are

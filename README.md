@@ -36,7 +36,7 @@ Run `./scripts/format.sh bootstrap` once to build the pinned official formatter,
 
 CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. These checks do not yet exercise native UI, VoiceOver or a macOS 14 runtime. A full Xcode app/test scheme remains later foundation work; see [REQUIREMENTS.md](REQUIREMENTS.md).
 
-**Merge enforcement:** Checks run and report failures, but are not yet enforced as a merge requirement. Private-repository protection was unavailable on the account's plan when CI was added. The project is now public for building in public and open-source collaboration; branch protection can be configured separately to require **macOS build and tests** for `main`.
+**Merge enforcement:** `main` requires the GitHub Actions **macOS build and tests** check and an up-to-date PR branch, including for administrators. The native test gate rejects failed processes, skipped or missing tests, and missing critical tests; CI retains bounded diagnostics. See [test quality](docs/engineering/test-quality.md) and its [verification record](docs/engineering/verification-44.md) for the policy and failed-merge probe. Repository settings are external to this workflow and must remain enabled.
 
 ## Data and meaning
 
