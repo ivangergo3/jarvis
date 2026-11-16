@@ -21,6 +21,7 @@ struct HoverTopology: View {
     let motion: Bool
     let connections: [GraphConnection]
     var body: some View {
+        let _ = PerformanceSession.count(.hoverTopologyBody)
         TopologyLines(
             active: active, highlighted: nodeIDs.map { $0 == hover.nodeID || $0 == selectedID },
             motion: motion, connections: connections)
@@ -36,6 +37,7 @@ struct HoverDestination: ViewModifier {
     let index: Int
     let left: Bool
     func body(content: Content) -> some View {
+        let _ = PerformanceSession.count(.hoverDestinationBody)
         content.modifier(
             GraphDestination(
                 active: active, highlighted: selected || hover.nodeID == nodeID,

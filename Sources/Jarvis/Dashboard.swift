@@ -38,6 +38,17 @@ struct Dashboard: View {
     var workspaceFixture = false
     @StateObject private var ui = DashboardState()
     @StateObject private var imagePreview = ImagePreviewPresentation()
+    init(
+        windowControls: WindowControls, companion: CompanionModel, voice: LocalVoice,
+        store: FleetStore, workspaceFixture: Bool = false, performance: PerformanceSession? = nil
+    ) {
+        self.windowControls = windowControls
+        self.companion = companion
+        self.voice = voice
+        self.store = store
+        self.workspaceFixture = workspaceFixture
+        _ui = StateObject(wrappedValue: performance?.dashboard ?? DashboardState())
+    }
     private var selection: String? {
         get { ui.selection }
         nonmutating set { ui.selection = newValue }
@@ -102,6 +113,7 @@ struct Dashboard: View {
     }
 
     var body: some View {
+        let _ = PerformanceSession.dashboardEvaluated(project: ui.projectID)
         HStack(spacing: 0) {
             sidebar.frame(width: 215)
             Rectangle().fill(HUD.line).frame(width: 1)
@@ -464,6 +476,7 @@ struct Dashboard: View {
 
     private var networkView: some View {
         GeometryReader { geometry in
+            let _ = PerformanceSession.count(.graphLayout)
             let layout = TeamGraphLayout(count: nodeCount, viewport: geometry.size)
             ScrollView([.horizontal, .vertical]) {
                 ZStack(alignment: .topLeading) {
@@ -558,6 +571,7 @@ struct Dashboard: View {
     }
 
     private func projectCard(_ p: WorkspaceProject) -> some View {
+        PerformanceSession.count(.cardFactory)
         let team = allMissions.filter { $0.projectID == p.id }
         let active = team.filter { $0.status == .working }.count
         return Button {
@@ -600,7 +614,8 @@ struct Dashboard: View {
     }
 
     private func missionCard(_ mission: Mission) -> some View {
-        Button {
+        PerformanceSession.count(.cardFactory)
+        return Button {
             chooseMission(mission)
         } label: {
             VStack(alignment: .leading, spacing: 10) {

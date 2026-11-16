@@ -24,6 +24,7 @@ struct CompanionPanel: View {
     @StateObject private var ui = CompanionPanelState()
 
     var body: some View {
+        let _ = PerformanceSession.count(.conversationBody)
         VStack(spacing: 12) {
             channelHeader
             VStack(alignment: .leading, spacing: 4) {

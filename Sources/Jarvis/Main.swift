@@ -5,6 +5,7 @@ import SwiftUI
 
 @main enum JarvisMain {
     @MainActor static func main() {
+        let enteredMain = ProcessInfo.processInfo.systemUptime
         let arguments = CommandLine.arguments
         let launch: WorkspaceLaunch
         do {
@@ -21,6 +22,26 @@ import SwiftUI
         switch launch {
         case .live: source = CodexReader()
         case .fixture(let home): source = CodexReader(home: home)
+        }
+        if arguments.contains("--performance-baseline") {
+            guard case .fixture(let home) = launch,
+                let revision = arguments.first(where: { $0.hasPrefix("--revision=") })
+            else { exit(64) }
+            Task {
+                do {
+                    try await PerformanceWorkloads.run(
+                        home: home,
+                        output: home.deletingLastPathComponent().appendingPathComponent(
+                            "performance-workloads.json"),
+                        revision: String(revision.dropFirst("--revision=".count)),
+                        makeSource: { CodexReader(home: home) })
+                    exit(0)
+                } catch {
+                    FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
+                    exit(1)
+                }
+            }
+            dispatchMain()
         }
         if CommandLine.arguments.contains("--self-test") {
             fputs("Tests now run separately: use swift test from the project folder.\n", stderr)
@@ -43,7 +64,29 @@ import SwiftUI
             dispatchMain()
         }
         let app = NSApplication.shared
-        let delegate = AppDelegate(source: source, workspaceFixture: launch.isFixture)
+        let output = Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceOutput") as? String
+        #if DEBUG
+            if output != nil { exit(64) }
+        #endif
+        guard output == nil || launch.isFixture else { exit(64) }
+        let performance: PerformanceSession?
+        do {
+            if let output, case .fixture(let home) = launch {
+                let fixture = try JSONDecoder().decode(
+                    [String: Int].self,
+                    from: Data(contentsOf: home.appendingPathComponent("performance-fixture.json")))
+                performance = PerformanceSession(
+                    enteredMain: enteredMain,
+                    output: URL(fileURLWithPath: output), fixture: fixture)
+            } else {
+                performance = nil
+            }
+        } catch {
+            FileHandle.standardError.write(Data("Invalid performance fixture metadata.\n".utf8))
+            exit(64)
+        }
+        let delegate = AppDelegate(
+            source: source, workspaceFixture: launch.isFixture, performance: performance)
         app.delegate = delegate
         app.setActivationPolicy(.regular)
         // AppKit owns the main run loop; do not hold a Swift concurrency job across app.run().
@@ -58,10 +101,15 @@ import SwiftUI
     private let windowControls = WindowControls()
     private let store: FleetStore
     private let workspaceFixture: Bool
+    private let performance: PerformanceSession?
 
-    init(source: any WorkspaceSource, workspaceFixture: Bool = false) {
+    init(
+        source: any WorkspaceSource, workspaceFixture: Bool = false,
+        performance: PerformanceSession? = nil
+    ) {
         store = FleetStore(source: source)
         self.workspaceFixture = workspaceFixture
+        self.performance = performance
         companion =
             workspaceFixture
             ? CompanionModel(makeConnection: { DisabledWorkspaceFixtureConnection() })
@@ -125,19 +173,23 @@ import SwiftUI
         window.backgroundColor = NSColor(red: 0.025, green: 0.045, blue: 0.065, alpha: 1)
         window.minSize = NSSize(width: 1180, height: 760)
         windowControls.attach(to: window)
-        window.contentView = NSHostingView(
-            rootView: Dashboard(
-                windowControls: windowControls, companion: companion, voice: voice, store: store,
-                workspaceFixture: workspaceFixture))
+        let dashboard = Dashboard(
+            windowControls: windowControls, companion: companion, voice: voice, store: store,
+            workspaceFixture: workspaceFixture, performance: performance)
+        window.contentView =
+            performance == nil
+            ? NSHostingView(rootView: dashboard) : PerformanceHostingView(rootView: dashboard)
         window.collectionBehavior = [.fullScreenPrimary]
         window.setFrameAutosaveName("JarvisMissionControl")
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
+        performance?.attach(window: window, store: store, companion: companion)
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        performance?.stop()
         voice.cancel()
         voice.stopAudio()
         Task {

@@ -1,4 +1,6 @@
 [
+  "JarvisTests.PerformanceRegressionTests/sustainedHoverDoesNotInvalidateDashboardOrConversation",
+  "JarvisTests.PerformanceRegressionTests/measurementSummaryPreservesSlowSamplesAndRejectsMissingMeasurements",
   "JarvisTests.WorkspaceLaunchTests/reopeningFixtureWithoutArgumentsUsesEmbeddedDataInsteadOfLiveRecords",
   "JarvisTests.WorkspaceLaunchTests/fixtureWithMissingConfigurationFailsClosed",
   "JarvisTests.FleetStoreTests/cancelledLateSuccessCannotPublishAndTheNextRefreshCanRecover",

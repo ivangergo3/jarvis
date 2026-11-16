@@ -307,6 +307,7 @@ struct CompositorTopology: NSViewRepresentable {
         HUDLayers.change { updateStyles() }
     }
     private func rebuildGeometry() {
+        PerformanceSession.count(.connectorRebuild)
         for sublayer in layer?.sublayers ?? [] { sublayer.removeFromSuperlayer() }
         lines = []
         dots = []
