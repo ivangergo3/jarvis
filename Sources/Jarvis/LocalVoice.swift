@@ -69,23 +69,25 @@ struct DictationSession {
     }()
     private let speaker = AVSpeechSynthesizer()
     private var speechTask: Task<Void, Never>?
-    private var workspaceObserver: NSObjectProtocol?
 
     override init() {
         super.init()
-        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in
-                self?.cancel()
-                self?.stopAudio()
-            }
-        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(workspaceWillSleep),
+            name: NSWorkspace.willSleepNotification, object: nil
+        )
     }
 
     deinit {
-        if let workspaceObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(workspaceObserver)
+        NSWorkspace.shared.notificationCenter.removeObserver(
+            self, name: NSWorkspace.willSleepNotification, object: nil
+        )
+    }
+
+    @objc nonisolated private func workspaceWillSleep(_ notification: Notification) {
+        Task { @MainActor [weak self] in
+            self?.cancel()
+            self?.stopAudio()
         }
     }
 

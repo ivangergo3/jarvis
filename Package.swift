@@ -13,5 +13,5 @@ let package = Package(
         .testTarget(name: "QualitySupportTests", dependencies: ["QualitySupport"],
                     swiftSettings: [.swiftLanguageMode(.v6)]),
     ],
-    swiftLanguageModes: [.v5]
+    swiftLanguageModes: [.v6]
 )

@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Jarvis
 
@@ -22,6 +23,9 @@ import Testing
     @Test func inlineFormattingRemovesMarkdownDelimiters() {
         let formatted = ChatMarkdown.inline("**Bold** and `code` and [a link](https://example.com)")
         #expect(String(formatted.characters) == "Bold and code and a link")
-        #expect(formatted.runs.contains { $0.link?.absoluteString == "https://example.com" })
+        let containsLink = formatted.runs.contains {
+            $0[AttributeScopes.FoundationAttributes.LinkAttribute.self]?.absoluteString == "https://example.com"
+        }
+        #expect(containsLink)
     }
 }

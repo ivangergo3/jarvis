@@ -135,10 +135,8 @@ struct LogObservation {
 
     static func date(_ value: String?) -> Date? {
         guard let value else { return nil }
-        return fractional.date(from: value) ?? whole.date(from: value)
+        return (try? fractional.parse(value)) ?? (try? whole.parse(value))
     }
-    private static let fractional: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]; return f
-    }()
-    private static let whole = ISO8601DateFormatter()
+    private static let fractional = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
+    private static let whole = Date.ISO8601FormatStyle(includingFractionalSeconds: false)
 }

@@ -71,6 +71,35 @@ struct ObservationTests {
         #expect(LogObservation.date(nil) == nil)
         #expect(LogObservation.date("invalid") == nil)
     }
+
+    @Test func timestampsPreserveOffsetsAndFractionalPrecision() throws {
+        let epoch = Date(timeIntervalSince1970: 1_767_225_600)
+        for text in ["2026-01-01T02:00:00+02:00", "2025-12-31T19:00:00-05:00"] {
+            #expect(LogObservation.date(text) == epoch)
+        }
+        for (text, fraction) in [
+            ("2026-01-01T00:00:00.1Z", 0.1),
+            ("2026-01-01T00:00:00.123456Z", 0.123456),
+            ("2026-01-01T02:00:00.125+02:00", 0.125),
+        ] {
+            let parsed = try #require(LogObservation.date(text))
+            #expect(abs(parsed.timeIntervalSince(epoch) - fraction) < 0.000001)
+        }
+    }
+
+    @Test func timestampsParseAcrossConcurrentTasks() async {
+        let expected = Date(timeIntervalSince1970: 1_767_225_600.125)
+        let results = await withTaskGroup(of: Date?.self, returning: [Date?].self) { group in
+            for _ in 0..<100 {
+                group.addTask { LogObservation.date("2026-01-01T00:00:00.125Z") }
+            }
+            var dates: [Date?] = []
+            for await date in group { dates.append(date) }
+            return dates
+        }
+        #expect(results.count == 100)
+        #expect(results.allSatisfy { $0 == expected })
+    }
 }
 
 @Suite("Project membership")
