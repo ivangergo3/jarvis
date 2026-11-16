@@ -11,7 +11,8 @@ import SwiftUI
         do {
             verification = try UIVerification.parse(arguments)
             if Bundle.main.bundleIdentifier == "dev.jarvis.verification", verification == nil {
-                throw VerificationFailure(message: "The verification app requires synthetic launch arguments.")
+                throw VerificationFailure(
+                    message: "The verification app requires synthetic launch arguments.")
             }
             launch = try WorkspaceLaunch.resolve(
                 arguments: arguments,
@@ -52,7 +53,8 @@ import SwiftUI
             dispatchMain()
         }
         let app = NSApplication.shared
-        let delegate = AppDelegate(source: source, workspaceFixture: launch.isFixture, verification: verification)
+        let delegate = AppDelegate(
+            source: source, workspaceFixture: launch.isFixture, verification: verification)
         app.delegate = delegate
         app.setActivationPolicy(.regular)
         // AppKit owns the main run loop; do not hold a Swift concurrency job across app.run().
@@ -71,7 +73,10 @@ import SwiftUI
     private let evidence = VerificationEvidence()
     private let windowControls = WindowControls()
     private var verificationLifetime: Task<Void, Never>?
-    init(source: any WorkspaceSource, workspaceFixture: Bool = false, verification: UIVerification? = nil) {
+    init(
+        source: any WorkspaceSource, workspaceFixture: Bool = false,
+        verification: UIVerification? = nil
+    ) {
         store = FleetStore(source: source)
         self.workspaceFixture = workspaceFixture
         self.verification = verification
@@ -86,8 +91,11 @@ import SwiftUI
             ui.motion = false
             ui.refreshInterval = .fast
         } else {
-            companion = workspaceFixture
-                ? CompanionModel(allowsExternalActions: false, makeConnection: { DisabledWorkspaceFixtureConnection() })
+            companion =
+                workspaceFixture
+                ? CompanionModel(
+                    allowsExternalActions: false,
+                    makeConnection: { DisabledWorkspaceFixtureConnection() })
                 : CompanionModel()
             voice = LocalVoice()
             ui = DashboardState()

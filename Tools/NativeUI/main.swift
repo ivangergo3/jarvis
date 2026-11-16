@@ -44,7 +44,9 @@ func verifyProjectSources() throws {
             .compactMap { objects[$0]?["fileRef"] as? String }
             .compactMap { objects[$0]?["path"] as? String })
     var owned = Set<String>()
-    for directory in ["Sources/Jarvis", "UITests"] {
+    for directory in [
+        "Sources/Jarvis", "Sources/JarvisDomain", "Sources/JarvisWorkspace", "UITests",
+    ] {
         guard
             let enumerator = FileManager.default.enumerator(
                 atPath: root.appendingPathComponent(directory).path)

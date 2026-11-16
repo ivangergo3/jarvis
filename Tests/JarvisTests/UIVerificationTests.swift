@@ -8,6 +8,7 @@ import Testing
 struct UIVerificationTests {
     @Test @MainActor func fixtureTerminationDoesNotWaitForAnotherMainActorTask() {
         let delegate = AppDelegate(
+            source: VerificationFleetSource(.workspace),
             verification: UIVerification(scenario: .workspace, runID: UUID()))
         #expect(delegate.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
     }

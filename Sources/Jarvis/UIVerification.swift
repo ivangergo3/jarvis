@@ -22,7 +22,8 @@ struct UIVerification: Sendable {
             guard arguments.filter({ $0 == flag }).count == 1,
                 let index = arguments.firstIndex(of: flag), index + 1 < arguments.count
             else {
-                throw VerificationFailure(message: "UI verification requires a scenario and run UUID.")
+                throw VerificationFailure(
+                    message: "UI verification requires a scenario and run UUID.")
             }
             return arguments[index + 1]
         }

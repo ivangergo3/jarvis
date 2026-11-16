@@ -59,14 +59,14 @@ final class JarvisUITests: XCTestCase {
 
     @MainActor func testProjectsAndChatSelection() throws {
         let app = try launch("workspace")
-        click(app, "dashboard.project.alpha")
+        click(app, "workspace.project.alpha")
         expect(element(app, "dashboard.scope"), equals: "/  Alpha Workshop")
-        click(app, "dashboard.chat.alpha-two")
+        click(app, "workspace.chat.alpha-two")
         expect(element(app, "companion.destination"), equals: "Release checks")
         choose(app, "beta")
         expect(element(app, "dashboard.scope"), equals: "/  Beta Workshop")
-        XCTAssertTrue(element(app, "dashboard.chat.beta-one").waitForExistence(timeout: 10))
-        XCTAssertFalse(element(app, "dashboard.chat.alpha-two").exists)
+        XCTAssertTrue(element(app, "workspace.chat.beta-one").waitForExistence(timeout: 10))
+        XCTAssertFalse(element(app, "workspace.chat.alpha-two").exists)
         expect(element(app, "companion.destination"), equals: "Planning")
         XCTAssertFalse(element(app, "companion.microphone").isEnabled)
         XCTAssertFalse(element(app, "companion.openLinkedChat").isEnabled)
@@ -82,7 +82,7 @@ final class JarvisUITests: XCTestCase {
     @MainActor func testEmptyWorkspace() throws {
         let empty = try launch("empty")
         expect(element(empty, "dashboard.empty"), equals: "No projects available yet.")
-        XCTAssertFalse(element(empty, "dashboard.project.alpha").exists)
+        XCTAssertFalse(element(empty, "workspace.project.alpha").exists)
         XCTAssertFalse(element(empty, "companion.send").isEnabled)
     }
 
@@ -96,10 +96,10 @@ final class JarvisUITests: XCTestCase {
 
     @MainActor func testStaleSnapshotRetainsNavigation() throws {
         let app = try launch("stale")
-        click(app, "dashboard.project.alpha")
+        click(app, "workspace.project.alpha")
         XCTAssertTrue(element(app, "dashboard.error").waitForExistence(timeout: 25))
-        XCTAssertTrue(element(app, "dashboard.chat.alpha-two").exists)
-        click(app, "dashboard.chat.alpha-two")
+        XCTAssertTrue(element(app, "workspace.chat.alpha-two").exists)
+        click(app, "workspace.chat.alpha-two")
         expect(element(app, "companion.destination"), equals: "Release checks")
         expect(element(app, "companion.activityStatus"), equals: "UNKNOWN")
     }
@@ -110,8 +110,8 @@ final class JarvisUITests: XCTestCase {
         XCTAssertTrue(element(app, "projectChoice.alpha").waitForExistence(timeout: 10))
         app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
         XCTAssertTrue(element(app, "projectChoice.alpha").waitForNonExistence(timeout: 10))
-        click(app, "dashboard.project.alpha")
-        click(app, "dashboard.chat.alpha-one")
+        click(app, "workspace.project.alpha")
+        click(app, "workspace.chat.alpha-one")
         let draft = element(app, "companion.draft")
         expect(element(app, "companion.destination"), equals: "Planning")
         click(app, "companion.draft")
@@ -121,7 +121,7 @@ final class JarvisUITests: XCTestCase {
         XCTAssertFalse(element(app, "companion.send").isEnabled)
         XCTAssertEqual(element(app, "verification.submissions").label, "0 submissions")
         choose(app, "alpha")
-        click(app, "dashboard.chat.alpha-one")
+        click(app, "workspace.chat.alpha-one")
         expect(draft, key: "value", equals: "Synthetic alpha draft")
         app.typeKey(XCUIKeyboardKey.return.rawValue, modifierFlags: .command)
         expect(

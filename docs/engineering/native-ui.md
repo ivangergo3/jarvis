@@ -3,6 +3,10 @@
 Ticket #45 adds the shared `NativeUI` Xcode scheme and six XCTest UI journeys.
 The scheme builds a Release macOS application from the same owned Swift sources
 and bundled artwork as `build.sh`, plus a native UI-test target. The verification
+build preserves the `JarvisDomain` and `JarvisWorkspace` modules as separate
+static library targets, with the same dependency direction as SwiftPM. The fake
+workspace implements `WorkspaceSource`; it uses the production refresh store,
+including cancellation and unchanged-snapshot suppression from #46. The verification
 artifact has its own bundle identifier (`dev.jarvis.verification`) and refuses
 to start without an explicit synthetic scenario and run UUID. The existing
 shell-built `Jarvis.app` remains unchanged as a packaging route; this suite
@@ -35,6 +39,8 @@ Each run preserves evidence under `test-results/native-ui/<run UUID>/`:
 - Xcode/Swift/OS/commit records, build/drive logs and discovery JSON.
 - `NativeUI.xcresult`, containing assertions, native accessibility hierarchy
   attachments and app screenshots; screenshots alone cannot pass a test.
+- On failure, exported attachments and diagnostics where Xcode can extract them;
+  the original result bundle is retained even if export fails.
 - Parsed result trees/summary and `gate.json` only after all checks pass.
 
 Open a retained result with `open <run-directory>/NativeUI.xcresult`. CI retains
