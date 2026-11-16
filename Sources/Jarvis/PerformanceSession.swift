@@ -39,8 +39,8 @@ import SwiftUI
         let processID: Int32
         let fixture: [String: Int]
         let mainToFirstDrawMilliseconds: Double?
-        let mainToPopulatedDrawMilliseconds: Double?
-        let switchToDrawMilliseconds: PerformanceDistribution?
+        let mainToPopulatedBodyMilliseconds: Double?
+        let switchToBodyMilliseconds: PerformanceDistribution?
         let windowWidth: Double
         let windowHeight: Double
         let backingScale: Double
@@ -51,9 +51,15 @@ import SwiftUI
 
     private(set) static weak var current: PerformanceSession?
     static func count(_ work: Work) { current?.counts[work, default: 0] += 1 }
-    static func dashboardEvaluated(project: String?) {
+    static func dashboardEvaluated(project: String?, populated: Bool) {
         count(.dashboardBody)
-        current?.evaluatedProject = project
+        guard let current else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        if populated && current.firstPopulatedBody == nil { current.firstPopulatedBody = now }
+        if let pending = current.pendingProject, pending == project {
+            current.switchSamples.append((now - current.switchStarted) * 1_000)
+            current.pendingProject = nil
+        }
     }
 
     let dashboard = DashboardState()
@@ -65,8 +71,7 @@ import SwiftUI
     private weak var store: FleetStore?
     private var subscriptions: [AnyCancellable] = []
     private var firstDraw: Double?
-    private var firstPopulatedDraw: Double?
-    private var evaluatedProject: String?
+    private var firstPopulatedBody: Double?
     private var pendingProject: String?
     private var switchStarted = 0.0
     private var switchSamples: [Double] = []
@@ -95,11 +100,6 @@ import SwiftUI
         Self.count(.nativeDraw)
         let now = ProcessInfo.processInfo.systemUptime
         if firstDraw == nil { firstDraw = now }
-        if store?.snapshot != nil, firstPopulatedDraw == nil { firstPopulatedDraw = now }
-        if let pendingProject, pendingProject == evaluatedProject {
-            switchSamples.append((now - switchStarted) * 1_000)
-            self.pendingProject = nil
-        }
     }
 
     func stop() {
@@ -197,7 +197,7 @@ import SwiftUI
     private func run() async {
         var failure: String?
         do {
-            try await waitUntil({ self.firstPopulatedDraw != nil }, seconds: 15)
+            try await waitUntil({ self.firstPopulatedBody != nil }, seconds: 15)
             let expected = Set([0, 1, 4, 20, 100].map { "perf-\($0)" })
             guard Set(store?.snapshot?.projects.map(\.id) ?? []) == expected else {
                 throw PerformanceFailure(
@@ -232,8 +232,8 @@ import SwiftUI
             processID: ProcessInfo.processInfo.processIdentifier,
             fixture: fixture,
             mainToFirstDrawMilliseconds: firstDraw.map { ($0 - enteredMain) * 1_000 },
-            mainToPopulatedDrawMilliseconds: firstPopulatedDraw.map { ($0 - enteredMain) * 1_000 },
-            switchToDrawMilliseconds: switches,
+            mainToPopulatedBodyMilliseconds: firstPopulatedBody.map { ($0 - enteredMain) * 1_000 },
+            switchToBodyMilliseconds: switches,
             windowWidth: Double(window?.frame.width ?? 0),
             windowHeight: Double(window?.frame.height ?? 0),
             backingScale: Double(window?.backingScaleFactor ?? 0),

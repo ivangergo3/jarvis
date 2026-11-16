@@ -113,7 +113,8 @@ struct Dashboard: View {
     }
 
     var body: some View {
-        let _ = PerformanceSession.dashboardEvaluated(project: ui.projectID)
+        let _ = PerformanceSession.dashboardEvaluated(
+            project: ui.projectID, populated: store.snapshot != nil)
         HStack(spacing: 0) {
             sidebar.frame(width: 215)
             Rectangle().fill(HUD.line).frame(width: 1)

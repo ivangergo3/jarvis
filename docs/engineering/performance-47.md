@@ -17,8 +17,13 @@ reviewable changes; no broad optimization is presumed necessary.
   graph routing (0/1/4/20/100 nodes), fresh-adapter workspace reads and cached
   unchanged reads. Record all samples, not only the fastest.
 - Three separately identified fixture app launches. Measure process-main entry
-  to first native draw and first populated workspace draw. These exclude work
+  to first native draw and first populated workspace body evaluation. These exclude work
   before main/LaunchServices and are not cold-disk launch claims.
+  Project-switch timings stop at the target SwiftUI body evaluation, not GPU
+  presentation. The initial draw-callback readiness protocol failed on a real
+  layer-backed update (revision d9f36a6); that failed run is retained and excluded
+  from successful baselines. The revised boundary is explicit, not a fabricated
+  substitute for an unobserved draw.
 - Exercise the real displayed hover state at a fixed cadence, then a bounded
   soak. Record root/conversation/card/topology work and connector rebuilds,
   own-process user+system CPU, resident memory, and main-actor heartbeat delay.
