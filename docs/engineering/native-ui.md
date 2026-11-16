@@ -79,6 +79,10 @@ Every journey starts a fresh app with a unique run UUID and waits for bounded,
 observable conditions. Stable identifiers are attached to existing native
 controls. The recorded fake transport receipt is independent of the displayed
 chat name, so duplicate names cannot conceal a wrong destination.
+Identifiers belong to individual controls, not the dashboard container, whose
+identifier can propagate over child identifiers in the native accessibility tree.
+The draft journey verifies actual typed text before switching: `NSTextView`'s
+accessibility-enabled flag is not its `isEditable` property.
 
 The static background grid uses a stroked `Shape` with the same spacing, color
 and line width as the original `Canvas`. The populated-workspace CI journeys

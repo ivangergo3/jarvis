@@ -152,7 +152,6 @@ struct Dashboard: View {
         }
         .background(HUD.background).foregroundStyle(HUD.text).preferredColorScheme(.dark)
         .frame(minWidth: 1180, minHeight: 760)
-        .accessibilityIdentifier("workspace.dashboard")
         .overlay(alignment: .bottomLeading) {
             if workspaceFixture {
                 Text("WORKSPACE FIXTURE").font(HUD.mono(9)).foregroundStyle(HUD.gold)
