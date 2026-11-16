@@ -4,6 +4,8 @@ This change implements the agreed skill definitions, not the app or an agent tea
 
 ## Suggested reading order
 
+For the latest engineering-only changes, start with the [16 November focused report](../../evaluations/guardrails-2026-11-16/REPORT.md). It maps ten revised skills to twelve exercises, including two actual disposable code regressions. The earlier full-library report remains historical evidence for its recorded versions. The new guardrail additions introduce no executable helpers or app/tooling changes.
+
 1. [Boundaries](SKILL_BOUNDARIES.md) and [local-use safety](SKILL_SAFETY.md): portability, authority, private context and runtime limits.
 2. [Research notes](SKILL_RESEARCH.md): external inspiration and what was deliberately excluded.
 3. [Evaluation report](../../evaluations/library-2026-11-15/REPORT.md): actual outcomes, revisions and limitations. Raw prompts, outputs and review evidence are alongside it.

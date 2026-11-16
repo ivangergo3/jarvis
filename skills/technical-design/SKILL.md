@@ -15,6 +15,12 @@ Trace the current path that the change will affect. Name the state owner, inputs
 Describe contracts, data lifetime, cancellation, permissions and compatibility only where they affect the requirement. Make migrations and irreversible transitions explicit. Identify unknown contracts as investigation tasks, not assumed capabilities.
 Give a vertical implementation slice and verification evidence for the risky boundaries. Label proposed schema or acceptance criteria as proposals. Retain technical decisions already made by the user unless evidence warrants a documented alternative.
 
+## Dependency boundaries
+
+Specify allowed dependency directions and ownership, not just folder names. For a web product, keep frontend and backend separate, with a shared package for transport-neutral contracts or pure domain rules. Frontend and backend may depend on shared; shared must not depend on either. Do not put server credentials, database clients, platform UI or privileged operations in browser-reachable shared code. Runtime input validation and server-side authorization remain necessary even with shared types.
+
+For a native application, adapt the same principle to presentation, domain and integration/storage boundaries. Do not invent a network backend to satisfy a folder convention. Keep UI lifecycle/state separate from blocking I/O and parsing; define interfaces for side effects. Propose an import/module check and contract tests where boundaries are important. Avoid framework layers without a concrete responsibility or consumer.
+
 ## Output
 
 A design note with current behaviour, proposed flow/contracts, alternatives, tradeoffs, unresolved decisions and verification approach.

@@ -15,6 +15,12 @@ Classify a failure as a product defect, test defect, environment issue or unreso
 Inspect shared state, time, ordering, selectors and external dependencies. Propose a targeted correction preserving the oracle. If the requirement changed, link the accepted change before updating expectations.
 Temporary quarantine needs a recorded reason, owner/next action and lost coverage; it is not a pass. Validate the correction under the conditions that caused the failure and report residual uncertainty.
 
+## Preserve the failure signal
+
+Never make CI green by deleting a failing test, removing its assertion, accepting arbitrary output, catching all errors, adding retries that hide the failure, globally skipping a suite or lowering a gate. First determine whether the product, test, environment or accepted requirement is wrong. The implementation's current output is not a new requirement.
+
+Replacing an obsolete or redundant test is legitimate only with the accepted requirement change or demonstrated equivalent coverage, a visible rationale and verification of the replacement. Review snapshot changes individually. Temporary quarantine must remain visible as missing coverage, with an owner, expiry/review condition and replacement signal; it must not bypass a release-critical gate without an explicit risk decision by the responsible owner. Re-run the reproducing conditions and relevant neighbours after the fix; distinguish actual observations from proposed commands.
+
 ## Output
 
 Cause assessment, narrow test/product change or quarantine proposal, coverage impact and verification evidence.

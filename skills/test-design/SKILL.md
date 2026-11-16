@@ -15,6 +15,12 @@ Map each consequential rule to an observable outcome. Use boundaries, equivalenc
 Choose the lowest test level that can observe the relevant contract, keeping a few end-to-end checks for integration risks. Specify setup, action, oracle and cleanup. Make temporal, negative and authorization behaviour explicit when relevant.
 Identify missing criteria instead of inventing acceptance thresholds. Separate proposed checks from required coverage. Explain what mocks cannot establish and where exploration or real integration evidence remains necessary.
 
+## Test strength
+
+Derive expected results independently from requirements, examples or a trusted oracle, not by calling the same algorithm twice. Ask which plausible behaviour defect each assertion would catch and whether an internal refactor preserving that behaviour would unnecessarily break it. Internal helper-call counts are usually brittle; an outbound request, forbidden side effect or idempotency guarantee can be a real observable contract.
+
+Select techniques for the risk: property/fuzz tests for parsers and invariants, contracts for integration boundaries, mutation or deliberate fault seeding for suspiciously green critical tests, benchmarks for performance claims. Coverage shows execution, not assertion quality. Do not mandate every technique, 100% coverage or arbitrary numeric thresholds for every change. Keep selected end-to-end journeys for risks that isolated mocks cannot establish.
+
 ## Output
 
 A prioritised test design with traceable conditions, data, oracles, level and known coverage gaps.

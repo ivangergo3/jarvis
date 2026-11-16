@@ -15,6 +15,12 @@ Choose assertions around observable behaviour or a stable contract. Use isolated
 Use condition-based waits and selectors grounded in observed UI semantics. Do not mask failures with unbounded retries, sleeps or overly broad mocks. Separate a mocked integration assertion from evidence that a real provider behaves that way.
 When useful, show that a regression check fails on the original defect and passes on the fix using a disposable copy. Record exactly what executed and any unavailable toolchain or fixture limitation.
 
+## Evidence and isolation
+
+For a bug regression, demonstrate failure on the defective version and success on the fix when reproducible. If that is unavailable, identify the alternative evidence and gap; never invent a red run. For critical new assertions, consider a disposable fault injection to confirm sensitivity without changing the production tree. Assert the actual result and relevant forbidden side effects, not only an exit code or mock invocation.
+
+Control time, randomness and shared state where needed; exercise cancellation, ordering and cleanup explicitly for asynchronous work. Use bounded condition waits. Retain failing seeds and useful redacted diagnostics. A test runner reporting success with zero selected tests is not test evidence; inspect discovery, skip counts and failures. Do not accept blanket snapshot regeneration: review each changed expectation against the intended behaviour.
+
 ## Output
 
 Focused test code, invocation/results when actually run, and the contract covered and excluded.

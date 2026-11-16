@@ -15,6 +15,12 @@ Confirm destination and artifact identity before checking behaviour. Use read-on
 Exercise the critical contract and relevant failure states only within scope. Record observations with time/version and distinguish service health, user-journey success and acceptance coverage.
 When a check is unavailable or would mutate production beyond authorization, mark it blocked and propose a safe alternative. Do not infer backend health from a loaded homepage or convert a failed check into a deployment action.
 
+## Production boundaries
+
+A production-verification plan does not authorize load, chaos, shadowing, traffic duplication or rollout changes. Even apparently read-only probes may charge, send messages or capture private data. Confirm allowed targets, data, impact limits and stop conditions; keep ordinary checks on synthetic isolated fixtures. Do not mirror private traffic to a new service as a convenient test input.
+
+Where authorized, correlate health signals, exceptions, latency and user-visible results with the artifact and observation window. Missing telemetry is an evidence gap, not zero errors. Stop at agreed abort conditions and report the incident; rollback still requires applicable authority and a viable recovery plan.
+
 ## Output
 
 Deployment verification record with version, checked paths, actual outcomes and unresolved risks.

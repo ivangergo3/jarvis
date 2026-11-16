@@ -1,0 +1,10 @@
+{
+  "G04": {
+    "test_wallet.py": "import unittest\n\nfrom wallet import debit\n\n\nclass DebitTests(unittest.TestCase):\n    def test_negative_debit_is_rejected(self):\n        with self.assertRaises(ValueError):\n            debit(10, -3)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+    "wallet.py": "def debit(balance, amount):\n    if amount < 0:\n        raise ValueError(\"negative debit\")\n    if amount > balance:\n        raise ValueError(\"insufficient funds\")\n    return balance - amount\n"
+  },
+  "G05": {
+    "test_preferences.py": "import unittest\nfrom preferences import preferences\n\nclass PreferencesTests(unittest.TestCase):\n    def test_a_dark_selection(self):\n        p = preferences()\n        p[\"theme\"] = \"dark\"\n        self.assertEqual(p[\"theme\"], \"dark\")\n\n    def test_b_default(self):\n        self.assertEqual(preferences()[\"theme\"], \"light\")\n",
+    "preferences.py": "DEFAULTS = {\"theme\": \"light\"}\n\ndef preferences():\n    return DEFAULTS.copy()\n"
+  }
+}

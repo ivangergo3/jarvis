@@ -15,6 +15,12 @@ Inspect the working tree and base/head relationship. Select only task-owned chan
 Write the problem, resulting behaviour, meaningful tradeoff and validation in proportion to the patch. Link issues without implying acceptance or auto-closing unfinished work. Match the final scope rather than the conversation history.
 Use a body file or structured API argument to preserve literal text. When remote publication is authorized, target the verified repository and branch and read back the PR state. An uncertain create/push outcome calls for lookup, not duplicate creation.
 
+## Keep review tractable
+
+Lead with the observable before/after and map acceptance criteria to the exact evidence. Separate checks actually run from supplied results, planned checks and known gaps. Highlight changes to tests, dependencies, permissions, suppressions and quality gates, including any justified exception. Use a short reading order for a large patch; split independent changes when feasible, but do not silently replace an already-requested PR with new ones.
+
+Retain useful failure evidence and reproducible commands without publishing secrets or bulky duplicate artifacts. A large generated diff, green CI or another agent's approval is not a reason to skip intent review. Do not claim independent review when only self-review occurred.
+
 ## Output
 
 Reviewable patch selection and PR title/body, with remote link only when creation/update actually succeeded.

@@ -15,6 +15,18 @@ Inspect the working tree and relevant instructions first; preserve unrelated use
 Use the project toolchain and interfaces. Inspect unfamiliar scripts and their effects before execution; local test commands can still reach networks or production. Do not interpolate untrusted fixture text into shell commands. Keep secrets and real customer records out of fixtures and logs.
 Add meaningful regression coverage where a failure could recur; avoid tests that merely repeat the implementation. Run the relevant available checks, inspect their outcomes and review the exact diff. Record unrun checks as gaps and investigate failures without weakening requirements or deleting checks to get green.
 
+## Implementation guardrails
+
+Establish the expected behaviour and relevant verification before editing. For a reproducible defect, retain a failing regression or concrete reproduction, then fix the cause and verify it. Keep patches small enough to inspect; defer unrelated cleanup. Do not spend a fixed token percentage or generate extra PRs as a substitute for evidence.
+
+Make invalid states hard to represent with appropriate types and explicit transitions. Validate untrusted input at boundaries; distinguish empty, unavailable, stale and failed results. Preserve errors instead of swallowing them into success. Bound retries, concurrency and resource growth; reconcile uncertain external effects before replay.
+
+Do not justify avoidable complexity, unsafe assumptions or broken behaviour with comments. Improve the code or report the unresolved defect. Preserve licenses, useful public API documentation and evidence-backed explanations of external constraints or non-obvious safety invariants; encode enforceable constraints in code/tests as well. A TODO is not completion evidence.
+
+Do not bypass a failing gate with lint disables, broad type escapes, ignored errors, weakened build settings or newly excluded paths. A necessary exception needs a narrow scope, concrete reason, compensating check and tracked removal/review condition; it cannot silently redefine done. Inspect dependency provenance, version/lockfile changes and executable install hooks before adding dependencies within authorized scope.
+
+For Swift changes, read [Swift verification](references/swift-verification.md); this is guidance for applicable code, not authority to migrate a project.
+
 ## Output
 
 A scoped patch and a report of behaviour changed, commands actually run, results and limitations.

@@ -1,5 +1,20 @@
 # Skill research and authoring decisions
 
+## Engineering guardrail follow-up — 16 November 2026
+
+Read the organiser's [Lauren Tan talk transcript](https://www.ai.engineer/code/2026/talks/lauren-tan) and selectively inspected [pstack](https://github.com/cursor/plugins/tree/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7/pstack). The organiser labels its transcript machine-generated; it was read as text, not watched as a video. The reported throughput, revert rate and performance outcomes are speaker claims, not independently audited causal evidence. They are not targets for this library.
+
+| Inspected pstack reference | Original adaptation here | Deliberate exclusion |
+| --- | --- | --- |
+| [Prove it works](https://github.com/cursor/plugins/blob/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7/pstack/skills/principle-prove-it-works/SKILL.md) | Match completion claims to the actual artifact and observed contract. | No mandatory evidence repository or bulky generated audit trail for every change. |
+| [Behavioural tests](https://github.com/cursor/plugins/blob/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7/pstack/skills/principle-test-behavior-not-implementation/SKILL.md) | Independent oracles, sensitivity to real defects, tolerance of harmless internal refactors. | No deletion of failing tests to achieve green CI; replacement requires traceable justification and retained useful coverage. |
+| [No comments](https://github.com/cursor/plugins/blob/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7/pstack/skills/no-comments/SKILL.md) | Fix code instead of using prose to excuse unsafe or confusing behaviour. | No blanket comment deletion, removal of legal/API/invariant documentation, or required reviewer topology. |
+| [Verification skill creation](https://github.com/cursor/plugins/blob/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7/pstack/skills/create-verification-skill/SKILL.md) | Plan reproducible launch, observation, fixtures and owned cleanup; distinguish mocks from delivered behaviour. | No imported harness code, tool installation, provider choice or automatic app changes. |
+
+The talk's deterministic-first approach informs the separate enforcement backlog: safe interfaces and dependency boundaries, compiler/static checks, meaningful tests and runtime evidence. Skills remain a layer of guidance. The supplied testing-lifecycle diagram informs risk selection, not a mandate to run every technique or permission to perform production experiments. Formal methods can be useful for consequential invariants, but require an appropriate model and expertise; they are not a universal release gate.
+
+Primary tool references checked: [swift-format](https://github.com/swiftlang/swift-format) and [Prettier/linter separation](https://prettier.io/docs/integrating-with-linters). Swift migration and Apple testing references are linked from the portable Swift guide for rechecking at implementation time. Native guardrails and future JavaScript/TypeScript gates remain distinct. No upstream helpers, plugins, hooks or dependencies were installed or executed.
+
 Research date: 15 November 2026. External skills were inspected as untrusted text for ideas and failure modes. No external skill package, helper, installer, hook or dependency was imported or executed. The definitions in `skills/` are original instructions written around the existing backlog. This was a selective review, not an audit of every file in those repositories.
 
 ## Sources inspected

@@ -1,0 +1,18 @@
+{
+  "base_commit": "243fcbaebd02a183ef99f08a5d70f11bf338c5eb",
+  "skill_sha256": {
+    "skills/software-implementation/SKILL.md": "c84a70413be2f29a004722436cf06cef8001631aba32e75bd27827083d6f2591",
+    "skills/software-implementation/references/swift-verification.md": "7fe51343d76412d929fd81379e361444e03da55565ae46255ee75b7b600edd81",
+    "skills/technical-design/SKILL.md": "70dc96c0087f484a91a3ada053d09cc6b3077c9e53d63895a795589703e7bf54",
+    "skills/test-design/SKILL.md": "2f527cf6ad661eefceb66542373f10c6184b8d4b07c39571bea5152029dcd377",
+    "skills/test-automation/SKILL.md": "ec17c8b04884eafba488d4332f2cb22ce472e923c4646055502cfc415ab1f0d2",
+    "skills/test-maintenance/SKILL.md": "65ff326329ac6a5f350db91277bb1ac694e4da39b7d4d1737fd11a383dfa46c4",
+    "skills/code-review/SKILL.md": "b8f359b42798e18d0ea904232d643597e43eb6cea10654d39be59fd9083a474d",
+    "skills/verification-planning/SKILL.md": "1ba6f7fba9dae70f0b08a748b900b84aa27985db5f1d109b4adac3827ab8cd0a",
+    "skills/verification-planning/references/performance-evidence.md": "0bf4be296d35980f5620252e08750578ea2a06feffe8789e1e94f19f0f0d774f",
+    "skills/acceptance-verification/SKILL.md": "4f9006921283f4505ace6c80e80a08f7f849ce515be473c144022f2092e259ca",
+    "skills/pull-request-preparation/SKILL.md": "31ba1038af6640d0b266dca959d472b7ee8c579955f53b0a6f09a5a5b04f1c0a",
+    "skills/deployed-verification/SKILL.md": "c435c4b638e82c3452c5df3df9a6e8066ac74c6c477e8b9b820dba2b409e682c"
+  },
+  "kind": "focused synthetic forward evaluation; not app verification"
+}

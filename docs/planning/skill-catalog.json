@@ -138,7 +138,7 @@
     "title": "Verification planning",
     "priority": "P0",
     "path": "skills/verification-planning/SKILL.md",
-    "sha256": "74f56d55699c214f2e7579e1cec3b60221a59392dadac5eb06db7ffd848d950d",
+    "sha256": "1ba6f7fba9dae70f0b08a748b900b84aa27985db5f1d109b4adac3827ab8cd0a",
     "issue": 16,
     "status": "In review"
   },
@@ -215,7 +215,7 @@
     "title": "Technical design",
     "priority": "P1",
     "path": "skills/technical-design/SKILL.md",
-    "sha256": "ffedfb26ed6665d8168199bb773289adf1c758337db5a9e5df908fed6115dfc5",
+    "sha256": "70dc96c0087f484a91a3ada053d09cc6b3077c9e53d63895a795589703e7bf54",
     "issue": 23,
     "status": "In review"
   },
@@ -237,7 +237,7 @@
     "title": "Software implementation",
     "priority": "P1",
     "path": "skills/software-implementation/SKILL.md",
-    "sha256": "e02e1b4ad3844bcaa763d7f4c730ba759743756607a4cb2cb18d312db840df69",
+    "sha256": "c84a70413be2f29a004722436cf06cef8001631aba32e75bd27827083d6f2591",
     "issue": 24,
     "status": "In review"
   },
@@ -259,7 +259,7 @@
     "title": "Test design",
     "priority": "P1",
     "path": "skills/test-design/SKILL.md",
-    "sha256": "43f036a89fa46e8c74df9eb41c9df0f4828039dbf96fed646a268e4cbb590a39",
+    "sha256": "2f527cf6ad661eefceb66542373f10c6184b8d4b07c39571bea5152029dcd377",
     "issue": 25,
     "status": "In review"
   },
@@ -270,7 +270,7 @@
     "title": "Test automation",
     "priority": "P1",
     "path": "skills/test-automation/SKILL.md",
-    "sha256": "fb2ef8cddffcc6e8972562a32fdea382b841820f6b082865ea5b2ad0899a09a8",
+    "sha256": "ec17c8b04884eafba488d4332f2cb22ce472e923c4646055502cfc415ab1f0d2",
     "issue": 25,
     "status": "In review"
   },
@@ -281,7 +281,7 @@
     "title": "Test maintenance",
     "priority": "P1",
     "path": "skills/test-maintenance/SKILL.md",
-    "sha256": "538bc3456a5083fe4315296565f37c409b2042ce9cd7705496bb30579adf9154",
+    "sha256": "65ff326329ac6a5f350db91277bb1ac694e4da39b7d4d1737fd11a383dfa46c4",
     "issue": 25,
     "status": "In review"
   },
@@ -292,7 +292,7 @@
     "title": "Code review",
     "priority": "P1",
     "path": "skills/code-review/SKILL.md",
-    "sha256": "304c10db707e4c90bec6112f8c7df3d775855427339ca7b2b8bf0e564651dec7",
+    "sha256": "b8f359b42798e18d0ea904232d643597e43eb6cea10654d39be59fd9083a474d",
     "issue": 26,
     "status": "In review"
   },
@@ -325,7 +325,7 @@
     "title": "Acceptance verification",
     "priority": "P1",
     "path": "skills/acceptance-verification/SKILL.md",
-    "sha256": "5168557913f8cea082e6952d0c02ab170c0eed842f02b01eeb5061d3ceba7ccf",
+    "sha256": "4f9006921283f4505ace6c80e80a08f7f849ce515be473c144022f2092e259ca",
     "issue": 27,
     "status": "In review"
   },
@@ -336,7 +336,7 @@
     "title": "Pull request preparation",
     "priority": "P1",
     "path": "skills/pull-request-preparation/SKILL.md",
-    "sha256": "737a1a3932473e7a8e41bf849199c81eeac3fa114ef5c4542d00d99acacaa607",
+    "sha256": "31ba1038af6640d0b266dca959d472b7ee8c579955f53b0a6f09a5a5b04f1c0a",
     "issue": 28,
     "status": "In review"
   },
@@ -699,7 +699,7 @@
     "title": "Deployed verification",
     "priority": "P2",
     "path": "skills/deployed-verification/SKILL.md",
-    "sha256": "edb129c141ca372e7e8fa54cc35a36e68419015a11bf2834ba80895c1001f773",
+    "sha256": "c435c4b638e82c3452c5df3df9a6e8066ac74c6c477e8b9b820dba2b409e682c",
     "issue": 40,
     "status": "In review"
   },
