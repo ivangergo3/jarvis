@@ -13,16 +13,19 @@ private final class ReportParser: NSObject, XMLParserDelegate {
     var invalidSuite = false
     private var current: TestCase?
 
-    func parser(_ parser: XMLParser, didStartElement elementName: String,
-                namespaceURI: String?, qualifiedName: String?, attributes: [String: String]) {
+    func parser(
+        _ parser: XMLParser, didStartElement elementName: String,
+        namespaceURI: String?, qualifiedName: String?, attributes: [String: String]
+    ) {
         if elementName == "testsuite" {
             for key in ["failures", "errors", "skipped"] {
                 if let value = attributes[key], Double(value) != 0 { invalidSuite = true }
             }
         }
         if elementName == "testcase" {
-            current = TestCase(id: TestReport.id(
-                (attributes["classname"] ?? "") + "/" + (attributes["name"] ?? "")))
+            current = TestCase(
+                id: TestReport.id(
+                    (attributes["classname"] ?? "") + "/" + (attributes["name"] ?? "")))
             current?.skipped = ["skipped", "disabled", "notrun"].contains(
                 attributes["status", default: ""].lowercased())
         }
@@ -30,8 +33,10 @@ private final class ReportParser: NSObject, XMLParserDelegate {
         if elementName == "skipped" { current?.skipped = true }
     }
 
-    func parser(_ parser: XMLParser, didEndElement elementName: String,
-                namespaceURI: String?, qualifiedName: String?) {
+    func parser(
+        _ parser: XMLParser, didEndElement elementName: String,
+        namespaceURI: String?, qualifiedName: String?
+    ) {
         if elementName == "testcase", let current {
             cases.append(current)
             self.current = nil
@@ -69,16 +74,21 @@ public enum TestReport {
         return cases
     }
 
-    public static func validate(_ cases: [TestCase], discovered: Set<String>,
-                                required: Set<String>) throws -> Int {
-        guard !cases.isEmpty else { throw QualityFailure("Zero test cases reported (or missing report)") }
+    public static func validate(
+        _ cases: [TestCase], discovered: Set<String>,
+        required: Set<String>
+    ) throws -> Int {
+        guard !cases.isEmpty else {
+            throw QualityFailure("Zero test cases reported (or missing report)")
+        }
         guard !cases.contains(where: { $0.failed || $0.skipped }) else {
             throw QualityFailure("Failed, errored or skipped test case")
         }
         guard !discovered.isEmpty else { throw QualityFailure("Zero tests discovered") }
         let missing = discovered.union(required).subtracting(cases.map(\.id))
         guard missing.isEmpty else {
-            throw QualityFailure("Tests missing from results: " + missing.sorted().joined(separator: ", "))
+            throw QualityFailure(
+                "Tests missing from results: " + missing.sorted().joined(separator: ", "))
         }
         guard required.isSubset(of: discovered) else {
             throw QualityFailure("Critical tests missing from discovery")
@@ -92,11 +102,15 @@ public enum TestReport {
     }
 
     public static func discovered(in text: String) -> Set<String> {
-        Set(text.split(whereSeparator: \.isNewline).compactMap { line in
-            let value = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard value.range(of: #"^(JarvisTests|QualitySupportTests)\.[^/\s]+/[^\s]+$"#,
-                              options: .regularExpression) != nil else { return nil }
-            return id(value)
-        })
+        Set(
+            text.split(whereSeparator: \.isNewline).compactMap { line in
+                let value = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard
+                    value.range(
+                        of: #"^(JarvisTests|QualitySupportTests)\.[^/\s]+/[^\s]+$"#,
+                        options: .regularExpression) != nil
+                else { return nil }
+                return id(value)
+            })
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Jarvis
 
 @Suite("Controlled lifecycle time")
@@ -8,12 +9,15 @@ struct LifecycleBoundaryTests {
         let fixture = try SessionFixture()
         let file = try fixture.addThread()
         let modified = Date(timeIntervalSince1970: 1_700_000_000)
-        try FileManager.default.setAttributes([.modificationDate: modified], ofItemAtPath: file.path)
+        try FileManager.default.setAttributes(
+            [.modificationDate: modified], ofItemAtPath: file.path)
         let boundary = modified.addingTimeInterval(1_800)
         let atBoundary = try await CodexReader(home: fixture.home, now: { boundary }).read()
         #expect(atBoundary.readAt == boundary)
         #expect(atBoundary.missions.first?.status == .working)
-        let afterBoundary = try await CodexReader(home: fixture.home, now: { boundary.addingTimeInterval(1) }).read()
+        let afterBoundary = try await CodexReader(
+            home: fixture.home, now: { boundary.addingTimeInterval(1) }
+        ).read()
         #expect(afterBoundary.missions.first?.status == .unknown)
     }
 }
@@ -33,11 +37,13 @@ struct ProtocolBoundaryTests {
         // Count the literal framing bytes independently of the parser's buffer logic.
         let prefix = "{\"text\":\""
         let suffix = "\"}"
-        let payload = String(repeating: "a", count: 1_048_576 - prefix.utf8.count - suffix.utf8.count)
+        let payload = String(
+            repeating: "a", count: 1_048_576 - prefix.utf8.count - suffix.utf8.count)
         var parser = ProtocolLines()
-        #expect(try parser.feed(Data((prefix + payload + suffix + "\n").utf8)) == [
-            .object(["text": .string(payload)])
-        ])
+        #expect(
+            try parser.feed(Data((prefix + payload + suffix + "\n").utf8)) == [
+                .object(["text": .string(payload)])
+            ])
         var oversized = ProtocolLines()
         #expect(throws: ConnectionFailure.invalidRecord) {
             try oversized.feed(Data((prefix + payload + "a" + suffix + "\n").utf8))
@@ -46,8 +52,10 @@ struct ProtocolBoundaryTests {
 
     @Test func deterministicChunkingPreservesKnownRecords() throws {
         let input = Data("{\"text\":\"🦾\\nhello\"}\n{\"id\":7}\n{\"done\":true}\n".utf8)
-        let expected: [WireValue] = [.object(["text": .string("🦾\nhello")]),
-                                     .object(["id": .number(7)]), .object(["done": .bool(true)])]
+        let expected: [WireValue] = [
+            .object(["text": .string("🦾\nhello")]),
+            .object(["id": .number(7)]), .object(["done": .bool(true)]),
+        ]
         for seed in 1...64 {
             var state = UInt64(seed)
             var parser = ProtocolLines()
@@ -78,34 +86,50 @@ private actor DelayedHistoryConnection: CodexConnection {
     private var stream: AsyncStream<CodexEvent>.Continuation?
 
     init(loseAcknowledgement: Bool = false) { self.loseAcknowledgement = loseAcknowledgement }
-    func pauseNextHistory() { pause = true; started = false }
+    func pauseNextHistory() {
+        pause = true
+        started = false
+    }
     func waitForHistory() async {
         if started { return }
         await withCheckedContinuation { startWaiter = $0 }
     }
-    func releaseHistory() { held?.resume(); held = nil }
+    func releaseHistory() {
+        held?.resume()
+        held = nil
+    }
     func publishMatchingReceipt() { queue = [receipt(id: receiptID)] }
     private func receipt(id: WireValue) -> WireValue {
-        .object(["id": .string("queue-receipt"), "clientUserMessageId": id,
-                 "input": .array([.object(["type": .string("text"), "text": .string("Same words")])])])
+        .object([
+            "id": .string("queue-receipt"), "clientUserMessageId": id,
+            "input": .array([.object(["type": .string("text"), "text": .string("Same words")])]),
+        ])
     }
     func request(_ method: String, params: WireValue) async throws -> WireValue {
         switch method {
         case "initialize": return .object([:])
         case "thread/turns/list":
             let target = params["threadId"].text ?? "missing"
-            let response = WireValue.object(["data": .array([.object([
-                "status": .string("completed"), "items": .array([.object([
-                    "type": .string("agentMessage"), "id": .string("reply-" + target),
-                    "text": .string("Reply for " + target)
-                ])])
-            ])])])
+            let response = WireValue.object([
+                "data": .array([
+                    .object([
+                        "status": .string("completed"),
+                        "items": .array([
+                            .object([
+                                "type": .string("agentMessage"), "id": .string("reply-" + target),
+                                "text": .string("Reply for " + target),
+                            ])
+                        ]),
+                    ])
+                ])
+            ])
             if pause {
                 pause = false
                 await withCheckedContinuation { continuation in
                     held = continuation
                     started = true
-                    startWaiter?.resume(); startWaiter = nil
+                    startWaiter?.resume()
+                    startWaiter = nil
                 }
             }
             return response
@@ -122,7 +146,9 @@ private actor DelayedHistoryConnection: CodexConnection {
         }
     }
     func notify(_ method: String) {}
-    func respond(to id: WireValue, result: WireValue) { Issue.record("Unexpected approval side effect") }
+    func respond(to id: WireValue, result: WireValue) {
+        Issue.record("Unexpected approval side effect")
+    }
     func reject(_ id: WireValue, message: String) {}
     func events() -> AsyncStream<CodexEvent> { AsyncStream { stream = $0 } }
     func close() { stream?.finish() }
@@ -130,8 +156,10 @@ private actor DelayedHistoryConnection: CodexConnection {
 
 @Suite("Asynchronous conversation regressions", .timeLimit(.minutes(1)))
 @MainActor struct ConversationRegressionTests {
-    private let first = ConversationScope(projectID: "p", name: "Same title", directory: nil, threadID: "a")
-    private let second = ConversationScope(projectID: "p", name: "Same title", directory: nil, threadID: "b")
+    private let first = ConversationScope(
+        projectID: "p", name: "Same title", directory: nil, threadID: "a")
+    private let second = ConversationScope(
+        projectID: "p", name: "Same title", directory: nil, threadID: "b")
 
     @Test func lateHistoryAfterDestinationChangeCannotReplaceTheNewChat() async {
         let connection = DelayedHistoryConnection()
