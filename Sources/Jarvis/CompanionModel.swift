@@ -93,6 +93,7 @@ struct CompanionApproval: Identifiable {
     @Published private(set) var historyUnavailable = false
     private(set) var turnID: String?
     private let makeConnection: @Sendable () -> any CodexConnection
+    let allowsExternalActions: Bool
     private var connection: (any CodexConnection)?
     private var eventTask: Task<Void, Never>?
     private var sendTask: Task<Void, Never>?
@@ -110,10 +111,14 @@ struct CompanionApproval: Identifiable {
     private var chatDrafts: [String: String] = [:]
 
     init(
+        allowsExternalActions: Bool = true,
         makeConnection: @escaping @Sendable () -> any CodexConnection = {
             CodexProcessConnection(executable: CodexExecutable.locate())
         }
-    ) { self.makeConnection = makeConnection }
+    ) {
+        self.allowsExternalActions = allowsExternalActions
+        self.makeConnection = makeConnection
+    }
 
     var canSend: Bool {
         !phase.busy && phase != .outcomeUnknown && !historyUnavailable
@@ -127,7 +132,9 @@ struct CompanionApproval: Identifiable {
     func pasteImage(_ image: ClipboardImage, store: ComposerImageStore = .shared) -> Task<
         Void, Never
     >? {
-        guard !phase.busy, phase != .outcomeUnknown, !importingImage, scope?.threadID != nil else {
+        guard allowsExternalActions, !phase.busy, phase != .outcomeUnknown, !importingImage,
+            scope?.threadID != nil
+        else {
             return nil
         }
         guard draftImages.count < 6 else {

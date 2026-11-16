@@ -45,14 +45,14 @@ struct DictationSession {
 @MainActor final class LocalVoice: NSObject, ObservableObject {
     @Published private(set) var session = DictationSession()
     @Published private(set) var error: String?
-    @Published var completionChime =
-        UserDefaults.standard.object(forKey: "completionChime") as? Bool ?? true
-    {
-        didSet { UserDefaults.standard.set(completionChime, forKey: "completionChime") }
+    private let preferences: UserDefaults?
+    let allowsAudio: Bool
+    @Published var completionChime: Bool {
+        didSet { preferences?.set(completionChime, forKey: "completionChime") }
     }
-    @Published var readReplies = UserDefaults.standard.bool(forKey: "readReplies") {
+    @Published var readReplies: Bool {
         didSet {
-            UserDefaults.standard.set(readReplies, forKey: "readReplies")
+            preferences?.set(readReplies, forKey: "readReplies")
             if !readReplies {
                 speechTask?.cancel()
                 speaker.stopSpeaking(at: .immediate)
@@ -78,7 +78,12 @@ struct DictationSession {
     private let speaker = AVSpeechSynthesizer()
     private var speechTask: Task<Void, Never>?
 
-    override init() {
+    init(preferences: UserDefaults? = .standard, allowsAudio: Bool = true) {
+        self.preferences = preferences
+        self.allowsAudio = allowsAudio
+        completionChime =
+            allowsAudio && (preferences?.object(forKey: "completionChime") as? Bool ?? true)
+        readReplies = allowsAudio && (preferences?.bool(forKey: "readReplies") ?? false)
         super.init()
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(workspaceWillSleep),
@@ -102,7 +107,7 @@ struct DictationSession {
     var recording: Bool { [.authorizing, .listening, .finishing].contains(session.phase) }
 
     func start() async {
-        guard !recording else { return }
+        guard allowsAudio, !recording else { return }
         stopAudio()
         error = nil
         let token = session.begin()
@@ -230,11 +235,12 @@ struct DictationSession {
     }
 
     func playCompletionChime() {
-        guard completionChime else { return }
+        guard allowsAudio, completionChime else { return }
         chime?.stop()
         chime?.play()
     }
     func announceCompletion(_ text: String?) {
+        guard allowsAudio else { return }
         stopAudio()
         playCompletionChime()
         guard readReplies, let text, !text.isEmpty else { return }
