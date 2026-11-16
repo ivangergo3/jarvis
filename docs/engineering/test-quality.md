@@ -2,7 +2,7 @@
 
 Implements #44 / QA-02, QA-03 and QA-05. These are fixture and protocol checks,
 not evidence that the native UI or a live Codex integration is production-ready.
-Native UI coverage remains a separate follow-up (QA-04).
+The separate [native UI gate](native-ui.md) covers bounded synthetic journeys (QA-04).
 
 ## Run locally
 

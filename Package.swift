@@ -13,6 +13,8 @@ let package = Package(
         .testTarget(
             name: "JarvisTests",
             dependencies: ["Jarvis", "JarvisDomain", "JarvisWorkspace", "QualitySupport"]),
+        .executableTarget(
+            name: "native-ui-check", dependencies: ["QualitySupport"], path: "Tools/NativeUI"),
         .target(
             name: "QualitySupport", path: "Tools/QualitySupport",
             swiftSettings: [.swiftLanguageMode(.v6)]),

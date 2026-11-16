@@ -3,11 +3,12 @@ import JarvisDomain
 import SwiftUI
 
 @MainActor final class DashboardState: ObservableObject {
+    private let preferences: UserDefaults?
     @Published var selection: String? {
-        didSet { UserDefaults.standard.set(selection, forKey: "selectedChat") }
+        didSet { preferences?.set(selection, forKey: "selectedChat") }
     }
     @Published var projectID: String? {
-        didSet { UserDefaults.standard.set(projectID ?? "__all__", forKey: "selectedProject") }
+        didSet { preferences?.set(projectID ?? "__all__", forKey: "selectedProject") }
     }
     @Published var tab = "Overview"
     @Published var motion = true
@@ -18,14 +19,15 @@ import SwiftUI
     @Published var projectPickerVisible = false
     @Published var refreshInterval: RefreshInterval = .normal {
         didSet {
-            UserDefaults.standard.set(refreshInterval.rawValue, forKey: "refreshIntervalSeconds")
+            preferences?.set(refreshInterval.rawValue, forKey: "refreshIntervalSeconds")
         }
     }
-    init() {
+    init(preferences: UserDefaults? = .standard) {
+        self.preferences = preferences
         refreshInterval = RefreshInterval.restoring(
-            UserDefaults.standard.integer(forKey: "refreshIntervalSeconds"))
-        selection = UserDefaults.standard.string(forKey: "selectedChat")
-        let stored = UserDefaults.standard.string(forKey: "selectedProject")
+            preferences?.integer(forKey: "refreshIntervalSeconds") ?? 0)
+        selection = preferences?.string(forKey: "selectedChat")
+        let stored = preferences?.string(forKey: "selectedProject")
         projectID = stored == "__all__" ? nil : stored
     }
 }
@@ -36,7 +38,18 @@ struct Dashboard: View {
     @ObservedObject var voice: LocalVoice
     @ObservedObject var store: FleetStore
     var workspaceFixture = false
-    @StateObject private var ui = DashboardState()
+    @StateObject private var ui: DashboardState
+    init(
+        windowControls: WindowControls, companion: CompanionModel, voice: LocalVoice,
+        store: FleetStore, ui: DashboardState = DashboardState(), workspaceFixture: Bool = false
+    ) {
+        self.windowControls = windowControls
+        self.companion = companion
+        self.voice = voice
+        self.store = store
+        self.workspaceFixture = workspaceFixture
+        _ui = StateObject(wrappedValue: ui)
+    }
     @StateObject private var imagePreview = ImagePreviewPresentation()
     private var selection: String? {
         get { ui.selection }
@@ -72,6 +85,13 @@ struct Dashboard: View {
     }
     private var selected: Mission? { missions.first { $0.id == selection } ?? missions.first }
     private var activeCount: Int { missions.filter { $0.status == .working }.count }
+    private var emptyMessage: String {
+        if store.snapshot == nil {
+            return store.error == nil ? "Connecting to your workspace…" : "Workspace unavailable."
+        }
+        return projects.isEmpty
+            ? "No projects available yet." : "No active chats in this project yet."
+    }
     private var agentCount: Int {
         missions.flatMap(\.agents).filter { $0.status == .working }.count
     }
@@ -132,7 +152,6 @@ struct Dashboard: View {
         }
         .background(HUD.background).foregroundStyle(HUD.text).preferredColorScheme(.dark)
         .frame(minWidth: 1180, minHeight: 760)
-        .accessibilityIdentifier("workspace.dashboard")
         .overlay(alignment: .bottomLeading) {
             if workspaceFixture {
                 Text("WORKSPACE FIXTURE").font(HUD.mono(9)).foregroundStyle(HUD.gold)
@@ -270,6 +289,7 @@ struct Dashboard: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Switch project: \(scopeName)")
         .accessibilityIdentifier("dashboard.projectSelector")
+        .keyboardShortcut("p", modifiers: [.command, .shift])
         .help("Switch between projects or the Jarvis overview")
         .popover(isPresented: $ui.projectPickerVisible, arrowEdge: .trailing) {
             ProjectChooser(projects: projects, selectedID: project?.id) { id in
@@ -291,6 +311,9 @@ struct Dashboard: View {
             Text("/  \(scopeName)").font(HUD.mono(12)).lineLimit(1).foregroundStyle(
                 HUD.text.opacity(0.85)
             ).layoutPriority(1)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("/  \(scopeName)")
+                .accessibilityIdentifier("dashboard.scope")
             Spacer()
             if windowControls.windowVisible {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -407,21 +430,23 @@ struct Dashboard: View {
                     .font(.system(size: 11)).foregroundStyle(HUD.gold).padding(12).background(
                         HUD.gold.opacity(0.06)
                     ).padding(.horizontal, 30)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Connection unavailable · \(error)")
+                    .accessibilityIdentifier("dashboard.error")
             } else if let notices = store.snapshot?.notices, !notices.isEmpty {
                 Label(notices.joined(separator: " "), systemImage: "exclamationmark.triangle").font(
                     .system(size: 11)
                 ).foregroundStyle(HUD.gold).padding(.horizontal, 30).padding(.bottom, 12)
             }
-            if store.snapshot == nil || (!isGlobal && missions.isEmpty) {
+            if store.snapshot == nil || projects.isEmpty || (!isGlobal && missions.isEmpty) {
                 Spacer()
                 VStack(spacing: 15) {
                     Image(systemName: "antenna.radiowaves.left.and.right").font(
                         .system(size: 28, weight: .ultraLight))
-                    Text(
-                        store.snapshot == nil
-                            ? "Connecting to your workspace…"
-                            : "No active chats in this project yet."
-                    ).font(.system(size: 15))
+                    Text(emptyMessage).font(.system(size: 15))
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(emptyMessage)
+                        .accessibilityIdentifier("dashboard.empty")
                 }.foregroundStyle(HUD.muted).frame(maxWidth: .infinity)
                 Spacer()
             } else if tab == "Activity" {
