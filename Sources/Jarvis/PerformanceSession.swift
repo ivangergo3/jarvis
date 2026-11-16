@@ -220,7 +220,10 @@ import SwiftUI
         var failure: String?
         do {
             try await waitUntil({ self.firstPopulatedBody != nil }, seconds: 15)
-            try await waitUntil({ NSApp.isActive && self.window?.isVisible == true }, seconds: 60)
+            if !manual {
+                try await waitUntil(
+                    { NSApp.isActive && self.window?.isVisible == true }, seconds: 300)
+            }
             let expected = Set([0, 1, 4, 20, 100].map { "perf-\($0)" })
             guard Set(store?.snapshot?.projects.map(\.id) ?? []) == expected else {
                 throw PerformanceFailure(
