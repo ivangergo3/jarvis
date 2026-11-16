@@ -45,13 +45,18 @@ struct DictationSession {
 @MainActor final class LocalVoice: NSObject, ObservableObject {
     @Published private(set) var session = DictationSession()
     @Published private(set) var error: String?
-    @Published var completionChime = UserDefaults.standard.object(forKey: "completionChime") as? Bool ?? true {
+    @Published var completionChime =
+        UserDefaults.standard.object(forKey: "completionChime") as? Bool ?? true
+    {
         didSet { UserDefaults.standard.set(completionChime, forKey: "completionChime") }
     }
     @Published var readReplies = UserDefaults.standard.bool(forKey: "readReplies") {
         didSet {
             UserDefaults.standard.set(readReplies, forKey: "readReplies")
-            if !readReplies { speechTask?.cancel(); speaker.stopSpeaking(at: .immediate) }
+            if !readReplies {
+                speechTask?.cancel()
+                speaker.stopSpeaking(at: .immediate)
+            }
         }
     }
     @Published var language = "en-GB"
@@ -64,7 +69,10 @@ struct DictationSession {
     private var finishTask: Task<Void, Never>?
     private let chime: NSSound? = {
         if let url = Bundle.main.url(forResource: "CompletionChime", withExtension: "wav"),
-           let sound = NSSound(contentsOf: url, byReference: true) { return sound }
+            let sound = NSSound(contentsOf: url, byReference: true)
+        {
+            return sound
+        }
         return NSSound(named: NSSound.Name("Glass"))
     }()
     private let speaker = AVSpeechSynthesizer()
@@ -233,14 +241,14 @@ struct DictationSession {
         let delay = completionChime
         speechTask = Task { [weak self] in
             if delay {
-                do { try await Task.sleep(for: .milliseconds(550)) }
-                catch { return }
+                do { try await Task.sleep(for: .milliseconds(550)) } catch { return }
             }
             guard !Task.isCancelled, let self, self.readReplies else { return }
             let raw = String(text.prefix(64_000))
             let spoken: String
-            do { spoken = String(try AttributedString(markdown: raw).characters) }
-            catch { spoken = raw }
+            do { spoken = String(try AttributedString(markdown: raw).characters) } catch {
+                spoken = raw
+            }
             let utterance = AVSpeechUtterance(string: spoken)
             utterance.voice = AVSpeechSynthesisVoice(language: self.language)
             self.speaker.speak(utterance)

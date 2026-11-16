@@ -1,18 +1,28 @@
 import Testing
+
 @testable import Jarvis
 
 @Suite("Markdown tables") struct MarkdownTableTests {
     @Test func toolSummaryWithWrappedDescriptions() {
-        let blocks = ChatMarkdown.blocks("Intro\n\n| Tool | What it does here |\n|---|---|\n| **Analytics** | Tracks consented product activity. |\n| **Errors** | Receives selected failures. |\n| **Collector** | Checks log freshness. |\n\nAfter")
+        let blocks = ChatMarkdown.blocks(
+            "Intro\n\n| Tool | What it does here |\n|---|---|\n| **Analytics** | Tracks consented product activity. |\n| **Errors** | Receives selected failures. |\n| **Collector** | Checks log freshness. |\n\nAfter"
+        )
         #expect(blocks.count == 3)
-        guard case .table(let table) = blocks[1] else { Issue.record("Missing table"); return }
+        guard case .table(let table) = blocks[1] else {
+            Issue.record("Missing table")
+            return
+        }
         #expect(table.headers == ["Tool", "What it does here"])
         #expect(table.rows.count == 3)
         #expect(table.rows[0][0] == "**Analytics**")
     }
     @Test func alignmentEscapesAndCodePipes() {
-        let blocks = ChatMarkdown.blocks("A | B | C\n:--- | :---: | ---:\na\\|b | `x|y` | z\nshort | row")
-        guard case .table(let table) = blocks.first else { Issue.record("Missing table"); return }
+        let blocks = ChatMarkdown.blocks(
+            "A | B | C\n:--- | :---: | ---:\na\\|b | `x|y` | z\nshort | row")
+        guard case .table(let table) = blocks.first else {
+            Issue.record("Missing table")
+            return
+        }
         #expect(table.alignments == [.leading, .center, .trailing])
         #expect(table.rows == [["a\\|b", "`x|y`", "z"], ["short", "row", ""]])
     }

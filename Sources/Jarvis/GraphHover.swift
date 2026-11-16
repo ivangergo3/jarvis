@@ -6,7 +6,9 @@ import SwiftUI
     func update(_ id: String, inside: Bool) {
         if inside {
             if nodeID != id { nodeID = id }
-        } else if nodeID == id { nodeID = nil }
+        } else if nodeID == id {
+            nodeID = nil
+        }
     }
     func clear() { if nodeID != nil { nodeID = nil } }
 }
@@ -19,8 +21,9 @@ struct HoverTopology: View {
     let motion: Bool
     let connections: [GraphConnection]
     var body: some View {
-        TopologyLines(active: active, highlighted: nodeIDs.map { $0 == hover.nodeID || $0 == selectedID },
-                      motion: motion, connections: connections)
+        TopologyLines(
+            active: active, highlighted: nodeIDs.map { $0 == hover.nodeID || $0 == selectedID },
+            motion: motion, connections: connections)
     }
 }
 
@@ -33,7 +36,9 @@ struct HoverDestination: ViewModifier {
     let index: Int
     let left: Bool
     func body(content: Content) -> some View {
-        content.modifier(GraphDestination(active: active, highlighted: selected || hover.nodeID == nodeID,
-                                         motion: motion, index: index, left: left))
+        content.modifier(
+            GraphDestination(
+                active: active, highlighted: selected || hover.nodeID == nodeID,
+                motion: motion, index: index, left: left))
     }
 }

@@ -1,4 +1,5 @@
 import Testing
+
 @testable import Jarvis
 
 @Suite("Refresh settings") struct RefreshIntervalTests {

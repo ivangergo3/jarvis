@@ -107,7 +107,10 @@ actor LinkedFixtureConnection: CodexConnection {
         await model.follow(first)
         await model.follow(second)
         #expect(model.draft.isEmpty)
-        #expect(await connection.calls.last(where: { $0.method == "thread/queue/add" })?.params["threadId"].text == "chat-b")
+        #expect(
+            await connection.calls.last(where: { $0.method == "thread/queue/add" })?.params[
+                "threadId"
+            ].text == "chat-b")
         await model.shutdown()
     }
 

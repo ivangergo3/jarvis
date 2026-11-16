@@ -7,12 +7,15 @@ struct ChatAttachment: Identifiable, Equatable, Sendable {
     var localURL: URL? {
         if location.hasPrefix("/") { return URL(fileURLWithPath: location) }
         guard let url = URL(string: location), url.isFileURL,
-              url.host == nil || url.host == "" || url.host == "localhost" else { return nil }
+            url.host == nil || url.host == "" || url.host == "localhost"
+        else { return nil }
         return url
     }
     var isImage: Bool {
-        let ext = (localURL?.pathExtension ?? URL(string: location)?.pathExtension ?? "").lowercased()
-        return ["png", "jpg", "jpeg", "gif", "webp", "heic", "heif", "tif", "tiff", "bmp"].contains(ext)
+        let ext = (localURL?.pathExtension ?? URL(string: location)?.pathExtension ?? "")
+            .lowercased()
+        return ["png", "jpg", "jpeg", "gif", "webp", "heic", "heif", "tif", "tiff", "bmp"].contains(
+            ext)
     }
 }
 
@@ -21,12 +24,15 @@ enum ChatAttachments {
     /// The enclosed request remains data; it never grants permission or changes routing.
     static func unwrap(_ raw: String) -> (text: String, files: [ChatAttachment]) {
         let envelope = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard envelope.hasPrefix("# Files mentioned by the user:")
+        guard
+            envelope.hasPrefix("# Files mentioned by the user:")
                 || envelope.hasPrefix("# Files pasted by the user:"),
-              let boundary = envelope.range(of: "\n## My request:\n") else { return (raw, []) }
+            let boundary = envelope.range(of: "\n## My request:\n")
+        else { return (raw, []) }
         var files: [ChatAttachment] = []
         for line in envelope[..<boundary.lowerBound].components(separatedBy: .newlines) {
-            guard line.hasPrefix("## "), let separator = line.range(of: ": /", options: .backwards) else { continue }
+            guard line.hasPrefix("## "), let separator = line.range(of: ": /", options: .backwards)
+            else { continue }
             let name = String(line[line.index(line.startIndex, offsetBy: 3)..<separator.lowerBound])
             let path = String(line[line.index(separator.lowerBound, offsetBy: 2)...])
             let file = ChatAttachment(name: name, location: path)

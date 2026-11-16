@@ -31,40 +31,62 @@ enum ChatMarkdown {
             if let marker = fence {
                 if trimmed.hasPrefix(marker) {
                     result.append(.code(code.joined(separator: "\n")))
-                    code.removeAll(); fence = nil
-                } else { code.append(line) }
+                    code.removeAll()
+                    fence = nil
+                } else {
+                    code.append(line)
+                }
                 continue
             }
             if trimmed.hasPrefix("```") || trimmed.hasPrefix("~~~") {
-                flushParagraph(); fence = String(trimmed.prefix(3)); continue
+                flushParagraph()
+                fence = String(trimmed.prefix(3))
+                continue
             }
-            if index < lines.count, let tableHeader = MarkdownTable.header(line, separator: lines[index]) {
+            if index < lines.count,
+                let tableHeader = MarkdownTable.header(line, separator: lines[index])
+            {
                 flushParagraph()
                 index += 1
                 var table = tableHeader
                 while index < lines.count, let cells = MarkdownTable.cells(lines[index]) {
-                    table.rows.append(Array((cells + Array(repeating: "", count: table.headers.count)).prefix(table.headers.count)))
+                    table.rows.append(
+                        Array(
+                            (cells + Array(repeating: "", count: table.headers.count)).prefix(
+                                table.headers.count)))
                     index += 1
                 }
-                result.append(.table(table)); continue
+                result.append(.table(table))
+                continue
             }
-            if trimmed.isEmpty { flushParagraph(); continue }
+            if trimmed.isEmpty {
+                flushParagraph()
+                continue
+            }
             if let image = imageAttachment(trimmed) {
-                flushParagraph(); result.append(.image(image)); continue
+                flushParagraph()
+                result.append(.image(image))
+                continue
             }
             let headingLevel = trimmed.prefix(while: { $0 == "#" }).count
             if (1...6).contains(headingLevel), trimmed.dropFirst(headingLevel).first == " " {
                 flushParagraph()
                 result.append(.heading(headingLevel, String(trimmed.dropFirst(headingLevel + 1))))
             } else if ["- ", "* ", "+ "].contains(String(trimmed.prefix(2))) {
-                flushParagraph(); result.append(.list("•", String(trimmed.dropFirst(2))))
+                flushParagraph()
+                result.append(.list("•", String(trimmed.dropFirst(2))))
             } else if let range = trimmed.range(of: #"^\d+[.)] "#, options: .regularExpression) {
                 flushParagraph()
-                result.append(.list(String(trimmed[range]).trimmingCharacters(in: .whitespaces),
-                    String(trimmed[range.upperBound...])))
+                result.append(
+                    .list(
+                        String(trimmed[range]).trimmingCharacters(in: .whitespaces),
+                        String(trimmed[range.upperBound...])))
             } else if trimmed.hasPrefix("> ") {
-                flushParagraph(); result.append(.quote(String(trimmed.dropFirst(2))))
-            } else { paragraph.append(line) }
+                flushParagraph()
+                result.append(.quote(String(trimmed.dropFirst(2))))
+            } else {
+                paragraph.append(line)
+            }
         }
         flushParagraph()
         if fence != nil { result.append(.code(code.joined(separator: "\n"))) }
@@ -72,7 +94,9 @@ enum ChatMarkdown {
     }
 
     private static func imageAttachment(_ line: String) -> ChatAttachment? {
-        guard line.hasPrefix("!["), let split = line.range(of: "]("), line.hasSuffix(")") else { return nil }
+        guard line.hasPrefix("!["), let split = line.range(of: "]("), line.hasSuffix(")") else {
+            return nil
+        }
         let label = String(line[line.index(line.startIndex, offsetBy: 2)..<split.lowerBound])
         var path = String(line[split.upperBound..<line.index(before: line.endIndex)])
         if path.hasPrefix("<"), path.hasSuffix(">") { path = String(path.dropFirst().dropLast()) }
@@ -82,7 +106,8 @@ enum ChatMarkdown {
 
     static func inline(_ text: String) -> AttributedString {
         do {
-            return try AttributedString(markdown: text,
+            return try AttributedString(
+                markdown: text,
                 options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))
         } catch { return AttributedString(text) }
     }

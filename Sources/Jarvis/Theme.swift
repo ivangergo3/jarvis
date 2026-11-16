@@ -8,9 +8,16 @@ enum HUD {
     static let text = Color(red: 0.84, green: 0.91, blue: 0.94)
     static let muted = Color(red: 0.43, green: 0.55, blue: 0.61)
     static let line = cyan.opacity(0.15)
-    static func mono(_ size: CGFloat = 10, weight: Font.Weight = .medium) -> Font { .system(size: size, weight: weight, design: .monospaced) }
+    static func mono(_ size: CGFloat = 10, weight: Font.Weight = .medium) -> Font {
+        .system(size: size, weight: weight, design: .monospaced)
+    }
     static func color(_ status: MissionStatus) -> Color {
-        switch status { case .working: return cyan; case .standby: return muted; case .interrupted: return gold; case .unknown: return gold }
+        switch status {
+        case .working: return cyan
+        case .standby: return muted
+        case .interrupted: return gold
+        case .unknown: return gold
+        }
     }
 }
 
@@ -34,7 +41,8 @@ struct HeaderSweepShape: Shape {
     var progress: CGFloat
     var cornerRadius: CGFloat = 9
     func path(in rect: CGRect) -> Path {
-        let outline = RoundedRectangle(cornerRadius: cornerRadius).path(in: rect.insetBy(dx: 1, dy: 1))
+        let outline = RoundedRectangle(cornerRadius: cornerRadius).path(
+            in: rect.insetBy(dx: 1, dy: 1))
         var path = Path()
         for range in BorderSweep.ranges(progress: progress) {
             path.addPath(outline.trimmedPath(from: range.lowerBound, to: range.upperBound))
@@ -50,7 +58,8 @@ struct HeaderActivityBorder: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        CompositorBorder(active: active, running: active && motion && !reduceMotion,
+        CompositorBorder(
+            active: active, running: active && motion && !reduceMotion,
             cornerRadius: cornerRadius)
     }
 }
@@ -64,10 +73,14 @@ struct HUDControlStyle: ButtonStyle {
         configuration.label
             .foregroundStyle(selected ? HUD.cyan : HUD.text)
             .padding(.horizontal, 12).padding(.vertical, 7)
-            .background(HUD.cyan.opacity(configuration.isPressed ? 0.16 : selected ? 0.09 : 0.035),
-                in: RoundedRectangle(cornerRadius: 5))
-            .overlay(RoundedRectangle(cornerRadius: 5)
-                .stroke(HUD.cyan.opacity(selected ? 0.3 : 0.12), lineWidth: 0.7))
+            .background(
+                HUD.cyan.opacity(configuration.isPressed ? 0.16 : selected ? 0.09 : 0.035),
+                in: RoundedRectangle(cornerRadius: 5)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(HUD.cyan.opacity(selected ? 0.3 : 0.12), lineWidth: 0.7)
+            )
             .opacity(enabled ? 1 : 0.4)
             .contentShape(Rectangle())
     }
@@ -89,7 +102,9 @@ struct HUDPanel: ViewModifier {
     var selected = false
     func body(content: Content) -> some View {
         content.background(HUD.panel.opacity(0.88), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(selected ? HUD.cyan.opacity(0.65) : HUD.line, lineWidth: selected ? 1 : 0.6))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12).stroke(
+                    selected ? HUD.cyan.opacity(0.65) : HUD.line, lineWidth: selected ? 1 : 0.6))
     }
 }
 
@@ -97,8 +112,14 @@ struct GridBackdrop: View {
     var body: some View {
         Canvas { context, size in
             var grid = Path()
-            for x in stride(from: CGFloat(0), through: size.width, by: 48) { grid.move(to: CGPoint(x: x, y: 0)); grid.addLine(to: CGPoint(x: x, y: size.height)) }
-            for y in stride(from: CGFloat(0), through: size.height, by: 48) { grid.move(to: CGPoint(x: 0, y: y)); grid.addLine(to: CGPoint(x: size.width, y: y)) }
+            for x in stride(from: CGFloat(0), through: size.width, by: 48) {
+                grid.move(to: CGPoint(x: x, y: 0))
+                grid.addLine(to: CGPoint(x: x, y: size.height))
+            }
+            for y in stride(from: CGFloat(0), through: size.height, by: 48) {
+                grid.move(to: CGPoint(x: 0, y: y))
+                grid.addLine(to: CGPoint(x: size.width, y: y))
+            }
             context.stroke(grid, with: .color(HUD.cyan.opacity(0.035)), lineWidth: 0.5)
         }.allowsHitTesting(false)
     }
@@ -130,9 +151,11 @@ struct TopologyLines: View {
     let connections: [GraphConnection]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        CompositorTopology(active: active, highlighted: highlighted,
-            running: motion && !reduceMotion, connections: connections)
-            .allowsHitTesting(false).accessibilityHidden(true)
+        CompositorTopology(
+            active: active, highlighted: highlighted,
+            running: motion && !reduceMotion, connections: connections
+        )
+        .allowsHitTesting(false).accessibilityHidden(true)
     }
 }
 
@@ -146,7 +169,8 @@ struct GraphDestination: ViewModifier {
     let left: Bool
 
     static func phase(_ date: Date, index: Int) -> Double {
-        (date.timeIntervalSinceReferenceDate * 0.18 + Double(index) * 0.17).truncatingRemainder(dividingBy: 1)
+        (date.timeIntervalSinceReferenceDate * 0.18 + Double(index) * 0.17).truncatingRemainder(
+            dividingBy: 1)
     }
     func body(content: Content) -> some View {
         let color = active ? HUD.cyan : highlighted ? HUD.gold : HUD.muted
@@ -155,8 +179,14 @@ struct GraphDestination: ViewModifier {
                 .stroke(HUD.gold.opacity(highlighted && !active ? 0.75 : 0), lineWidth: 1)
                 .overlay(alignment: left ? .trailing : .leading) {
                     Circle().fill(HUD.panel).frame(width: 9, height: 9)
-                        .overlay(Circle().stroke(color.opacity(active || highlighted ? 1 : 0.45), lineWidth: 1.4))
-                        .overlay(Circle().fill(color.opacity(active || highlighted ? 0.9 : 0.3)).frame(width: 3, height: 3))
+                        .overlay(
+                            Circle().stroke(
+                                color.opacity(active || highlighted ? 1 : 0.45), lineWidth: 1.4)
+                        )
+                        .overlay(
+                            Circle().fill(color.opacity(active || highlighted ? 0.9 : 0.3)).frame(
+                                width: 3, height: 3)
+                        )
                         .offset(x: left ? 4.5 : -4.5)
                 }
                 .allowsHitTesting(false).accessibilityHidden(true)

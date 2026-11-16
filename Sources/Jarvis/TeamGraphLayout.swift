@@ -17,10 +17,12 @@ struct TeamGraphLayout {
             let fraction = 0.14 + 0.72 * CGFloat(rank + 1) / CGFloat(sideIndices.count + 1)
             let lane = edge + (center.x - edge) * fraction
             let launchY = center.y + (CGFloat(rank) - CGFloat(sideIndices.count - 1) / 2) * 12
-            return GraphConnection(points: [CGPoint(x: center.x, y: launchY),
-                                             CGPoint(x: lane, y: launchY),
-                                             CGPoint(x: lane, y: node.y),
-                                             CGPoint(x: edge, y: node.y)])
+            return GraphConnection(points: [
+                CGPoint(x: center.x, y: launchY),
+                CGPoint(x: lane, y: launchY),
+                CGPoint(x: lane, y: node.y),
+                CGPoint(x: edge, y: node.y),
+            ])
         }
     }
 
@@ -32,21 +34,26 @@ struct TeamGraphLayout {
             center = CGPoint(x: size.width * 0.5, y: size.height * 0.48)
             let canvas = size
             nodes = (0..<count).map { index in
-                CGPoint(x: canvas.width * (index % 2 == 0 ? 0.23 : 0.77),
-                        y: canvas.height * (index < 2 ? 0.19 : 0.81))
+                CGPoint(
+                    x: canvas.width * (index % 2 == 0 ? 0.23 : 0.77),
+                    y: canvas.height * (index < 2 ? 0.19 : 0.81))
             }
         } else {
             let rows = (count + 1) / 2
             // Reserve a dedicated centre lane for the reactor. Smaller windows can pan
             // horizontally; larger teams extend vertically instead of shrinking their text.
-            size = CGSize(width: max(860, viewport.width), height: max(viewport.height, CGFloat(rows) * 220 + 60))
+            size = CGSize(
+                width: max(860, viewport.width),
+                height: max(viewport.height, CGFloat(rows) * 220 + 60))
             cardWidth = min(275, (size.width - 320) / 2 - 24)
             center = CGPoint(x: size.width / 2, y: size.height / 2)
             let spacing = (size.height - 60) / CGFloat(rows)
-            let canvas = size, width = cardWidth
+            let canvas = size
+            let width = cardWidth
             nodes = (0..<count).map { index in
-                CGPoint(x: index % 2 == 0 ? 24 + width / 2 : canvas.width - 24 - width / 2,
-                        y: 30 + (CGFloat(index / 2) + 0.5) * spacing)
+                CGPoint(
+                    x: index % 2 == 0 ? 24 + width / 2 : canvas.width - 24 - width / 2,
+                    y: 30 + (CGFloat(index / 2) + 0.5) * spacing)
             }
         }
     }
@@ -64,7 +71,9 @@ struct GraphConnection: Equatable {
         var distance = CGFloat(min(1, max(0, fraction))) * lengths.reduce(0, +)
         for (index, length) in lengths.enumerated() {
             if distance <= length && length > 0 {
-                let a = points[index], b = points[index + 1], t = distance / length
+                let a = points[index]
+                let b = points[index + 1]
+                let t = distance / length
                 return CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t)
             }
             distance -= length

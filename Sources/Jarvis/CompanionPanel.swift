@@ -128,21 +128,27 @@ struct CompanionPanel: View {
             }
             Rectangle().fill(HUD.line).frame(height: 1)
             HStack(spacing: 8) {
-                Button { openLinkedChat() } label: {
+                Button {
+                    openLinkedChat()
+                } label: {
                     Label("Open in Codex", systemImage: "arrow.up.forward.app")
                         .font(.system(size: 11, weight: .medium))
                 }
                 .disabled(chat.scope?.threadID == nil)
                 .accessibilityIdentifier("companion.openLinkedChat")
                 Spacer(minLength: 8)
-                Button { ui.confirmNew = true } label: {
+                Button {
+                    ui.confirmNew = true
+                } label: {
                     Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 12))
                 }
                 .disabled(chat.phase.busy || voice.recording)
                 .help("Reconnect to selected chat")
                 .accessibilityLabel("Switch or reconnect to the selected Codex chat")
                 .accessibilityIdentifier("companion.newChat")
-                Button { ui.settings = true } label: {
+                Button {
+                    ui.settings = true
+                } label: {
                     Image(systemName: "gearshape").font(.system(size: 12))
                 }
                 .help("Connection, voice and subagents")
@@ -152,8 +158,9 @@ struct CompanionPanel: View {
         }
         .padding(14)
         .background(HUD.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 9))
-        .overlay(HeaderActivityBorder(active: status == .working, motion: motion)
-            .allowsHitTesting(false).accessibilityHidden(true))
+        .overlay(
+            HeaderActivityBorder(active: status == .working, motion: motion)
+                .allowsHitTesting(false).accessibilityHidden(true))
     }
 
     private func openLinkedChat() {
@@ -167,30 +174,30 @@ struct CompanionPanel: View {
 
     private var conversation: some View {
         GeometryReader { geometry in
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
-                    if chat.messages.isEmpty {
-                        Text("This is the same chat.")
-                            .font(.system(size: 18, weight: .light)).padding(.top, 12)
-                        Text(
-                            "Select a chat to read recent saved messages. Typed and dictated messages go to that chat when you choose Send. Approvals are handled in Codex."
-                        )
-                        .font(.system(size: 12)).foregroundStyle(HUD.muted).lineSpacing(4)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 16) {
+                        if chat.messages.isEmpty {
+                            Text("This is the same chat.")
+                                .font(.system(size: 18, weight: .light)).padding(.top, 12)
+                            Text(
+                                "Select a chat to read recent saved messages. Typed and dictated messages go to that chat when you choose Send. Approvals are handled in Codex."
+                            )
+                            .font(.system(size: 12)).foregroundStyle(HUD.muted).lineSpacing(4)
+                        }
+                        ForEach(chat.messages) { message in
+                            messageBubble(message, maxWidth: min(760, geometry.size.width * 0.8))
+                                .id(message.id)
+                        }
+                        Color.clear.frame(height: 1).id("chat-bottom")
                     }
-                    ForEach(chat.messages) { message in
-                        messageBubble(message, maxWidth: min(760, geometry.size.width * 0.8))
-                            .id(message.id)
-                    }
-                    Color.clear.frame(height: 1).id("chat-bottom")
                 }
-            }
-            .defaultScrollAnchor(.bottom)
-            .onAppear { proxy.scrollTo("chat-bottom", anchor: .bottom) }
-            .onChange(of: chat.messages.last?.text) { _, _ in
-                proxy.scrollTo("chat-bottom", anchor: .bottom)
-            }
-        }.accessibilityIdentifier("companion.conversation")
+                .defaultScrollAnchor(.bottom)
+                .onAppear { proxy.scrollTo("chat-bottom", anchor: .bottom) }
+                .onChange(of: chat.messages.last?.text) { _, _ in
+                    proxy.scrollTo("chat-bottom", anchor: .bottom)
+                }
+            }.accessibilityIdentifier("companion.conversation")
         }
     }
 
@@ -205,7 +212,9 @@ struct CompanionPanel: View {
             )
             .font(HUD.mono(9)).foregroundStyle(accent)
             if !message.attachments.isEmpty {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 104, maximum: 150))], alignment: .leading) {
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 104, maximum: 150))], alignment: .leading
+                ) {
                     ForEach(message.attachments) { file in AttachmentTile(file: file) }
                 }
             }
@@ -247,10 +256,14 @@ struct CompanionPanel: View {
                         ForEach(chat.draftImages) { image in
                             VStack(spacing: 4) {
                                 AttachmentTile(file: image).frame(width: 110)
-                                Button { chat.removeDraftImage(image.id) } label: {
+                                Button {
+                                    chat.removeDraftImage(image.id)
+                                } label: {
                                     Label("Remove", systemImage: "xmark.circle")
                                 }
-                                .font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(HUD.muted)
+                                .font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(
+                                    HUD.muted
+                                )
                                 .disabled(chat.phase.busy || chat.phase == .outcomeUnknown)
                                 .accessibilityLabel("Remove pasted image")
                             }
@@ -261,12 +274,16 @@ struct CompanionPanel: View {
             if chat.importingImage {
                 Text("Preparing image…").font(HUD.mono(10)).foregroundStyle(HUD.cyan)
             }
-            ComposerEditor(text: $chat.draft,
-                editable: !chat.phase.busy && !voice.recording && chat.phase != .outcomeUnknown && chat.scope?.threadID != nil,
-                pasteImage: { chat.pasteImage($0) })
-                .frame(height: 76).padding(7)
-                .background(Color.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 7))
-                .overlay(RoundedRectangle(cornerRadius: 7)
+            ComposerEditor(
+                text: $chat.draft,
+                editable: !chat.phase.busy && !voice.recording && chat.phase != .outcomeUnknown
+                    && chat.scope?.threadID != nil,
+                pasteImage: { chat.pasteImage($0) }
+            )
+            .frame(height: 76).padding(7)
+            .background(Color.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 7))
+            .overlay(
+                RoundedRectangle(cornerRadius: 7)
                     .stroke(HUD.cyan.opacity(0.5), lineWidth: 1))
             HStack(spacing: 14) {
                 Button {
@@ -290,9 +307,12 @@ struct CompanionPanel: View {
                 )
                 .accessibilityIdentifier("companion.microphone")
                 Toggle(isOn: $voice.completionChime) {
-                    Label("Completion chime", systemImage: voice.completionChime ? "bell.fill" : "bell.slash")
-                        .font(.system(size: 11))
-                        .foregroundStyle(voice.completionChime ? HUD.cyan : HUD.muted)
+                    Label(
+                        "Completion chime",
+                        systemImage: voice.completionChime ? "bell.fill" : "bell.slash"
+                    )
+                    .font(.system(size: 11))
+                    .foregroundStyle(voice.completionChime ? HUD.cyan : HUD.muted)
                 }
                 .toggleStyle(.button)
                 .help(voice.completionChime ? "Mute completion chime" : "Enable completion chime")
@@ -301,9 +321,12 @@ struct CompanionPanel: View {
                     if !enabled { voice.stopAudio() }
                 }
                 Toggle(isOn: $voice.readReplies) {
-                    Label("Read reply", systemImage: voice.readReplies ? "speaker.wave.2.fill" : "speaker.slash")
-                        .font(.system(size: 11))
-                        .foregroundStyle(voice.readReplies ? HUD.cyan : HUD.muted)
+                    Label(
+                        "Read reply",
+                        systemImage: voice.readReplies ? "speaker.wave.2.fill" : "speaker.slash"
+                    )
+                    .font(.system(size: 11))
+                    .foregroundStyle(voice.readReplies ? HUD.cyan : HUD.muted)
                 }
                 .toggleStyle(.button)
                 .help(voice.readReplies ? "Disable read-aloud" : "Read completed replies aloud")
@@ -314,8 +337,10 @@ struct CompanionPanel: View {
                         "companion.stop")
                 } else {
                     Button("Send") { chat.send(in: proposedScope) }
-                        .disabled(!chat.canSend || voice.recording || chat.scope?.threadID == nil
-                            || chat.scope?.threadID != proposedScope.threadID)
+                        .disabled(
+                            !chat.canSend || voice.recording || chat.scope?.threadID == nil
+                                || chat.scope?.threadID != proposedScope.threadID
+                        )
                         .keyboardShortcut(
                             .return, modifiers: .command
                         )
@@ -407,83 +432,106 @@ private struct CompanionSettings: View {
 
     var body: some View {
         ScrollView {
-        VStack(alignment: .leading, spacing: 22) {
-            HStack(spacing: 12) {
-                Image(systemName: "gearshape").font(.system(size: 24, weight: .light))
-                    .foregroundStyle(HUD.cyan)
-                VStack(alignment: .leading, spacing: 5) {
-                    Eyebrow(text: "JARVIS / PREFERENCES", color: HUD.gold)
-                    Text("Connection & voice").font(.system(size: 23, weight: .light))
-                }
-                Spacer()
-                Button { dismiss() } label: { Image(systemName: "xmark") }
+            VStack(alignment: .leading, spacing: 22) {
+                HStack(spacing: 12) {
+                    Image(systemName: "gearshape").font(.system(size: 24, weight: .light))
+                        .foregroundStyle(HUD.cyan)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Eyebrow(text: "JARVIS / PREFERENCES", color: HUD.gold)
+                        Text("Connection & voice").font(.system(size: 23, weight: .light))
+                    }
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
                     .buttonStyle(HUDControlStyle()).keyboardShortcut(.cancelAction)
                     .accessibilityLabel("Close settings")
-            }
-            Rectangle().fill(HUD.line).frame(height: 1)
-            VStack(alignment: .leading, spacing: 13) {
-                Label("CODEX CONNECTION", systemImage: "link")
-                    .font(HUD.mono(10)).foregroundStyle(HUD.cyan)
-                Text("Uses your installed Codex and its existing sign-in. No API key is copied into Jarvis.")
-                    .font(.system(size: 12)).lineSpacing(4)
-                Text(ui.executable).font(HUD.mono(11)).foregroundStyle(HUD.muted)
-                    .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                Button("Choose Codex executable…") { chooseExecutable() }
-                    .font(.system(size: 11)).buttonStyle(HUDControlStyle())
-                Text("A different executable applies when you reconnect. Sign in through Codex itself.")
-                    .font(.system(size: 11)).foregroundStyle(HUD.muted)
-            }.padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(HUDPanel())
-            VStack(alignment: .leading, spacing: 13) {
-                Label("VOICE", systemImage: "waveform")
-                    .font(HUD.mono(10)).foregroundStyle(HUD.cyan)
-                Picker("Dictation language", selection: $voice.language) {
-                    Text("English (UK)").tag("en-GB")
-                    Text("English (US)").tag("en-US")
-                    Text("French").tag("fr-FR")
-                    Text("Hungarian").tag("hu-HU")
-                }.disabled(voice.recording).tint(HUD.cyan)
-                Text("Dictation runs on this Mac when the language is supported. Review the text before sending; there is no cloud audio fallback.")
-                    .font(.system(size: 12)).lineSpacing(4)
-                Text("Completion chime and read-aloud can be enabled separately. With both on, the chime plays first. Read-aloud uses macOS speech.")
-                    .font(.system(size: 11)).foregroundStyle(HUD.muted)
-            }.padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(HUDPanel())
-            if let mission {
+                }
+                Rectangle().fill(HUD.line).frame(height: 1)
                 VStack(alignment: .leading, spacing: 13) {
-                    Label("SUBAGENTS / \(mission.name)", systemImage: "person.3")
+                    Label("CODEX CONNECTION", systemImage: "link")
                         .font(HUD.mono(10)).foregroundStyle(HUD.cyan)
-                    if mission.agents.isEmpty {
-                        Text("No delegated agents recorded.").font(.system(size: 12))
-                    } else {
-                        ScrollView {
-                            VStack(spacing: 10) {
-                                ForEach(mission.agents) { agent in
-                                    HStack {
-                                        Text(agent.name).font(HUD.mono(11))
-                                        Spacer()
-                                        StatusBadge(status: sourceUnavailable ? .unknown : agent.status)
+                    Text(
+                        "Uses your installed Codex and its existing sign-in. No API key is copied into Jarvis."
+                    )
+                    .font(.system(size: 12)).lineSpacing(4)
+                    Text(ui.executable).font(HUD.mono(11)).foregroundStyle(HUD.muted)
+                        .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                    Button("Choose Codex executable…") { chooseExecutable() }
+                        .font(.system(size: 11)).buttonStyle(HUDControlStyle())
+                    Text(
+                        "A different executable applies when you reconnect. Sign in through Codex itself."
+                    )
+                    .font(.system(size: 11)).foregroundStyle(HUD.muted)
+                }.padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(HUDPanel())
+                VStack(alignment: .leading, spacing: 13) {
+                    Label("VOICE", systemImage: "waveform")
+                        .font(HUD.mono(10)).foregroundStyle(HUD.cyan)
+                    Picker("Dictation language", selection: $voice.language) {
+                        Text("English (UK)").tag("en-GB")
+                        Text("English (US)").tag("en-US")
+                        Text("French").tag("fr-FR")
+                        Text("Hungarian").tag("hu-HU")
+                    }.disabled(voice.recording).tint(HUD.cyan)
+                    Text(
+                        "Dictation runs on this Mac when the language is supported. Review the text before sending; there is no cloud audio fallback."
+                    )
+                    .font(.system(size: 12)).lineSpacing(4)
+                    Text(
+                        "Completion chime and read-aloud can be enabled separately. With both on, the chime plays first. Read-aloud uses macOS speech."
+                    )
+                    .font(.system(size: 11)).foregroundStyle(HUD.muted)
+                }.padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(HUDPanel())
+                if let mission {
+                    VStack(alignment: .leading, spacing: 13) {
+                        Label("SUBAGENTS / \(mission.name)", systemImage: "person.3")
+                            .font(HUD.mono(10)).foregroundStyle(HUD.cyan)
+                        if mission.agents.isEmpty {
+                            Text("No delegated agents recorded.").font(.system(size: 12))
+                        } else {
+                            ScrollView {
+                                VStack(spacing: 10) {
+                                    ForEach(mission.agents) { agent in
+                                        HStack {
+                                            Text(agent.name).font(HUD.mono(11))
+                                            Spacer()
+                                            StatusBadge(
+                                                status: sourceUnavailable ? .unknown : agent.status)
+                                        }
                                     }
                                 }
-                            }
-                        }.frame(height: min(140, CGFloat(mission.agents.count) * 32))
-                    }
-                    Divider().overlay(HUD.line)
-                    HStack {
-                        Text("Last activity").font(.system(size: 11)).foregroundStyle(HUD.muted)
-                        Spacer()
-                        Text(mission.updated, format: .dateTime.day().month(.abbreviated).hour().minute())
+                            }.frame(height: min(140, CGFloat(mission.agents.count) * 32))
+                        }
+                        Divider().overlay(HUD.line)
+                        HStack {
+                            Text("Last activity").font(.system(size: 11)).foregroundStyle(HUD.muted)
+                            Spacer()
+                            Text(
+                                mission.updated,
+                                format: .dateTime.day().month(.abbreviated).hour().minute()
+                            )
                             .font(HUD.mono(10))
-                    }
-                }.padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(HUDPanel())
+                        }
+                    }.padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(
+                        HUDPanel())
+                }
+                HStack(spacing: 7) {
+                    Image(systemName: "lock.shield")
+                    Text("LOCAL CONNECTION / YOUR MAC")
+                }.font(HUD.mono(9)).foregroundStyle(HUD.muted)
             }
-            HStack(spacing: 7) {
-                Image(systemName: "lock.shield")
-                Text("LOCAL CONNECTION / YOUR MAC")
-            }.font(HUD.mono(9)).foregroundStyle(HUD.muted)
+            .padding(28)
         }
-        .padding(28)
-        }
-        .frame(width: 530, height: min(780, max(400,
-            (NSApp.keyWindow?.screen?.visibleFrame.height ?? 900) - 100)))
+        .frame(
+            width: 530,
+            height: min(
+                780,
+                max(
+                    400,
+                    (NSApp.keyWindow?.screen?.visibleFrame.height ?? 900) - 100))
+        )
         .foregroundStyle(HUD.text).background(HUD.background)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(HUD.cyan.opacity(0.25), lineWidth: 1))
         .preferredColorScheme(.dark)
