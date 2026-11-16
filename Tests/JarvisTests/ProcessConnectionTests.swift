@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import QualitySupport
 
 @testable import Jarvis
 
@@ -8,21 +9,15 @@ struct ProcessConnectionTests {
     @Test func literalTextRoundTripsWithoutShellExecutionAndCloseReleasesPendingCalls() async throws
     {
         let fixture = try SessionFixture()
-        let script = fixture.home.appendingPathComponent("fake-codex")
-        try Data(
-            """
-            #!/usr/bin/python3
-            import json, sys
-            for line in sys.stdin:
-                value = json.loads(line)
-                if value.get('method') == 'hang':
-                    continue
-                if 'id' in value:
-                    print(json.dumps({'id': value['id'], 'result': value.get('params', {})}), flush=True)
-            """.utf8
-        ).write(to: script)
-        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
-        let connection = CodexProcessConnection(executable: script, timeout: .seconds(5))
+        let executable = fixture.home.appendingPathComponent("fake-codex")
+        let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Fixtures/EchoServer.swift")
+        let compileLog = fixture.home.appendingPathComponent("compile.log")
+        let status = try Command("/usr/bin/xcrun", ["swiftc", source.path, "-o", executable.path],
+                                 directory: fixture.home).run(log: compileLog, timeout: 60)
+        let diagnostic = try Diagnostics.tail(of: compileLog)
+        try #require(status == 0, "Native fixture compilation failed: \(diagnostic)")
+        let connection = CodexProcessConnection(executable: executable, timeout: .seconds(5))
         let stream = await connection.events()
         let consume = Task { for await _ in stream {} }
         let marker = fixture.home.appendingPathComponent("must-not-exist")

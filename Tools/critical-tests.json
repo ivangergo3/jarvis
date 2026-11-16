@@ -1,0 +1,22 @@
+[
+  "QualitySupportTests.QualitySupportTests/discoveryRecognisesBothTestModulesAndIgnoresCompilerOutput",
+  "QualitySupportTests.QualitySupportTests/diagnosticsAreBoundedAndRedactPathsQuotedCredentialsAndBearerValues",
+  "QualitySupportTests.QualitySupportTests/validResultsRequireTheCompleteDiscoveredAndCriticalInventory",
+  "QualitySupportTests.QualitySupportTests/malformedMissingOversizedOrSkippedResultsCannotPass",
+  "QualitySupportTests.QualitySupportTests/nonzeroExitSignalAndTimeoutAreFailures",
+  "QualitySupportTests.QualitySupportTests/timeoutAlsoStopsDescendants",
+  "QualitySupportTests.QualitySupportTests/greenXMLCannotOverrideAFailedProcess",
+  "JarvisTests.LifecycleBoundaryTests/startMarkerExpiresOnlyAfterThirtyMinutes",
+  "JarvisTests.ProtocolBoundaryTests/validJSONThatIsNotAnObjectIsRejected",
+  "JarvisTests.ProtocolBoundaryTests/exactFrameLimitIsAcceptedButOneMoreByteIsRejected",
+  "JarvisTests.ProtocolBoundaryTests/deterministicChunkingPreservesKnownRecords",
+  "JarvisTests.ConversationRegressionTests/lateHistoryAfterDestinationChangeCannotReplaceTheNewChat",
+  "JarvisTests.ConversationRegressionTests/historyStartedBeforeSendCannotEraseTheQueuedMessage",
+  "JarvisTests.ConversationRegressionTests/identicalTextWithWrongReceiptCannotResolveAnUncertainSend",
+  "JarvisTests.LinkedConversationTests/sameNamesUseDifferentIDsWithoutCreatingOrResumingThreads",
+  "JarvisTests.LinkedConversationTests/lostAcknowledgementReconcilesByClientIDWithoutResending",
+  "JarvisTests.CompanionTests/foreignOrStaleEventsAndToolInstructionsCannotBecomeRepliesOrActions",
+  "JarvisTests.CompanionTests/approvalWaitsForAnExplicitAllowedDecision",
+  "JarvisTests.VoiceTests/cancellationAndRestartRejectLateRecognition",
+  "JarvisTests.ProcessConnectionTests/literalTextRoundTripsWithoutShellExecutionAndCloseReleasesPendingCalls"
+]

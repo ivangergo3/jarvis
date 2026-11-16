@@ -12,9 +12,15 @@ actor CodexReader {
     struct CachedLog { var path: String; var offset: UInt64; var partial: Data; var observation: LogObservation }
     private var cache: [String: CachedLog] = [:]
     private let home: URL
-    init(home: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex")) { self.home = home }
+    private let now: @Sendable () -> Date
+    init(home: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex"),
+         now: @escaping @Sendable () -> Date = { Date() }) {
+        self.home = home
+        self.now = now
+    }
 
     func read() throws -> FleetSnapshot {
+        let readAt = now()
         let db = try ReadOnlyDatabase(home.appendingPathComponent("state_5.sqlite").path)
         let membership = try projectMembership(db)
         let rows = try db.query("SELECT id, COALESCE(NULLIF(name, ''), title) AS display_name, rollout_path, updated_at, cwd, project_id FROM threads WHERE archived = 0 AND thread_source IN ('user', 'voice_chat') ORDER BY updated_at DESC")
@@ -42,7 +48,7 @@ actor CodexReader {
             let updated = try? FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date
             let date = updated ?? observation.taskTime ?? Date(timeIntervalSince1970: Double(row["updated_at"] ?? "0") ?? 0)
             // A start marker surviving an app crash is not proof that an agent is still running.
-            if state == .working && Date().timeIntervalSince(date) > 1800 { state = .unknown }
+            if state == .working && readAt.timeIntervalSince(date) > 1800 { state = .unknown }
             let edges = try db.query("SELECT t.id, COALESCE(t.agent_path, t.agent_nickname, t.name, 'Agent') AS display_name, t.rollout_path FROM thread_spawn_edges e JOIN threads t ON t.id=e.child_thread_id WHERE e.parent_thread_id=? AND COALESCE(t.thread_source, '') <> 'guardian_review' ORDER BY t.updated_at DESC", bind: id)
             var agents: [Agent] = []
             for edge in edges {
@@ -51,7 +57,7 @@ actor CodexReader {
                 var status = log?.status ?? .unknown
                 if status == .working,
                    let attrs = try? FileManager.default.attributesOfItem(atPath: apath),
-                   let modified = attrs[.modificationDate] as? Date, Date().timeIntervalSince(modified) > 1800 { status = .unknown }
+                   let modified = attrs[.modificationDate] as? Date, readAt.timeIntervalSince(modified) > 1800 { status = .unknown }
                 agents.append(Agent(id: aid, name: edge["display_name"]?.components(separatedBy: "/").last ?? "Agent", status: status))
             }
             missions.append(Mission(id: id, projectID: projectID, name: name, role: role, symbol: symbol,
@@ -63,7 +69,7 @@ actor CodexReader {
         if missions.contains(where: { $0.projectID == "unassigned" }) {
             projects.append(WorkspaceProject(id: "unassigned", name: "Unassigned chats", roots: []))
         }
-        return FleetSnapshot(projects: projects, missions: missions, readAt: Date(), notices: notices)
+        return FleetSnapshot(projects: projects, missions: missions, readAt: readAt, notices: notices)
     }
 
     private func savedObservation(id: String, db: ReadOnlyDatabase) throws -> LogObservation {
