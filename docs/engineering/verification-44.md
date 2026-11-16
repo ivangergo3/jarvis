@@ -1,5 +1,37 @@
 # Issue 44 verification — 2026-11-16
 
+## Swift-only tooling revision
+
+The initial scripting implementation below was replaced at the owner's request.
+All active app-test fixtures and quality/CI tooling now use Swift and native
+Foundation APIs, with Swift Testing for the tooling's own tests. There are no
+third-party Swift packages or Python runtime requirements for these commands.
+The `QualitySupport` and `quality-gate` targets use Swift 6 language mode and
+are not dependencies of the shipping Jarvis executable.
+
+```sh
+swift run quality-gate test
+swift run quality-gate mutations
+```
+
+The native full gate passed **99 tests**: the same 92 application tests plus
+seven tooling tests. Checks cover full inventory, malformed/oversized/empty
+reports, skips, nonzero exit/signal, timeout and descendant cleanup, redacted
+diagnostics, and a green XML file accompanying a failed process. The former
+Python stdio fixture was replaced with a synthetic Swift server compiled using
+the installed toolchain, preserving literal-text and close/cancellation checks.
+
+The Swift mutation command separately reproduced all three original → defective
+assertion failure → restored-green sequences in a disposable source copy, with
+exactly one matching test per invocation. The record under “Local synthetic
+evidence” describes the original implementation and remains historical evidence;
+its six scripting self-tests have been replaced by the seven Swift tests.
+
+The required GitHub check name and branch-protection policy are unchanged.
+The native revision runs through that same required check; consult the latest
+PR-head result. The earlier failed-merge proof below establishes GitHub's merge
+policy, rather than a dependency on a particular test-runner implementation.
+
 ## Local synthetic evidence
 
 Base: `526106396c63dbb20197212b6c623c063330f0dd`; initial implementation:

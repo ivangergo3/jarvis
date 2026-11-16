@@ -7,14 +7,16 @@ Native UI coverage remains a separate follow-up (QA-04).
 ## Run locally
 
 ```sh
-python3 -m unittest discover -s scripts -p 'test_*.py'
-python3 scripts/run_tests.py
+swift run quality-gate test
 ./build.sh
 ```
 
-The gate executes the whole existing Swift Testing suite, then independently
+The native Swift executable uses Foundation for processes, XML, files and JSON.
+Its own tests use Swift Testing alongside the app tests; there are no external
+package dependencies or additional runtime requirements. The gate executes the
+whole Swift Testing suite, then independently
 discovers tests with `swift test list --skip-build`. Every discovered test must
-appear in the fresh xUnit results. `scripts/critical-tests.json` additionally
+appear in the fresh xUnit results. `Tools/critical-tests.json` additionally
 guards against accidentally removing consequential tests from both discovery
 and results. Update this reviewed list when deliberately renaming those tests.
 It is a contract list, not a target for coverage percentages.
@@ -53,10 +55,10 @@ microphone, account, paid turn or external message/network side effect.
 ## Check that assertions detect defects
 
 ```sh
-python3 scripts/check_regressions.py
+swift run quality-gate mutations
 ```
 
-This explicit diagnostic copies Sources, Tests and Package.swift to a temporary
+This explicit diagnostic copies Sources, Tests, Tools and Package.swift to a temporary
 directory. For each of three faults it requires green → assertion failure →
 restored green: accepting non-object JSON, accepting stale refresh revisions,
 and expiring a start marker at the wrong boundary. A compiler failure, skipped

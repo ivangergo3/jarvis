@@ -1,4 +1,11 @@
 [
+  "QualitySupportTests.QualitySupportTests/discoveryRecognisesBothTestModulesAndIgnoresCompilerOutput",
+  "QualitySupportTests.QualitySupportTests/diagnosticsAreBoundedAndRedactPathsQuotedCredentialsAndBearerValues",
+  "QualitySupportTests.QualitySupportTests/validResultsRequireTheCompleteDiscoveredAndCriticalInventory",
+  "QualitySupportTests.QualitySupportTests/malformedMissingOversizedOrSkippedResultsCannotPass",
+  "QualitySupportTests.QualitySupportTests/nonzeroExitSignalAndTimeoutAreFailures",
+  "QualitySupportTests.QualitySupportTests/timeoutAlsoStopsDescendants",
+  "QualitySupportTests.QualitySupportTests/greenXMLCannotOverrideAFailedProcess",
   "JarvisTests.LifecycleBoundaryTests/startMarkerExpiresOnlyAfterThirtyMinutes",
   "JarvisTests.ProtocolBoundaryTests/validJSONThatIsNotAnObjectIsRejected",
   "JarvisTests.ProtocolBoundaryTests/exactFrameLimitIsAcceptedButOneMoreByteIsRejected",

@@ -2,7 +2,6 @@
 build/
 .DS_Store
 test-results/
-__pycache__/
 
 # Local-only context; never put a private skill checkout under skills/.
 .local-skills/
