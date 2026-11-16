@@ -61,3 +61,14 @@ jobs:
           done
           /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' build/Jarvis.app/Contents/Info.plist
           /usr/libexec/PlistBuddy -c 'Print :NSSpeechRecognitionUsageDescription' build/Jarvis.app/Contents/Info.plist
+      - name: Verify native UI with synthetic fixtures
+        id: nativeui
+        run: swift run -Xswiftc -warnings-as-errors native-ui-check
+      - name: Retain native UI evidence
+        if: always() && steps.nativeui.outcome != 'skipped'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-ui-evidence
+          path: test-results/native-ui/
+          retention-days: 7
+          if-no-files-found: error

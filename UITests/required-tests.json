@@ -1,0 +1,8 @@
+[
+  "testProjectsAndChatSelection",
+  "testEmptyProject",
+  "testEmptyWorkspace",
+  "testUnavailableWorkspace",
+  "testStaleSnapshotRetainsNavigation",
+  "testKeyboardNavigationAndDraftDestination"
+]
