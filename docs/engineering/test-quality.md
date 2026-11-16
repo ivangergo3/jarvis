@@ -92,7 +92,8 @@ Workflow events include pull requests, pushes to main and `merge_group`; the
 last prevents a future merge queue from waiting on a check that never runs.
 Workflow YAML alone cannot enforce required checks. Repository branch rules and
 a disposable failed-PR probe must be inspected separately; see the dated
-verification record for the actual result and any platform/permission limits.
+[verification record](verification-44.md) for the actual result and any
+platform/permission limits.
 
 References: [required checks and branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches),
 [merge queue checks](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue).

@@ -53,10 +53,10 @@ def validate(reports, discovered, required):
     return len(cases)
 
 
-def run(command, log, timeout):
+def run(command, log, timeout, cwd=ROOT):
     # A separate process group ensures a timed-out runner cannot leave test children behind.
     with log.open("wb") as output:
-        process = subprocess.Popen(command, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT,
+        process = subprocess.Popen(command, cwd=cwd, stdout=output, stderr=subprocess.STDOUT,
                                    start_new_session=True)
         try:
             return process.wait(timeout=timeout)

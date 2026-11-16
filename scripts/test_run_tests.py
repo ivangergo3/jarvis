@@ -1,6 +1,7 @@
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import run_tests as gate
 
@@ -52,6 +53,29 @@ class GateTests(unittest.TestCase):
             self.assertNotIn(str(Path.home()), result)
             self.assertNotIn("synthetic-secret", result)
 
+    def test_main_never_trusts_green_xml_after_a_failed_process(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts").mkdir()
+            (root / "scripts/critical-tests.json").write_text('["JarvisTests.Suite/example"]')
+
+            def fake_run(command, log, timeout):
+                log.write_text("synthetic diagnostic")
+                report = Path(command[command.index("--xunit-output") + 1])
+                report.write_text('<testsuite><testcase classname="JarvisTests.Suite" name="example()"/></testsuite>')
+                return 7
+
+            with patch.object(gate, "ROOT", root), patch.object(gate, "run", fake_run), \
+                    patch("sys.argv", ["run_tests.py", "--output", str(root / "results")]), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(gate.main(), 1)
+            summary = json.loads((root / "results/summary.json").read_text())
+            self.assertFalse(summary["passed"])
+            self.assertEqual(summary["process_exit"], 7)
+
 
 if __name__ == "__main__":
     unittest.main()
+import contextlib
+import io
+import json
