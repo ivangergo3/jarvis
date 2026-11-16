@@ -177,6 +177,7 @@ import SwiftUI
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         voice.cancel()
         voice.stopAudio()
+        if verification != nil { return .terminateNow }
         Task {
             await companion.shutdown()
             sender.reply(toApplicationShouldTerminate: true)

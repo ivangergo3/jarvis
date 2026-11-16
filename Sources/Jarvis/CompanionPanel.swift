@@ -114,6 +114,9 @@ struct CompanionPanel: View {
                 HStack(spacing: 6) {
                     Circle().fill(HUD.color(status)).frame(width: 4, height: 4)
                     Text(status.label).font(HUD.mono(8)).tracking(1)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(status.label)
+                        .accessibilityIdentifier("companion.activityStatus")
                 }.foregroundStyle(HUD.color(status))
             }
             HStack(spacing: 12) {
@@ -124,6 +127,8 @@ struct CompanionPanel: View {
                     }
                     .foregroundStyle(HUD.cyan.opacity(0.8)).accessibilityHidden(true)
                 Text((chat.scope ?? proposedScope).name)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel((chat.scope ?? proposedScope).name)
                     .accessibilityIdentifier("companion.destination")
                     .font(.system(size: 21, weight: .light, design: .monospaced))
                     .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)

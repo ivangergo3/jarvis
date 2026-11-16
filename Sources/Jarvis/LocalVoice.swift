@@ -55,7 +55,7 @@ struct DictationSession {
             preferences?.set(readReplies, forKey: "readReplies")
             if !readReplies {
                 speechTask?.cancel()
-                speaker.stopSpeaking(at: .immediate)
+                speaker?.stopSpeaking(at: .immediate)
             }
         }
     }
@@ -67,20 +67,25 @@ struct DictationSession {
     private var tapInstalled = false
     private var limitTask: Task<Void, Never>?
     private var finishTask: Task<Void, Never>?
-    private let chime: NSSound? = {
-        if let url = Bundle.main.url(forResource: "CompletionChime", withExtension: "wav"),
-            let sound = NSSound(contentsOf: url, byReference: true)
-        {
-            return sound
-        }
-        return NSSound(named: NSSound.Name("Glass"))
-    }()
-    private let speaker = AVSpeechSynthesizer()
+    private let chime: NSSound?
+    private let speaker: AVSpeechSynthesizer?
     private var speechTask: Task<Void, Never>?
 
     init(preferences: UserDefaults? = .standard, allowsAudio: Bool = true) {
         self.preferences = preferences
         self.allowsAudio = allowsAudio
+        speaker = allowsAudio ? AVSpeechSynthesizer() : nil
+        if allowsAudio {
+            if let url = Bundle.main.url(forResource: "CompletionChime", withExtension: "wav"),
+                let sound = NSSound(contentsOf: url, byReference: true)
+            {
+                chime = sound
+            } else {
+                chime = NSSound(named: NSSound.Name("Glass"))
+            }
+        } else {
+            chime = nil
+        }
         completionChime =
             allowsAudio && (preferences?.object(forKey: "completionChime") as? Bool ?? true)
         readReplies = allowsAudio && (preferences?.bool(forKey: "readReplies") ?? false)
@@ -257,13 +262,13 @@ struct DictationSession {
             }
             let utterance = AVSpeechUtterance(string: spoken)
             utterance.voice = AVSpeechSynthesisVoice(language: self.language)
-            self.speaker.speak(utterance)
+            self.speaker?.speak(utterance)
         }
     }
     func stopAudio() {
         speechTask?.cancel()
         speechTask = nil
-        speaker.stopSpeaking(at: .immediate)
+        speaker?.stopSpeaking(at: .immediate)
         chime?.stop()
     }
 }

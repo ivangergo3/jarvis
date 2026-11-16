@@ -85,6 +85,13 @@ struct Dashboard: View {
     }
     private var selected: Mission? { missions.first { $0.id == selection } ?? missions.first }
     private var activeCount: Int { missions.filter { $0.status == .working }.count }
+    private var emptyMessage: String {
+        if store.snapshot == nil {
+            return store.error == nil ? "Connecting to your workspace…" : "Workspace unavailable."
+        }
+        return projects.isEmpty
+            ? "No projects available yet." : "No active chats in this project yet."
+    }
     private var agentCount: Int {
         missions.flatMap(\.agents).filter { $0.status == .working }.count
     }
@@ -304,7 +311,10 @@ struct Dashboard: View {
             }
             Text("/  \(scopeName)").font(HUD.mono(12)).lineLimit(1).foregroundStyle(
                 HUD.text.opacity(0.85)
-            ).layoutPriority(1).accessibilityIdentifier("dashboard.scope")
+            ).layoutPriority(1)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("/  \(scopeName)")
+                .accessibilityIdentifier("dashboard.scope")
             Spacer()
             if windowControls.windowVisible {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -420,7 +430,10 @@ struct Dashboard: View {
                 Label("Connection unavailable · \(error)", systemImage: "exclamationmark.triangle")
                     .font(.system(size: 11)).foregroundStyle(HUD.gold).padding(12).background(
                         HUD.gold.opacity(0.06)
-                    ).padding(.horizontal, 30).accessibilityIdentifier("dashboard.error")
+                    ).padding(.horizontal, 30)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Connection unavailable · \(error)")
+                    .accessibilityIdentifier("dashboard.error")
             } else if let notices = store.snapshot?.notices, !notices.isEmpty {
                 Label(notices.joined(separator: " "), systemImage: "exclamationmark.triangle").font(
                     .system(size: 11)
@@ -431,15 +444,10 @@ struct Dashboard: View {
                 VStack(spacing: 15) {
                     Image(systemName: "antenna.radiowaves.left.and.right").font(
                         .system(size: 28, weight: .ultraLight))
-                    Text(
-                        store.error != nil && store.snapshot == nil
-                            ? "Workspace unavailable."
-                            : store.snapshot == nil
-                                ? "Connecting to your workspace…"
-                                : projects.isEmpty
-                                    ? "No projects available yet."
-                                    : "No active chats in this project yet."
-                    ).font(.system(size: 15)).accessibilityIdentifier("dashboard.empty")
+                    Text(emptyMessage).font(.system(size: 15))
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(emptyMessage)
+                        .accessibilityIdentifier("dashboard.empty")
                 }.foregroundStyle(HUD.muted).frame(maxWidth: .infinity)
                 Spacer()
             } else if tab == "Activity" {

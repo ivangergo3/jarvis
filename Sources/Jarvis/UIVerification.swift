@@ -119,8 +119,14 @@ struct VerificationBanner: View {
     var body: some View {
         HStack {
             Text("Synthetic verification · \(configuration.scenario.rawValue)")
-            Text(configuration.runID.uuidString).accessibilityIdentifier("verification.run")
-            Text(evidence.submission).accessibilityIdentifier("verification.submissions")
+            Text(configuration.runID.uuidString)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(configuration.runID.uuidString)
+                .accessibilityIdentifier("verification.run")
+            Text(evidence.submission)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(evidence.submission)
+                .accessibilityIdentifier("verification.submissions")
         }.font(.system(size: 10)).padding(8).foregroundStyle(.white).background(.black)
     }
 }

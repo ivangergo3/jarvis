@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 
@@ -5,6 +6,11 @@ import Testing
 
 @Suite("UI verification isolation")
 struct UIVerificationTests {
+    @Test @MainActor func fixtureTerminationDoesNotWaitForAnotherMainActorTask() {
+        let delegate = AppDelegate(
+            verification: UIVerification(scenario: .workspace, runID: UUID()))
+        #expect(delegate.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+    }
     @Test func malformedVerificationCannotFallBackToLiveMode() throws {
         #expect(try UIVerification.parse(["Jarvis"]) == nil)
         for arguments in [

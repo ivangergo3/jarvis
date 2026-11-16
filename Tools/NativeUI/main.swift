@@ -126,6 +126,26 @@ do {
         to: output.appendingPathComponent("gate.json"))
     print("Native UI verification passed: \(count) tests. Evidence: \(output.path)")
 } catch {
+    let result = output.appendingPathComponent("NativeUI.xcresult")
+    if files.fileExists(atPath: result.path) {
+        do {
+            try run(
+                "/usr/bin/xcrun",
+                [
+                    "xcresulttool", "export", "attachments", "--path", result.path,
+                    "--output-path", output.appendingPathComponent("attachments").path,
+                ], log: "export.log")
+            try run(
+                "/usr/bin/xcrun",
+                [
+                    "xcresulttool", "export", "diagnostics", "--path", result.path,
+                    "--output-path", output.appendingPathComponent("diagnostics").path,
+                ], log: "diagnostics-export.log")
+        } catch {
+            FileHandle.standardError.write(
+                Data("Additional result export failed; original result bundle is retained.\n".utf8))
+        }
+    }
     FileHandle.standardError.write(
         Data((Diagnostics.redact(error.localizedDescription) + "\nEvidence: \(output.path)\n").utf8)
     )

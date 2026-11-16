@@ -101,7 +101,7 @@ final class JarvisUITests: XCTestCase {
         XCTAssertTrue(element(app, "dashboard.chat.alpha-two").exists)
         click(app, "dashboard.chat.alpha-two")
         expect(element(app, "companion.destination"), equals: "Release checks")
-        XCTAssertTrue(app.staticTexts["UNKNOWN"].firstMatch.waitForExistence(timeout: 10))
+        expect(element(app, "companion.activityStatus"), equals: "UNKNOWN")
     }
 
     @MainActor func testKeyboardNavigationAndDraftDestination() throws {
