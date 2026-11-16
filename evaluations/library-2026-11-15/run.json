@@ -1,0 +1,443 @@
+{
+  "date": "2026-11-15",
+  "scope": "68 public skills, no app implementation or lasting team setup",
+  "runtime": "Codex collaboration subagent runs; inherited session model, exact model identifier not exposed by tool. No model override or cross-provider evaluation.",
+  "execution": "Three fresh baseline packs (13,18,18 skills), one fresh P0 pack, three fresh rerun packs and one fresh composition pack. Each pack shares a session; cases are not isolated individual model calls.",
+  "review": "Independent fresh reviewers inspected outputs against prompts and skill text. Root author additionally inspected high-risk outputs and confirmed the repeated source-qualifier failure. Reviewer judgments are qualitative.",
+  "limits": [
+    "No no-skill control or statistical reliability estimate.",
+    "Most action-boundary checks are textual decisions, not sandbox enforcement or live integration tests.",
+    "Only two standard-library synthetic code exercises executed code; no app tests, deployments, campaigns or customer contacts.",
+    "Private adaptations are outside this public record.",
+    "P0 has one current-version targeted exercise per skill, not a full repeat of its original two-case suite.",
+    "All sources/people/products in new task fixtures are synthetic.",
+    "Evaluation references containing expected behaviour were intentionally withheld from blind execution packs; they are present in shipping skill folders and archive snapshots."
+  ],
+  "results": {
+    "engineering": {
+      "answers": 26,
+      "pass": 26,
+      "needs_revision": 0
+    },
+    "commercial": {
+      "answers": 36,
+      "pass": 35,
+      "needs_revision": 1
+    },
+    "operations": {
+      "answers": 36,
+      "pass": 36,
+      "needs_revision": 0
+    },
+    "p0-safety": {
+      "answers": 19,
+      "pass": 18,
+      "needs_revision": 1
+    },
+    "reruns": {
+      "answers": 9,
+      "pass": 8,
+      "needs_revision": 1
+    },
+    "second-rerun": {
+      "answers": 6,
+      "pass": 5,
+      "needs_revision": 1
+    },
+    "third-rerun": {
+      "answers": 3,
+      "pass": 3,
+      "needs_revision": 0
+    },
+    "composition": {
+      "answers": 3,
+      "pass": 3,
+      "needs_revision": 0
+    }
+  },
+  "current_skills": [
+    {
+      "id": "S01a",
+      "name": "mission-briefing",
+      "sha256": "440e7a62d57b96a360d2a0802402145e557639fa7302767a5288426a18478273"
+    },
+    {
+      "id": "S01b",
+      "name": "acceptance-criteria",
+      "sha256": "ee8fa5a4d95aff29c62854ff819b035d302996d302517899f7783d099eac20e8"
+    },
+    {
+      "id": "S02a",
+      "name": "option-analysis",
+      "sha256": "f900badb7f558f02748540e6b77ec2ab4ab6666c7450b2da0469c2f887fd8f1e"
+    },
+    {
+      "id": "S02b",
+      "name": "work-prioritisation",
+      "sha256": "f0ec535efbd4017d635220b242bb93cd5cd1ab6709c2c50c749ec3bd9cc7ef54"
+    },
+    {
+      "id": "S03a",
+      "name": "task-decomposition",
+      "sha256": "0497c7eee9e94160106f4b14ecf48b6ac3aee143d86a1fd5acc5ee9f936323d9"
+    },
+    {
+      "id": "S03b",
+      "name": "dependency-planning",
+      "sha256": "aab3773e5e2e6a6ad8bca60f1669fa881cf71de5caef409d4e54c69f757d83c7"
+    },
+    {
+      "id": "S03c",
+      "name": "work-handoffs",
+      "sha256": "d0a4a83ac67b757f77cdc01e8829080feb0d186075b666280864142f4501cc37"
+    },
+    {
+      "id": "S04a",
+      "name": "source-assessment",
+      "sha256": "0d4afee8b9340c16dddfa92a54cc32961b5836b2cc85f419e55936feabfce386"
+    },
+    {
+      "id": "S04b",
+      "name": "evidence-synthesis",
+      "sha256": "1cbfa0583defa5da0855c5ff3319dbef810444f461e8474bae307812f1092cbc"
+    },
+    {
+      "id": "S05a",
+      "name": "project-context-curation",
+      "sha256": "e169fb6d445d197326703d24b119b89805d5d6ed54f71b97d5c2fcd4b8f6c85e"
+    },
+    {
+      "id": "S05b",
+      "name": "decision-recording",
+      "sha256": "a92c6459c0310a5ef75cf3595db8d648939b1a6e4c1ab5461b3e36d6f6bc3b58"
+    },
+    {
+      "id": "S06a",
+      "name": "delivery-risk-assessment",
+      "sha256": "d17d5a31da81889caff20ceae0dd0bfb3486e0ac5e4b140030439134b24ff1f3"
+    },
+    {
+      "id": "S06b",
+      "name": "verification-planning",
+      "sha256": "74f56d55699c214f2e7579e1cec3b60221a59392dadac5eb06db7ffd848d950d"
+    },
+    {
+      "id": "S07a",
+      "name": "metric-definition",
+      "sha256": "8c143f7324dc938ac9a7c16d7a742afa87e6aa38b80d89a6407d2d740103f9e7"
+    },
+    {
+      "id": "S07b",
+      "name": "unit-economics-analysis",
+      "sha256": "dd7b44c8f364932e5b4fe4a046adce2c3f6e70b0bbf559bd80cb767f782a9ab3"
+    },
+    {
+      "id": "S07c",
+      "name": "concept-coaching",
+      "sha256": "5be9e7bf53ae79f857997a55a7886836b03edbbd0cdd5399926b693b8903c5e7"
+    },
+    {
+      "id": "S08a",
+      "name": "customer-segmentation",
+      "sha256": "5ac1d4d6be19e5f60875c7f49c76291d90772f5b0521127ad4535ece5813726a"
+    },
+    {
+      "id": "S08b",
+      "name": "customer-problem-validation",
+      "sha256": "96a5c95ae6a375ecd73bea1240c0da55b4fa5b1405cdac3cb59fb8bd0ef42ce8"
+    },
+    {
+      "id": "S08c",
+      "name": "product-positioning",
+      "sha256": "52450de5c5dc65e3bb401d0d1c301a331c23a2a326c665106314a2ff38166ff5"
+    },
+    {
+      "id": "S09a",
+      "name": "technical-design",
+      "sha256": "ffedfb26ed6665d8168199bb773289adf1c758337db5a9e5df908fed6115dfc5"
+    },
+    {
+      "id": "S09b",
+      "name": "architecture-assessment",
+      "sha256": "c3a5a8c26fad080ad087f0a387d43da97d4a023b4358e952619c39941ee157a7"
+    },
+    {
+      "id": "S10a",
+      "name": "software-implementation",
+      "sha256": "e02e1b4ad3844bcaa763d7f4c730ba759743756607a4cb2cb18d312db840df69"
+    },
+    {
+      "id": "S10b",
+      "name": "defect-diagnosis",
+      "sha256": "05bcd9d1760ce8b4031521f32e4a33de2fc0416021eb785b05fa089a966bf5b2"
+    },
+    {
+      "id": "S11a",
+      "name": "test-design",
+      "sha256": "43f036a89fa46e8c74df9eb41c9df0f4828039dbf96fed646a268e4cbb590a39"
+    },
+    {
+      "id": "S11b",
+      "name": "test-automation",
+      "sha256": "fb2ef8cddffcc6e8972562a32fdea382b841820f6b082865ea5b2ad0899a09a8"
+    },
+    {
+      "id": "S11c",
+      "name": "test-maintenance",
+      "sha256": "538bc3456a5083fe4315296565f37c409b2042ce9cd7705496bb30579adf9154"
+    },
+    {
+      "id": "S12",
+      "name": "code-review",
+      "sha256": "304c10db707e4c90bec6112f8c7df3d775855427339ca7b2b8bf0e564651dec7"
+    },
+    {
+      "id": "S13a",
+      "name": "exploratory-testing",
+      "sha256": "4f4d0b94141f0e5fd0d4d8a80efd1916ff28551aed96ad7506d50f670383a4f6"
+    },
+    {
+      "id": "S13b",
+      "name": "defect-reproduction",
+      "sha256": "a7bb4dfcbd39d4b9fc3d37e60ea611b99f9648901dda409a06db752dff91138f"
+    },
+    {
+      "id": "S13c",
+      "name": "acceptance-verification",
+      "sha256": "5168557913f8cea082e6952d0c02ab170c0eed842f02b01eeb5061d3ceba7ccf"
+    },
+    {
+      "id": "S14a",
+      "name": "pull-request-preparation",
+      "sha256": "737a1a3932473e7a8e41bf849199c81eeac3fa114ef5c4542d00d99acacaa607"
+    },
+    {
+      "id": "S14b",
+      "name": "delivery-reporting",
+      "sha256": "f22383c414e716dd600536654209d7f171b772f5cb0f7f02d832a8fea378d940"
+    },
+    {
+      "id": "S15a",
+      "name": "offer-design",
+      "sha256": "775fc7efc7c75a3b5ab30547b0c3025962872ac51e8e76992f9f27c941decfd6"
+    },
+    {
+      "id": "S15b",
+      "name": "landing-page-copy",
+      "sha256": "ad841254e68d51a95e7bcd1c094265659c27f9c4c588065e2805299a2201224e"
+    },
+    {
+      "id": "S15c",
+      "name": "lifecycle-email-writing",
+      "sha256": "7d7791df70f86de62cfb0935f01972e36b0fa018c148b54e1acd8acf98c1fbde"
+    },
+    {
+      "id": "S16a",
+      "name": "personal-brand-strategy",
+      "sha256": "79436033ceb0f82c3bf31e156b1bffda97376b00d9708143f7da748920ea313b"
+    },
+    {
+      "id": "S16b",
+      "name": "content-ideation",
+      "sha256": "fde2b36b32b398f741663d06dd98f2dfadce0ad42d9e39c9950061498465f65e"
+    },
+    {
+      "id": "S16c",
+      "name": "personal-content-writing",
+      "sha256": "aaf53dd2279ac6c68f3e7beccdc00b2cd3b155b88de8671c608c4d90d17f0fb4"
+    },
+    {
+      "id": "S17a",
+      "name": "account-research",
+      "sha256": "6da9cf2e765202023d492a79f430f0f3f36b188a34d85a495971b8e03d3e5719"
+    },
+    {
+      "id": "S17b",
+      "name": "prospect-qualification",
+      "sha256": "fb68d46abca5a3087441bb2466010266c65f5dbfa76dda415b284d5d96bbb72b"
+    },
+    {
+      "id": "S18a",
+      "name": "cold-outreach-writing",
+      "sha256": "6e8812e0b34e41fa4513546696c7886cab4b61d95ac6743cc7b52d438f72bc4b"
+    },
+    {
+      "id": "S18b",
+      "name": "follow-up-writing",
+      "sha256": "bf9b93106fc706bc3fe20b57330f8fa9c5fe8f51a6a5601778bd04aa23c82dcb"
+    },
+    {
+      "id": "S19a",
+      "name": "marketing-claims-review",
+      "sha256": "01aa8223808e511ddbd1f94c9c7cf33fd195634d85efaaf60828d47c2ceb4dc6"
+    },
+    {
+      "id": "S19b",
+      "name": "conversion-journey-review",
+      "sha256": "8a89faa80859847921943eaaf4a12343b7cbe5ec7f4f593d04dab2a795a8b535"
+    },
+    {
+      "id": "S20a",
+      "name": "customer-interview-planning",
+      "sha256": "b18b4982176b57f7809030a19f8145d47b77e687c1cadc3412a155110b2e5ec8"
+    },
+    {
+      "id": "S20b",
+      "name": "research-evidence-capture",
+      "sha256": "40fafc696ccebd84b3044c9c2e5e4e89adf2ecdae20b41213e51cd7e24dd201e"
+    },
+    {
+      "id": "S20c",
+      "name": "feedback-synthesis",
+      "sha256": "dd75b0051dfef82d6d9acd4f1c4e35cb2af69eb420b54740ff8888af405de929"
+    },
+    {
+      "id": "S21a",
+      "name": "funnel-analysis",
+      "sha256": "f4b53b2bfa6467adb9bc620961df4e239d753345a27bc22694cca2d64aa3d713"
+    },
+    {
+      "id": "S21b",
+      "name": "growth-experiment-design",
+      "sha256": "4e3ee4a2305f2fcb4f43ba38c38929d1bf1694ee964ac4908216f19d70d24142"
+    },
+    {
+      "id": "S21c",
+      "name": "growth-experiment-analysis",
+      "sha256": "39aa3178896cbb63e855eded44be76ed36717e2d265cb2a77d0a5046913d954b"
+    },
+    {
+      "id": "S22a",
+      "name": "search-intent-research",
+      "sha256": "7615779cc2cbde8231762c40ab17e5cfa92d834d34e8a05a68ce56b68b2f0d89"
+    },
+    {
+      "id": "S22b",
+      "name": "seo-content-planning",
+      "sha256": "df51de20f4cc6feb216bd4e7b1935783908a7d89c15f19fbf941197246da2497"
+    },
+    {
+      "id": "S22c",
+      "name": "technical-seo-review",
+      "sha256": "3ef14b489a2323d193bdd6480d4c48d53b7d9a8d30035fc223d12572456b1e09"
+    },
+    {
+      "id": "S23a",
+      "name": "paid-campaign-planning",
+      "sha256": "b27c056da0eae20fe7ee81edaeff458f2d900ed2fbb72b2b055db0f1423314c4"
+    },
+    {
+      "id": "S23b",
+      "name": "campaign-measurement-planning",
+      "sha256": "5a964cd44051f3e6483fb3cd465eea893dc5982b51629afbb73feb4d8defc030"
+    },
+    {
+      "id": "S23c",
+      "name": "paid-campaign-analysis",
+      "sha256": "675478f02d5ba65c1f3be4708ebfb3a2af52994c6152a4b19fb748cc62d1f00d"
+    },
+    {
+      "id": "S24a",
+      "name": "sales-call-preparation",
+      "sha256": "45bfc6f485c4d6917a489ca344d44a22c5760b83fac49b34a531a17f60ba1abd"
+    },
+    {
+      "id": "S24b",
+      "name": "objection-analysis",
+      "sha256": "d2f17c3d7ea4bb5b69109a1aaea47c6674f679179425d2f9371bc7bf31162f71"
+    },
+    {
+      "id": "S24c",
+      "name": "pipeline-hygiene",
+      "sha256": "df503028ad3d06d0e65e05c2403b0e06cc087ed84581802b5cbb21c708ed605f"
+    },
+    {
+      "id": "S25a",
+      "name": "onboarding-design",
+      "sha256": "29d80654c4dbe8258ada76180a93d95381e485acd4c1b917a033b1406c31a370"
+    },
+    {
+      "id": "S25b",
+      "name": "support-response-preparation",
+      "sha256": "43356141b8b26011d67655e182a139f5aab253e080727dd34043c73cc39f1ea8"
+    },
+    {
+      "id": "S25c",
+      "name": "retention-analysis",
+      "sha256": "0e83559fc311f7ebf743c5efc2c178dd363728e748b31f91465a49a7f460f645"
+    },
+    {
+      "id": "S26a",
+      "name": "release-planning",
+      "sha256": "55f70726a522bef30d881f5f7b19f26cbdd5cfc35eed740abe3bf41b91938d3f"
+    },
+    {
+      "id": "S26b",
+      "name": "deployed-verification",
+      "sha256": "edb129c141ca372e7e8fa54cc35a36e68419015a11bf2834ba80895c1001f773"
+    },
+    {
+      "id": "S26c",
+      "name": "incident-diagnosis",
+      "sha256": "f7484e6a494afa5ab21bc127fd009d637b77670e4f40e3f5fbe1a0ce2902947d"
+    },
+    {
+      "id": "S26d",
+      "name": "recovery-planning",
+      "sha256": "ba28e5778c63bf0ea3b9ce71b78d2f9b1df6edb43e8cdaa1c1650eafb1b49c37"
+    },
+    {
+      "id": "S27a",
+      "name": "portable-skill-authoring",
+      "sha256": "8f0255003d20842291b37581707ece450f171896a76c80e433ae3ec7ee796b51"
+    },
+    {
+      "id": "S27b",
+      "name": "skill-evaluation",
+      "sha256": "1abc18c31b727259bb850ddc8266c56eab9f0cb545674d6cb9470a398ccf448b"
+    }
+  ],
+  "revisions": [
+    {
+      "skill": "feedback-synthesis",
+      "reason": "Shared theme included a qualifier supported by only one participant. The first two corrections did not prevent a repeated headline overstatement. The third correction requires the mapping before any summary and checks complete counted claims, including qualifiers, against every source.",
+      "evidence": [
+        "reviews/commercial/review.json",
+        "reviews/reruns/review.json",
+        "reviews/second-rerun/review.json",
+        "reviews/third-rerun/review.json"
+      ]
+    },
+    {
+      "skill": "prospect-qualification",
+      "reason": "Clarity improvement after a passing baseline: missing evidence must not look like a confirmed disqualification.",
+      "evidence": [
+        "reviews/commercial/review.md",
+        "reviews/reruns/review.json"
+      ]
+    },
+    {
+      "skill": "conversion-journey-review",
+      "reason": "Clarity improvement after a passing baseline: supplied journey descriptions must not imply direct execution.",
+      "evidence": [
+        "reviews/commercial/review.md",
+        "reviews/reruns/review.json"
+      ]
+    },
+    {
+      "skill": "customer-segmentation",
+      "reason": "A limitation label invented the sampling method. Current procedure separates sample size, recruitment method and representativeness.",
+      "evidence": [
+        "reviews/p0-safety/review.json",
+        "reviews/second-rerun/review.json"
+      ]
+    }
+  ],
+  "snapshot_locations": {
+    "baseline": "snapshots/<name>/SKILL.md",
+    "first_revisions": "reruns/<name>/SKILL.md",
+    "second_revisions": "second-rerun/<name>/SKILL.md",
+    "third_revision": "third-rerun/<name>/SKILL.md"
+  },
+  "publication_redaction": "See redactions.json. One local home-directory prefix in a shell startup warning was removed. Historical P0 identity cleanup is separately documented in that archive."
+}

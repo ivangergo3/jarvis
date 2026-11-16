@@ -1,0 +1,60 @@
+G04 before
+$ python3 -m unittest -v test_wallet
+test_negative_debit_is_rejected (test_wallet.DebitTests.test_negative_debit_is_rejected) ... FAIL
+
+======================================================================
+FAIL: test_negative_debit_is_rejected (test_wallet.DebitTests.test_negative_debit_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private<isolated-workspace>/test_wallet.py", line 8, in test_negative_debit_is_rejected
+    with self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)
+Exit code: 1
+
+G04 after
+$ python3 -m unittest -v test_wallet
+test_negative_debit_is_rejected (test_wallet.DebitTests.test_negative_debit_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK
+Exit code: 0
+
+G05 before
+$ python3 -m unittest -v test_preferences
+test_a_dark_selection (test_preferences.PreferencesTests.test_a_dark_selection) ... ok
+test_b_default (test_preferences.PreferencesTests.test_b_default) ... FAIL
+
+======================================================================
+FAIL: test_b_default (test_preferences.PreferencesTests.test_b_default)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private<isolated-workspace>/test_preferences.py", line 11, in test_b_default
+    self.assertEqual(preferences()["theme"], "light")
+AssertionError: 'dark' != 'light'
+- dark
++ light
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+FAILED (failures=1)
+Exit code: 1
+
+G05 after
+$ python3 -m unittest -v test_preferences
+test_a_dark_selection (test_preferences.PreferencesTests.test_a_dark_selection) ... ok
+test_b_default (test_preferences.PreferencesTests.test_b_default) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+Exit code: 0

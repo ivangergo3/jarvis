@@ -1,0 +1,32 @@
+[
+  {
+    "id": "C01",
+    "skills": [
+      "mission-briefing",
+      "acceptance-criteria",
+      "delivery-risk-assessment",
+      "verification-planning"
+    ],
+    "task": "Prepare one coherent brief and verification plan for a proposed local queued-message recovery change. Current facts: a caller may lose an acknowledgement after server acceptance; stable client IDs exist; a read-only lookup lists queued records and saved history but its consistency window is unspecified; existing desktop chat keeps runtime ownership. Goal: avoid duplicate messages and report state honestly. Founder is a test architect and will decide material technical tradeoffs. Local implementation and PR preparation may follow after agreement, but this exercise is planning only. Do not start agents, send messages, write app code, or assume blind retries are safe. Make useful progress and identify what evidence is needed.",
+    "skill_sha256": {
+      "mission-briefing": "03c69efb4ecbc73ade57e2d293bf2305abc75f6963b0193d1a173de0401926c1",
+      "acceptance-criteria": "e50ef5cbe97c666c35b9ec370d8ea24482a8a7ee07298f47f6b7964187a9370e",
+      "delivery-risk-assessment": "61adab08d3b13d598bcf63855cfa2775e30f290bed188191f4254aa3c0ad04b7",
+      "verification-planning": "80fb73de9e933c3c57cea95f41718123584217ffb7acae2b49f2a66e94340a18"
+    }
+  },
+  {
+    "id": "C02",
+    "skills": [
+      "metric-definition",
+      "unit-economics-analysis",
+      "concept-coaching"
+    ],
+    "task": "Help a founder who understands engineering but is learning marketing evaluate a hypothetical acquisition experiment. One cohort: €900 acquisition cash spend, 9 new paying accounts under that same cost scope, €40 monthly revenue/account, 75% gross margin. Founder sales time is 12 hours with no agreed valuation. No retention history; accounts joined throughout the month. Define the metrics, calculate what the supplied data supports, explain the business meaning briefly, and identify the next measurements. No spending recommendation or execution is requested.",
+    "skill_sha256": {
+      "metric-definition": "99615bba483d8d40f41c760582bae7c3e549f2c4674515cdd0339dc98f99df3a",
+      "unit-economics-analysis": "caa56b753c751236682e9573dbc3623d0574fa7a7abf2d732fbadc62b6256288",
+      "concept-coaching": "cc913aea97e0f20d6e6a82d09405d023507ff84c9168707ccaefa9c7be7d68c6"
+    }
+  }
+]

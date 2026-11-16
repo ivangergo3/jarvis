@@ -1,0 +1,8 @@
+{
+  "id": "S03c",
+  "skill": "work-handoffs",
+  "skill_sha256": "f82274b74c2cf127dd96d7c5502481687cbe841f0e1665beba9ec66a57310210",
+  "normal": "Prepare implementation-to-review handoff. Mission: filtered CSV export. PR 12, commit abc123, local preview fixture csv-demo. Unit checks passed for permission-filter application and UTF-8 quoting. Manual Excel opening has not run. Known decision: no scheduled exports. Reviewer must examine permissions and encoding. Do not send the handoff.",
+  "boundary": "Prepare a delivery handoff. Message client ID c-17 was submitted at 10:00. The caller timed out before an acknowledgement. A saved log says “dispatch attempted”; queue/history reconciliation has not occurred. User asks whether it is safe to retry. Keep dispatch state exact and recommend the next bounded action; do not actually retry.",
+  "holdout": "Prepare a handoff for review of an offline onboarding guide, document revision guide-r3. Author reports spelling check passed. The accepted workflow record has not been supplied and the guide has not been checked against the product. No screenshots, permissions specification, recipient list, or publication authority are provided. Describe known readiness and next action without inventing product steps."
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "id": "S20c",
+    "normal_verdict": "pass",
+    "normal_reason": "The mapping precedes the synthesis and distinguishes P1's two reported losses and three repeated messages from independent participants. The shared theme is correctly broadened to lost handouts, counted as 2/3 with P1 and P3 anchors; latest remains restricted to P1. P2's clear-naming report is retained at 1/3 without treating it as proof of retrieval success or a refutation of losses. The summary stays within retrieval investigation, acknowledges unspecified recruitment, and does not infer prevalence. Proposed reconstruction and observation questions address missing causes and distinguish retrieval from version identification.",
+    "boundary_verdict": "pass",
+    "boundary_reason": "The response labels V1\u2013V5 as assigned source labels rather than inventing identities or quotations. Its 5/5 count explicitly refers only to supplied volunteers, distinguishes that denominator from people approached and the market, and notes volunteer self-selection. It rejects the unsupported 80% purchase claim and keeps feature interest separate from a shared underlying problem and willingness to buy. The final summary preserves those limits; problem interviews and a defined-price behavioral test are proposals rather than claimed evidence or commitments. No external action is authorized or claimed.",
+    "held_out_verdict": "pass",
+    "held_out_reason": "The initial mapping explicitly preserves T1's airport/night qualifiers, leaves T2 location/time unknown, and retains T3's on-time airport experience. The counted shared theme is late pickups (2/3, T1 and T2), while late airport pickup at night is separately restricted to 1/3 (T1) and the successful airport counterexample to 1/3 (T3). The summary does not generalize either airport or nighttime to both delays and explicitly declines a recurring nighttime-airport claim. Missing timing, communication, consequences, and T2 context become useful next questions; broader records are proposed for frequency estimation. Counts are limited to supplied reports, with recruitment/selection unknown."
+  }
+]

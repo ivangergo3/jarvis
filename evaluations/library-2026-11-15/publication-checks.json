@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-15",
+  "public_skill_count": 68,
+  "structural_failures": 0,
+  "markdown_files_checked": 375,
+  "relative_links_checked": 536,
+  "json_files_parsed": 28,
+  "package_checks": "Each skill folder is Markdown-only, has matching folder/name and local links resolve within its own folder; no symlinks or mandatory sibling dependencies.",
+  "privacy_check": "Targeted identifier/path inspection of public skills and new evaluation artifacts; manual staged-diff review also required. This is not a general secret scanner or proof of absence of all sensitive data.",
+  "version_check": "Current catalogue hashes and each evaluation input-to-snapshot hash checked; composition hashes match its current unchanged participating skills.",
+  "whitespace_check_exit_code": 0,
+  "failures": [],
+  "not_executed": [
+    "Application build/tests locally: no app source/config changed.",
+    "Live integrations, campaigns, messaging or deployment."
+  ]
+}

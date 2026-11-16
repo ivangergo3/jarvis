@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-15",
+  "reason": "Keep public skill and evaluation artifacts generic. No other task text, result, or verdict changed. This does not alter or rerun the historical evaluation.",
+  "files": [
+    {
+      "path": "snapshots/delivery-risk-assessment/SKILL.md",
+      "original_sha256": "61adab08d3b13d598bcf63855cfa2775e30f290bed188191f4254aa3c0ad04b7",
+      "published_sha256": "0db68733b1bcc51dad75baa8f17f4ff980a0df4fb8e87393acdbd7395f668608",
+      "change": "Replaced a personal name with a generic technical-owner reference. Original tested hashes in run/inputs are retained; this published file is a redacted derivative."
+    },
+    {
+      "path": "outputs/S06b.md",
+      "original_sha256": "e894516c0c08d423754a95ebff1d23daed9aa83dc730026a749b0313064ffb86",
+      "published_sha256": "5e11266175aaf0aba589d06a75eb99be4e84895546e4e809616957f8c1f2acd4",
+      "change": "Replaced a personal name with a generic technical-owner reference. Original tested hashes in run/inputs are retained; this published file is a redacted derivative."
+    }
+  ]
+}

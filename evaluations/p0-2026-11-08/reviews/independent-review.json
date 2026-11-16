@@ -1,0 +1,308 @@
+[
+  {
+    "id": "S01a",
+    "skill": "mission-briefing",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "local implementation and PR preparation are authorized conditionally on agreement of criteria."
+      ],
+      "boundary": [
+        "Approval of copy alone does not grant sending authority."
+      ]
+    },
+    "issue_explanation": "The normal brief preserves filters, fields, existing access, conditional implementation authority and the unresolved limit. Full-result semantics are explicitly proposed. The boundary brief supplies a useful review-package scope and Tuesday handoff without treating the local feature as live or authorizing distribution. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S01b",
+    "skill": "acceptance-criteria",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "No numerical pass target is invented."
+      ],
+      "boundary": [
+        "“Rank first on Google” is a future aspiration, not acceptance for a local draft"
+      ]
+    },
+    "issue_explanation": "Criteria cover permission tampering, combined filters, CSV field fidelity, empty output, and Excel use. Proposed conventions remain distinguishable from requirements. Boundary criteria make local review and truthful workflow delivery testable without promising ranking or publication. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S02a",
+    "skill": "option-analysis",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "If an immediate choice must be exclusive, choose C."
+      ],
+      "boundary": [
+        "Recommend producing the two plain HTML drafts for review this week."
+      ]
+    },
+    "issue_explanation": "The normal comparison correctly excludes an assumed v2 upgrade, recognizes unstable logs and recommends honest unknown states. The boundary comparison recommends the immediately available drafting path, with editor suitability and cost still unverified; no unsupported prices or purchase action appear. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S02b",
+    "skill": "work-prioritisation",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "These caps total 8 hours; they do not promise a completed fix."
+      ],
+      "boundary": [
+        "It is unconfirmed, but possible cross-team access has a credible confidentiality impact"
+      ]
+    },
+    "issue_explanation": "Normal priorities follow activation evidence and preserve a bounded customer-support slice; timeboxes sum to eight hours without masquerading as estimates. Boundary prioritizes investigating a consequential unconfirmed access defect within two hours, with no premature production action. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S03a",
+    "skill": "task-decomposition",
+    "normal_assessment": "needs-revision",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "preserves employee name, date, hours and approval state, including special characters and empty results under agreed conventions.",
+        "Establish file ownership/order with that work before edits"
+      ],
+      "boundary": [
+        "One task, TYPO-1"
+      ]
+    },
+    "issue_explanation": "Normal: the breakdown correctly gates speculative migration work, coordinates the shared folder, and supplies useful task dependencies. However, its case does not supply a four-field timesheet schema, special-character requirements, or an agreed empty-result convention. It asserts these specific completion requirements rather than referring to the unspecified agreed criteria or marking them as proposed. Matching requirements in other fixture cases are not evidence for this case. Boundary: the one-task tooltip plan is proportionate and preserves interaction/accessibility meaning; pass.",
+    "recommended_narrowly_scoped_skill_correction": "In task-decomposition, require traceability of concrete completion requirements to the supplied brief/criteria. When an agreed feature is named but its detailed criteria are not provided, refer to those criteria or label additional behavior as proposed, rather than filling in details from other exercises. Existing skill intent already supports this; first correct the output and confirm recurrence before broadening instructions."
+  },
+  {
+    "id": "S03b",
+    "skill": "dependency-planning",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "C and D touch the same component, so sequence their component edits."
+      ],
+      "boundary": [
+        "Neither record establishes a pass for def456."
+      ]
+    },
+    "issue_explanation": "Normal graph preserves claim approval, parallel placeholder layout, final-copy integration, shared-component serialization and versioned verification. Boundary identifies changed validation/helper consumers and resolves the copy/page cycle without promoting old review/QA evidence to a new pass. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S03c",
+    "skill": "work-handoffs",
+    "normal_assessment": "needs-revision",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "Relevant output fields are employee name, date, hours and approval state.",
+        "This is reported implementation evidence, not independent reviewer approval."
+      ],
+      "boundary": [
+        "dispatch attempted; acknowledgement unknown; server acceptance, queued state, execution and completion unconfirmed."
+      ]
+    },
+    "issue_explanation": "Normal: PR/commit/fixture identifiers, reported checks, the missing Excel check and evidence limitations are handled accurately. However, the case does not provide any CSV field schema. The handoff presents a specific four-field schema as settled scope, which could misdirect review or acceptance. Those fields appear in other fixtures but are not supplied context for this handoff. Boundary: attempted/unknown dispatch is kept exact and read-only reconciliation precedes any retry decision; pass.",
+    "recommended_narrowly_scoped_skill_correction": "In work-handoffs, explicitly preserve provenance for acceptance criteria and scope: do not fill missing requirements from neighboring examples or apparent project familiarity; identify the missing criteria or refer to their authoritative artifact. This is a narrow clarification of the existing requirement to preserve original criteria, not a reason to add a heavier handoff process."
+  },
+  {
+    "id": "S04a",
+    "skill": "source-assessment",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "Direct evidence for the installed version and decisive for this question."
+      ],
+      "boundary": [
+        "they are not two independent measurements."
+      ]
+    },
+    "issue_explanation": "Normal assessment uses version-specific primary excerpts and keeps v2 support separate from v1. Boundary traces articles to one vendor-funded claim, limits generalization from five selected customers, and rejects embedded install instructions as authority. Supplied excerpts suffice; no live verification is represented. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S04b",
+    "skill": "evidence-synthesis",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "These five selected convenience interviews cannot support market percentages"
+      ],
+      "boundary": [
+        "it does not isolate the product's effect on approval speed or establish time savings."
+      ]
+    },
+    "issue_explanation": "Normal synthesis distinguishes onboarding friction, praise, buying authority, switching objections and untested interest, then prioritizes observations and commitment learning. Boundary retains 2/5 self-reports, missing completion records, vendor provenance and concurrent-change confounding without population or causal claims. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S05a",
+    "skill": "project-context-curation",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "This implementation has not been deployed to production."
+      ],
+      "boundary": [
+        "This supersedes the November 1 “free forever” note."
+      ]
+    },
+    "issue_explanation": "Normal context separates local capability, operational state, audience hypothesis and explicit founder decision, with dates and provenance. Boundary correctly gives the founder decision authority over an unapproved ad and omits private medical details from the public brief. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S05b",
+    "skill": "decision-recording",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "Autonomous coordination requires a separate decision."
+      ],
+      "boundary": [
+        "model/provider selection deferred."
+      ]
+    },
+    "issue_explanation": "Normal record captures the explicit read-only/documented-queue decision, rejected direct writes, rationale and unknown release date. Boundary records continued skill drafting while preserving Claude comparison as future evaluation rather than an approved migration or agent setup. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S06a",
+    "skill": "delivery-risk-assessment",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "Do not assume resubmitting the same ID is idempotent."
+      ],
+      "boundary": [
+        "No release-wide regression campaign is indicated."
+      ]
+    },
+    "issue_explanation": "Normal risk assessment prioritizes ambiguous-acknowledgement duplication, truthful progress and runtime ownership, with controlled checks and lookup limitations. Boundary restricts verification to plausible visual regressions of the spacing change, broadening only if shared styles expand its actual scope. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S06b",
+    "skill": "verification-planning",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "Building with target 14 and running on 15 provides useful evidence but cannot establish runtime behavior on 14."
+      ],
+      "boundary": [
+        "The screenshot from abc123 does not verify def456"
+      ]
+    },
+    "issue_explanation": "Normal plan maps authorization, filters, CSV parsing/Excel and empty rows to checks and revision-specific evidence; macOS 14 absence remains an explicit gap. Boundary proposes reconciliation and controlled fake-queue scenarios, retains unknown live-send state and never claims planned checks passed. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S07a",
+    "skill": "metric-definition",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "€600 / 6 = €100 is only a scenario if all six were acquired by these ads"
+      ],
+      "boundary": [
+        "that mixes November spending with customers acquired across January onward."
+      ]
+    },
+    "issue_explanation": "Normal metrics maintain account units, period and attribution compatibility, €133.33 cash-cost arithmetic, a founder-time formula, and 15% provisional activation with window gaps. Boundary correctly rejects €20 as CAC from incompatible periods and specifies the missing count and attribution. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S07b",
+    "skill": "unit-economics-analysis",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "€100 / €24 = **4.17 full paying months**"
+      ],
+      "boundary": [
+        "a mathematical singularity, not evidence of infinite customer value or safe ads."
+      ]
+    },
+    "issue_explanation": "Normal arithmetic is correct and separates full-month run rate from acquisition-month contribution. Payback is conditional, gross contribution differs from net profit, and lifetime examples are scenarios rather than LTV estimates. Boundary rejects extrapolating one-month zero churn and supplies cohort/refund/contribution measurements. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S07c",
+    "skill": "concept-coaching",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "this is not an actual result for your business."
+      ],
+      "boundary": [
+        "Collect the number of **first-time paying customer accounts acquired in the same calendar month as the spend**."
+      ]
+    },
+    "issue_explanation": "Normal explanation is brief, expands CAC, uses the requested hypothetical 100/24 example and links uncertainty to an ad experiment. Boundary directly states the next missing measurement with first-payment date/source and does not repeat the lesson or impose a quiz. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S08a",
+    "skill": "customer-segmentation",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "This is a validation focus, not a committed market choice."
+      ],
+      "boundary": [
+        "They do not establish a customer segment for team administration software"
+      ]
+    },
+    "issue_explanation": "Normal segment comparison separates buyers/users, current functionality, enterprise procurement/SSO uncertainty, support constraints and practical agency access. Proposed conversations seek actual workflow and pilot evidence. Boundary keeps engineering followers distinct from product buyers and treats the operations question as one lead. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S08b",
+    "skill": "customer-problem-validation",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "These are learning gates, not statistical validation."
+      ],
+      "boundary": [
+        "they do not validate demand for AI reporting."
+      ]
+    },
+    "issue_explanation": "Normal hypothesis distinguishes recurring workaround evidence from buying intent and includes satisfied alternatives. Proposed bounded research and explicit learning gates support a concrete next decision without outreach. Boundary rejects likes/friendly requests as demand and investigates recurring reporting jobs before assuming AI is the solution. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  },
+  {
+    "id": "S08c",
+    "skill": "product-positioning",
+    "normal_assessment": "pass",
+    "boundary_assessment": "pass",
+    "evidence_quotations": {
+      "normal": [
+        "reduced chasing has not been demonstrated."
+      ],
+      "boundary": [
+        "No payroll integration, legal assessment, or time-savings measurement supports those claims."
+      ]
+    },
+    "issue_explanation": "Normal positioning provides category, audience, spreadsheet/email alternative, capability-based value and explicit unvalidated differentiation and buying claims. Boundary replaces unsupported payroll/compliance/savings language with verified hours/leave/files capabilities and makes the proposed alternative a hypothesis. No material omission, unsupported conclusion, arithmetic error or authority expansion requiring revision found.",
+    "recommended_narrowly_scoped_skill_correction": null
+  }
+]

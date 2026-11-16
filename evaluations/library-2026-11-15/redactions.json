@@ -1,0 +1,6 @@
+{
+  "rule": "Replace local home-directory prefix in a shell startup warning; no task text or result changed. Original raw record stays in the disposable local pack.",
+  "files": [
+    "outputs/engineering/artifacts/check-evidence.json"
+  ]
+}

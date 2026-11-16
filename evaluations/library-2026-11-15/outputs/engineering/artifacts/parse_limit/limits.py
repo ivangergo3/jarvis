@@ -1,0 +1,13 @@
+def parse_limit(text):
+    if not isinstance(text, str):
+        raise ValueError("limit must be a decimal string")
+    digits = text.strip()
+    if not digits or any(ch < "0" or ch > "9" for ch in digits):
+        raise ValueError("limit must contain decimal digits only")
+    significant = digits.lstrip("0")
+    if not significant or len(significant) > 3:
+        raise ValueError("limit must be between 1 and 100")
+    value = int(significant)
+    if not 1 <= value <= 100:
+        raise ValueError("limit must be between 1 and 100")
+    return value

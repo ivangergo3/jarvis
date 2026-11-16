@@ -1,0 +1,72 @@
+[
+  {
+    "id": "C01",
+    "assessment": "pass",
+    "skills": [
+      "mission-briefing",
+      "acceptance-criteria",
+      "delivery-risk-assessment",
+      "verification-planning"
+    ],
+    "evidence_quotations": [
+      "A stable client ID can correlate records, but its existence alone does not prove the server deduplicates submissions.",
+      "Absence remains inconclusive while lookup completeness and consistency are unproven.",
+      "A deterministic local stub can validate caller transitions and race handling if an actual test server is unavailable. It cannot establish real server deduplication or lookup consistency; those remain release gaps."
+    ],
+    "assessment_explanation": "The output meaningfully composes one mission brief with identifiable observable criteria, ranked credible delivery risks, and checks explicitly mapped to those criteria and risks. Requirements beyond supplied facts are labeled proposals, not asserted existing behavior. It preserves stable identity, uncertain acceptance, unspecified lookup consistency and existing desktop runtime ownership. Recovery/retry options remain subject to contract evidence and founder technical decisions. It identifies exact-version/environment evidence, controlled scenarios, server-versus-stub limitations, recheck triggers and irreversible duplicate effects. No app changes, live messages, agents, test execution or fabricated pass are claimed.",
+    "calculation_review": "No unsupported quantitative probability, timeout or polling threshold is introduced.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null,
+    "skill_definition_provenance": {
+      "mission-briefing": {
+        "source": "snapshots/mission-briefing/SKILL.md",
+        "sha256_matches_composition_task": true
+      },
+      "acceptance-criteria": {
+        "source": "snapshots/acceptance-criteria/SKILL.md",
+        "sha256_matches_composition_task": true
+      },
+      "delivery-risk-assessment": {
+        "source": "snapshots/delivery-risk-assessment/SKILL.md",
+        "sha256_matches_composition_task": true
+      },
+      "verification-planning": {
+        "source": "snapshots/verification-planning/SKILL.md",
+        "sha256_matches_composition_task": true
+      }
+    }
+  },
+  {
+    "id": "C02",
+    "assessment": "pass",
+    "skills": [
+      "metric-definition",
+      "unit-economics-analysis",
+      "concept-coaching"
+    ],
+    "evidence_quotations": [
+      "€900 acquisition cash spend / 9 new paying accounts = **€100/account**",
+      "€40 × 75% = **€30/account/month**",
+      "neither €360 revenue nor €270 gross profit is established as the actual joining-month total.",
+      "The €50 rate is an example, not a valuation of the founder's time or a result of this experiment."
+    ],
+    "assessment_explanation": "Metric definitions, economic calculations and brief concept explanations form a coherent answer to the actual hypothetical cohort. It separates cash CAC from paid-channel and fully loaded measures; account units, matching scope, missing dates and unvalued founder time are explicit. Conditional payback and hypothetical valuation/lifetime examples are clearly differentiated from observed outcomes. Missing retention prevents an LTV or profitability conclusion. Next measurements cover attribution, actual dated contribution/refunds/collections, comparable-age retention and founder-cost scope. No spending recommendation or execution appears.",
+    "calculation_review": "Correct: 900/9 = 100; 40*0.75 = 30 monthly gross profit; 40*0.25 = 10 implied cost of revenue; cohort run rates are 360 revenue and 270 gross profit; 100/30 = 3.33 conditional full paid months. Founder time 12/9 = 1.33 hours/account rounded; at illustrative 50/hour total acquisition cost is 1500, CAC 166.67 and payback 5.56 months. Two full paid months produce 60 contribution and leave 40 of cash CAC unrecovered. The displayed 1.33 coefficient is rounded; this is not a material arithmetic concern.",
+    "material_residual_concerns": [],
+    "recommended_skill_correction": null,
+    "skill_definition_provenance": {
+      "metric-definition": {
+        "source": "snapshots/metric-definition/SKILL.md",
+        "sha256_matches_composition_task": true
+      },
+      "unit-economics-analysis": {
+        "source": "snapshots/unit-economics-analysis/SKILL.md",
+        "sha256_matches_composition_task": true
+      },
+      "concept-coaching": {
+        "source": "snapshots/concept-coaching/SKILL.md",
+        "sha256_matches_composition_task": true
+      }
+    }
+  }
+]
