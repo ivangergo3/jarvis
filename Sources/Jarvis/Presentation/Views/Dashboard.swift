@@ -2,36 +2,6 @@ import AppKit
 import JarvisDomain
 import SwiftUI
 
-@MainActor final class DashboardState: ObservableObject {
-    private let preferences: UserDefaults?
-    @Published var selection: String? {
-        didSet { preferences?.set(selection, forKey: "selectedChat") }
-    }
-    @Published var projectID: String? {
-        didSet { preferences?.set(projectID ?? "__all__", forKey: "selectedProject") }
-    }
-    @Published var tab = "Overview"
-    @Published var motion = true
-    @Published var board = false
-    let graphHover = GraphHoverState()
-    @Published var conversationVisible = true
-    @Published var globalSettingsVisible = false
-    @Published var projectPickerVisible = false
-    @Published var refreshInterval: RefreshInterval = .normal {
-        didSet {
-            preferences?.set(refreshInterval.rawValue, forKey: "refreshIntervalSeconds")
-        }
-    }
-    init(preferences: UserDefaults? = .standard) {
-        self.preferences = preferences
-        refreshInterval = RefreshInterval.restoring(
-            preferences?.integer(forKey: "refreshIntervalSeconds") ?? 0)
-        selection = preferences?.string(forKey: "selectedChat")
-        let stored = preferences?.string(forKey: "selectedProject")
-        projectID = stored == "__all__" ? nil : stored
-    }
-}
-
 struct Dashboard: View {
     @ObservedObject var windowControls: WindowControls
     @ObservedObject var companion: CompanionModel
@@ -41,7 +11,8 @@ struct Dashboard: View {
     @StateObject private var ui: DashboardState
     init(
         windowControls: WindowControls, companion: CompanionModel, voice: LocalVoice,
-        store: FleetStore, ui: DashboardState = DashboardState(), workspaceFixture: Bool = false
+        store: FleetStore, ui: DashboardState, imagePreview: ImagePreviewPresentation,
+        workspaceFixture: Bool = false
     ) {
         self.windowControls = windowControls
         self.companion = companion
@@ -49,8 +20,9 @@ struct Dashboard: View {
         self.store = store
         self.workspaceFixture = workspaceFixture
         _ui = StateObject(wrappedValue: ui)
+        _imagePreview = StateObject(wrappedValue: imagePreview)
     }
-    @StateObject private var imagePreview = ImagePreviewPresentation()
+    @StateObject private var imagePreview: ImagePreviewPresentation
     private var selection: String? {
         get { ui.selection }
         nonmutating set { ui.selection = newValue }
@@ -163,8 +135,10 @@ struct Dashboard: View {
         .accessibilityHidden(imagePreview.file != nil)
         .overlay {
             if let file = imagePreview.file {
-                AttachmentImagePreview(file: file) { imagePreview.file = nil }
-                    .id(file.id)
+                AttachmentImagePreview(file: file, preview: imagePreview) {
+                    imagePreview.file = nil
+                }
+                .id(file.id)
             }
         }
         .onChange(of: companion.completionID) { _, id in

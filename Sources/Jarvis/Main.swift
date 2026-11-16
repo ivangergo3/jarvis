@@ -69,6 +69,8 @@ import SwiftUI
     private let voice: LocalVoice
     private let store: FleetStore
     private let ui: DashboardState
+    private let imagePreview: ImagePreviewPresentation
+    private let desktopActions: DesktopActions
     private let verification: UIVerification?
     private let evidence = VerificationEvidence()
     private let windowControls = WindowControls()
@@ -80,6 +82,13 @@ import SwiftUI
         store = FleetStore(source: source)
         self.workspaceFixture = workspaceFixture
         self.verification = verification
+        let externalActionsAllowed = verification == nil && !workspaceFixture
+        desktopActions = DesktopActions(allowed: externalActionsAllowed)
+        let previewLoader = AttachmentPreviewLoader()
+        imagePreview = ImagePreviewPresentation { file, pixels in
+            guard externalActionsAllowed else { return nil }
+            return await previewLoader.load(file, pixels: pixels)
+        }
         if verification != nil {
             let evidence = evidence
             let connection = VerificationConnection { thread, text in
@@ -96,7 +105,9 @@ import SwiftUI
                 ? CompanionModel(
                     allowsExternalActions: false,
                     makeConnection: { DisabledWorkspaceFixtureConnection() })
-                : CompanionModel()
+                : CompanionModel(imageStore: ComposerImageStore()) {
+                    CodexProcessConnection(executable: CodexExecutable.locate())
+                }
             voice = LocalVoice()
             ui = DashboardState()
         }
@@ -166,8 +177,9 @@ import SwiftUI
                 }
                 Dashboard(
                     windowControls: windowControls, companion: companion, voice: voice,
-                    store: store, ui: ui, workspaceFixture: workspaceFixture)
-            })
+                    store: store, ui: ui, imagePreview: imagePreview,
+                    workspaceFixture: workspaceFixture)
+            }.environmentObject(desktopActions))
         window.collectionBehavior = [.fullScreenPrimary]
         if verification == nil { window.setFrameAutosaveName("JarvisMissionControl") }
         window.center()

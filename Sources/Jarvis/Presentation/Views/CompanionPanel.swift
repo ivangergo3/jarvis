@@ -10,11 +10,8 @@ import SwiftUI
 @MainActor private final class ApprovalState: ObservableObject {
     @Published var answers: [String: String] = [:]
 }
-@MainActor private final class ConnectionSettingsState: ObservableObject {
-    @Published var executable = CodexExecutable.locate()?.path ?? "Not found"
-}
-
 struct CompanionPanel: View {
+    @EnvironmentObject private var desktopActions: DesktopActions
     @ObservedObject var chat: CompanionModel
     @ObservedObject var voice: LocalVoice
     let proposedScope: ConversationScope
@@ -173,11 +170,7 @@ struct CompanionPanel: View {
 
     private func openLinkedChat() {
         guard chat.allowsExternalActions, let id = chat.scope?.threadID else { return }
-        var destination = URLComponents()
-        destination.scheme = "codex"
-        destination.host = "threads"
-        destination.path = "/" + id
-        if let url = destination.url { NSWorkspace.shared.open(url) }
+        desktopActions.openChat(id)
     }
 
     private var conversation: some View {
@@ -439,7 +432,7 @@ private struct CompanionSettings: View {
     let mission: Mission?
     let sourceUnavailable: Bool
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var ui = ConnectionSettingsState()
+    @EnvironmentObject private var desktopActions: DesktopActions
 
     var body: some View {
         ScrollView {
@@ -468,9 +461,9 @@ private struct CompanionSettings: View {
                         "Uses your installed Codex and its existing sign-in. No API key is copied into Jarvis."
                     )
                     .font(.system(size: 12)).lineSpacing(4)
-                    Text(ui.executable).font(HUD.mono(11)).foregroundStyle(HUD.muted)
+                    Text(desktopActions.executable).font(HUD.mono(11)).foregroundStyle(HUD.muted)
                         .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                    Button("Choose Codex executable…") { chooseExecutable() }
+                    Button("Choose Codex executable…") { desktopActions.chooseExecutable() }
                         .font(.system(size: 11)).buttonStyle(HUDControlStyle())
                     Text(
                         "A different executable applies when you reconnect. Sign in through Codex itself."
@@ -546,16 +539,5 @@ private struct CompanionSettings: View {
         .foregroundStyle(HUD.text).background(HUD.background)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(HUD.cyan.opacity(0.25), lineWidth: 1))
         .preferredColorScheme(.dark)
-    }
-
-    private func chooseExecutable() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK, let url = panel.url, CodexExecutable.isValid(url) {
-            UserDefaults.standard.set(url.path, forKey: "codexExecutable")
-            ui.executable = url.path
-        }
     }
 }
