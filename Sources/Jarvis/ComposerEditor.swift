@@ -51,14 +51,18 @@ final class ImagePasteTextView: NSTextView {
     var onImage: ((ClipboardImage) -> Void)?
     override func validateUserInterfaceItem(_ item: NSValidatedUserInterfaceItem) -> Bool {
         if item.action == #selector(paste(_:)), isEditable,
-            imagePasteboard.availableType(from: [.png, .tiff, .fileURL]) != nil {
+            imagePasteboard.availableType(from: [.png, .tiff, .fileURL]) != nil
+        {
             return true
         }
         return super.validateUserInterfaceItem(item)
     }
     override func paste(_ sender: Any?) {
         guard isEditable else { return }
-        if let image = ClipboardImage.read(imagePasteboard) { onImage?(image) }
-        else { super.paste(sender) }
+        if let image = ClipboardImage.read(imagePasteboard) {
+            onImage?(image)
+        } else {
+            super.paste(sender)
+        }
     }
 }

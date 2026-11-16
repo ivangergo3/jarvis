@@ -11,17 +11,26 @@ actor AttachmentPreviewLoader {
         do {
             let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
             guard values.isRegularFile == true, let size = values.fileSize,
-                  size > 0, size <= 50 * 1024 * 1024 else { return nil }
-        } catch { return nil } // Missing, removed or inaccessible attachments show a file card.
-        guard let source = CGImageSourceCreateWithURL(url as CFURL,
+                size > 0, size <= 50 * 1024 * 1024
+            else { return nil }
+        } catch { return nil }  // Missing, removed or inaccessible attachments show a file card.
+        guard
+            let source = CGImageSourceCreateWithURL(
+                url as CFURL,
                 [kCGImageSourceShouldCache: false] as CFDictionary),
-              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceThumbnailMaxPixelSize: min(3200, max(64, pixels)),
-                kCGImageSourceCreateThumbnailWithTransform: true
-              ] as CFDictionary), !Task.isCancelled else { return nil }
+            let image = CGImageSourceCreateThumbnailAtIndex(
+                source, 0,
+                [
+                    kCGImageSourceCreateThumbnailFromImageAlways: true,
+                    kCGImageSourceThumbnailMaxPixelSize: min(3200, max(64, pixels)),
+                    kCGImageSourceCreateThumbnailWithTransform: true,
+                ] as CFDictionary), !Task.isCancelled
+        else { return nil }
         let data = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil) else { return nil }
+        guard
+            let destination = CGImageDestinationCreateWithData(
+                data, "public.png" as CFString, 1, nil)
+        else { return nil }
         CGImageDestinationAddImage(destination, image, nil)
         guard CGImageDestinationFinalize(destination) else { return nil }
         return data as Data
@@ -44,8 +53,11 @@ struct AttachmentTile: View {
 
     var body: some View {
         Button {
-            if state.image != nil { preview.file = file }
-            else if let url = file.localURL { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            if state.image != nil {
+                preview.file = file
+            } else if let url = file.localURL {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
         } label: {
             VStack(spacing: 6) {
                 if let image = state.image {
@@ -62,13 +74,17 @@ struct AttachmentTile: View {
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(HUD.line))
         }
         .buttonStyle(.plain).disabled(file.localURL == nil)
-        .accessibilityLabel(file.isImage ? "Preview image: \(file.name)" : "Reveal file: \(file.name)")
+        .accessibilityLabel(
+            file.isImage ? "Preview image: \(file.name)" : "Reveal file: \(file.name)"
+        )
         .help(file.name)
         .task(id: file.id) {
-            state.image = nil; state.loaded = false
+            state.image = nil
+            state.loaded = false
             let data = await AttachmentPreviewLoader.shared.load(file, pixels: 300)
             guard !Task.isCancelled else { return }
-            state.image = data.flatMap(NSImage.init(data:)); state.loaded = true
+            state.image = data.flatMap(NSImage.init(data:))
+            state.loaded = true
         }
     }
 }
@@ -76,8 +92,9 @@ struct AttachmentTile: View {
 enum ImagePreviewLayout {
     static func fit(_ image: CGSize, within available: CGSize) -> CGSize {
         guard image.width > 0, image.height > 0,
-              image.width.isFinite, image.height.isFinite,
-              available.width > 0, available.height > 0 else { return .zero }
+            image.width.isFinite, image.height.isFinite,
+            available.width > 0, available.height > 0
+        else { return .zero }
         let scale = min(available.width / image.width, available.height / image.height)
         return CGSize(width: image.width * scale, height: image.height * scale)
     }
@@ -91,19 +108,23 @@ struct AttachmentImagePreview: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Button { dismiss() } label: {
+                Button {
+                    dismiss()
+                } label: {
                     Color.black.opacity(0.82).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close image preview")
                 if let image = state.image {
-                    let size = ImagePreviewLayout.fit(image.size,
-                        within: CGSize(width: geometry.size.width * 0.9, height: geometry.size.height * 0.9))
+                    let size = ImagePreviewLayout.fit(
+                        image.size,
+                        within: CGSize(
+                            width: geometry.size.width * 0.9, height: geometry.size.height * 0.9))
                     Image(nsImage: image).resizable().frame(width: size.width, height: size.height)
                         .background(HUD.background)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .shadow(color: .black.opacity(0.7), radius: 24)
-                        .onTapGesture { } // Only the surrounding backdrop dismisses the preview.
+                        .onTapGesture {}  // Only the surrounding backdrop dismisses the preview.
                         .accessibilityLabel("Image preview")
                 } else {
                     Text(state.loaded ? "Preview unavailable" : "Loading image…")
@@ -114,12 +135,12 @@ struct AttachmentImagePreview: View {
         .background(PreviewKeyboard(dismiss: dismiss))
         .accessibilityAddTraits(.isModal)
         .help("Press Escape or click anywhere outside the image to close")
-            .task(id: file.id) {
-                let data = await AttachmentPreviewLoader.shared.load(file, pixels: 3200)
-                guard !Task.isCancelled else { return }
-                state.image = data.flatMap(NSImage.init(data:))
-                state.loaded = true
-            }
+        .task(id: file.id) {
+            let data = await AttachmentPreviewLoader.shared.load(file, pixels: 3200)
+            guard !Task.isCancelled else { return }
+            state.image = data.flatMap(NSImage.init(data:))
+            state.loaded = true
+        }
     }
 }
 
@@ -152,8 +173,7 @@ private struct PreviewKeyboard: NSViewRepresentable {
             window.makeFirstResponder(self)
         }
         override func keyDown(with event: NSEvent) {
-            if event.keyCode == 53 { dismiss?() }
-            else { super.keyDown(with: event) }
+            if event.keyCode == 53 { dismiss?() } else { super.keyDown(with: event) }
         }
     }
 }

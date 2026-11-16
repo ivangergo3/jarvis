@@ -1,7 +1,11 @@
 import Foundation
 
 enum RefreshInterval: Int, CaseIterable, Identifiable {
-    case fast = 1, normal = 3, relaxed = 5, slow = 10, background = 30
+    case fast = 1
+    case normal = 3
+    case relaxed = 5
+    case slow = 10
+    case background = 30
     var id: Int { rawValue }
     var label: String { rawValue == 1 ? "1 second" : "\(rawValue) seconds" }
 

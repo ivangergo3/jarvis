@@ -6,11 +6,13 @@ final class SessionFixture {
     let home: URL
 
     init() throws {
-        home = FileManager.default.temporaryDirectory.appendingPathComponent("jarvis-tests-\(UUID())")
+        home = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "jarvis-tests-\(UUID())")
         try FileManager.default.createDirectory(
             at: home.appendingPathComponent("sessions"), withIntermediateDirectories: true
         )
-        try execute("""
+        try execute(
+            """
             CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT, position INTEGER);
             CREATE TABLE project_roots (project_id TEXT, path TEXT, position INTEGER);
             CREATE TABLE threads (
@@ -26,7 +28,9 @@ final class SessionFixture {
 
     deinit { try? FileManager.default.removeItem(at: home) }
 
-    static func quote(_ text: String) -> String { "'" + text.replacingOccurrences(of: "'", with: "''") + "'" }
+    static func quote(_ text: String) -> String {
+        "'" + text.replacingOccurrences(of: "'", with: "''") + "'"
+    }
 
     static func message(_ text: String, role: String = "user") -> String {
         // Internal fixture invariant: this dictionary contains only JSON-serializable strings/arrays.
@@ -58,7 +62,8 @@ final class SessionFixture {
         let file = home.appendingPathComponent("sessions/\(id).jsonl")
         try Data(log.utf8).write(to: file)
         let q = Self.quote
-        try execute("""
+        try execute(
+            """
             INSERT INTO threads VALUES (
                 \(q(id)), 'Same display name', 'Fallback title', \(q(file.path)),
                 0, \(q(cwd)), \(projectID.map(q) ?? "NULL"), \(archived ? 1 : 0),

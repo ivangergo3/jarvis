@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Jarvis
 
 @Suite("Reactor motion") struct ReactorMotionTests {

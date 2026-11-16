@@ -11,10 +11,15 @@ import SwiftUI
             Task {
                 do {
                     let snapshot = try await CodexReader().read()
-                    let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]; encoder.dateEncodingStrategy = .iso8601
+                    let encoder = JSONEncoder()
+                    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+                    encoder.dateEncodingStrategy = .iso8601
                     print(String(data: try encoder.encode(snapshot), encoding: .utf8)!)
                     exit(0)
-                } catch { fputs("FAIL: \(error.localizedDescription)\n", stderr); exit(1) }
+                } catch {
+                    fputs("FAIL: \(error.localizedDescription)\n", stderr)
+                    exit(1)
+                }
             }
             dispatchMain()
         }
@@ -32,42 +37,69 @@ import SwiftUI
     private let companion = CompanionModel()
     private let voice = LocalVoice()
     private let windowControls = WindowControls()
-    func applicationDidBecomeActive(_ notification: Notification) { windowControls.applicationActive = true }
-    func applicationDidResignActive(_ notification: Notification) { windowControls.applicationActive = false }
+    func applicationDidBecomeActive(_ notification: Notification) {
+        windowControls.applicationActive = true
+    }
+    func applicationDidResignActive(_ notification: Notification) {
+        windowControls.applicationActive = false
+    }
     func applicationDidFinishLaunching(_ notification: Notification) {
         let menu = NSMenu()
-        let appItem = NSMenuItem(); menu.addItem(appItem)
-        let appMenu = NSMenu(); appItem.submenu = appMenu
-        appMenu.addItem(withTitle: "About Jarvis", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let appItem = NSMenuItem()
+        menu.addItem(appItem)
+        let appMenu = NSMenu()
+        appItem.submenu = appMenu
+        appMenu.addItem(
+            withTitle: "About Jarvis",
+            action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Quit Jarvis", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        let editItem = NSMenuItem(); editItem.title = "Edit"; menu.addItem(editItem)
-        let editMenu = NSMenu(); editItem.submenu = editMenu
+        appMenu.addItem(
+            withTitle: "Quit Jarvis", action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q")
+        let editItem = NSMenuItem()
+        editItem.title = "Edit"
+        menu.addItem(editItem)
+        let editMenu = NSMenu()
+        editItem.submenu = editMenu
         editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
         let redo = NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
-        redo.keyEquivalentModifierMask = [.command, .shift]; editMenu.addItem(redo)
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(redo)
         editMenu.addItem(.separator())
         editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
         editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
-        let viewItem = NSMenuItem(); viewItem.title = "View"; menu.addItem(viewItem)
-        let viewMenu = NSMenu(); viewItem.submenu = viewMenu
-        let fullscreen = NSMenuItem(title: "Toggle Full Screen", action: #selector(WindowControls.toggleFullScreen(_:)), keyEquivalent: "f")
+        editMenu.addItem(
+            withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(
+            withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let viewItem = NSMenuItem()
+        viewItem.title = "View"
+        menu.addItem(viewItem)
+        let viewMenu = NSMenu()
+        viewItem.submenu = viewMenu
+        let fullscreen = NSMenuItem(
+            title: "Toggle Full Screen", action: #selector(WindowControls.toggleFullScreen(_:)),
+            keyEquivalent: "f")
         fullscreen.target = windowControls
-        fullscreen.keyEquivalentModifierMask = [.control, .command]; viewMenu.addItem(fullscreen)
+        fullscreen.keyEquivalentModifierMask = [.control, .command]
+        viewMenu.addItem(fullscreen)
         NSApp.mainMenu = menu
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1500, height: 940), styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1500, height: 940),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered, defer: false)
         window.title = "Jarvis — Mission Control"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.backgroundColor = NSColor(red: 0.025, green: 0.045, blue: 0.065, alpha: 1)
         window.minSize = NSSize(width: 1180, height: 760)
         windowControls.attach(to: window)
-        window.contentView = NSHostingView(rootView: Dashboard(windowControls: windowControls, companion: companion, voice: voice))
+        window.contentView = NSHostingView(
+            rootView: Dashboard(windowControls: windowControls, companion: companion, voice: voice))
         window.collectionBehavior = [.fullScreenPrimary]
         window.setFrameAutosaveName("JarvisMissionControl")
-        window.center(); window.makeKeyAndOrderFront(nil)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
     }
@@ -81,7 +113,10 @@ import SwiftUI
         }
         return .terminateLater
     }
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        window?.makeKeyAndOrderFront(nil); return true
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)
+        -> Bool
+    {
+        window?.makeKeyAndOrderFront(nil)
+        return true
     }
 }

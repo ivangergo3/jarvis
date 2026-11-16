@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Jarvis
 
 @Suite("Read-only Codex adapter")
@@ -19,7 +20,8 @@ struct ReaderTests {
         #expect(try db.query("SELECT id FROM projects WHERE id=?", bind: "' OR 1=1 --").isEmpty)
         #expect(throws: ReaderFailure.self) { try db.query("DELETE FROM projects") }
         #expect(throws: ReaderFailure.self) { try db.query("SELECT * FROM unknown_table") }
-        #expect(try Data(contentsOf: fixture.home.appendingPathComponent("state_5.sqlite")) == before)
+        #expect(
+            try Data(contentsOf: fixture.home.appendingPathComponent("state_5.sqlite")) == before)
     }
 
     @Test func discoversOnlyVisibleChatsAndRecordedNonReviewerAgents() async throws {
@@ -29,7 +31,8 @@ struct ReaderTests {
         try fixture.addThread("archived", archived: true)
         try fixture.addThread("child", source: "subagent")
         try fixture.addThread("reviewer", source: "guardian_review")
-        try fixture.execute("""
+        try fixture.execute(
+            """
             INSERT INTO thread_spawn_edges VALUES ('first', 'child');
             INSERT INTO thread_spawn_edges VALUES ('first', 'reviewer');
             """)
@@ -51,7 +54,9 @@ struct ReaderTests {
         try fixture.addThread("loose", projectID: "demo")
         try fixture.setAssignments([
             "local-projects": ["legacy": ["rootPaths": ["/work/demo"]]],
-            "thread-project-assignments": ["moved": ["projectKind": "local", "projectId": "legacy"]],
+            "thread-project-assignments": [
+                "moved": ["projectKind": "local", "projectId": "legacy"]
+            ],
             "projectless-thread-ids": ["loose"],
         ])
         let snapshot = try await CodexReader(home: fixture.home).read()
@@ -65,18 +70,35 @@ struct ReaderTests {
         for id in ["coding", "jarvis", "marketing", "new"] { try fixture.addThread(id) }
         try fixture.setAssignments([
             "local-projects": ["legacy": ["rootPaths": ["/work/demo"]]],
-            "sidebar-project-thread-orders": ["legacy": ["threadIds": ["archived-or-moved", "marketing", "jarvis", "coding", "coding"]]],
+            "sidebar-project-thread-orders": [
+                "legacy": [
+                    "threadIds": ["archived-or-moved", "marketing", "jarvis", "coding", "coding"]
+                ]
+            ],
         ])
         let reader = CodexReader(home: fixture.home)
         let first = try await reader.read()
-        #expect(MissionNavigation.ordered(first.missions).map(\.id) == ["marketing", "jarvis", "coding", "new"])
+        #expect(
+            MissionNavigation.ordered(first.missions).map(\.id) == [
+                "marketing", "jarvis", "coding", "new",
+            ])
         try fixture.execute("UPDATE threads SET updated_at=999999999 WHERE id='coding'")
         let next = try await reader.read()
-        #expect(MissionNavigation.ordered(next.missions).map(\.id) == ["marketing", "jarvis", "coding", "new"])
+        #expect(
+            MissionNavigation.ordered(next.missions).map(\.id) == [
+                "marketing", "jarvis", "coding", "new",
+            ])
         // A deliberate Codex reorder is reflected on the next refresh.
-        try fixture.setAssignments(["sidebar-project-thread-orders": ["demo": ["threadIds": ["coding", "marketing", "jarvis"]]]])
+        try fixture.setAssignments([
+            "sidebar-project-thread-orders": [
+                "demo": ["threadIds": ["coding", "marketing", "jarvis"]]
+            ]
+        ])
         let reordered = try await reader.read()
-        #expect(MissionNavigation.ordered(reordered.missions).map(\.id) == ["coding", "marketing", "jarvis", "new"])
+        #expect(
+            MissionNavigation.ordered(reordered.missions).map(\.id) == [
+                "coding", "marketing", "jarvis", "new",
+            ])
     }
 
     @Test func sidebarFallbackAndMigratedOrderAreDeterministic() async throws {
@@ -128,7 +150,8 @@ struct ReaderTests {
         let file = try fixture.addThread()
         try FileManager.default.removeItem(at: file)
         let saved = "{\"content\":[{\"text\":\"Recovered request\"}]}"
-        try fixture.execute("""
+        try fixture.execute(
+            """
             CREATE TABLE thread_items (thread_id TEXT, item_type TEXT, item_json TEXT, created_at_ms INTEGER);
             INSERT INTO thread_items VALUES ('chat', 'userMessage', \(SessionFixture.quote(saved)), 1000);
             """, database: "thread_history_1.sqlite")
@@ -162,10 +185,16 @@ struct ReaderTests {
 
     @Test func corruptCatalogAndUnsupportedSchemaFailExplicitly() async throws {
         let fixture = try SessionFixture()
-        try Data("{unfinished".utf8).write(to: fixture.home.appendingPathComponent(".codex-global-state.json"))
-        await #expect(throws: ReaderFailure.self) { try await CodexReader(home: fixture.home).read() }
-        try FileManager.default.removeItem(at: fixture.home.appendingPathComponent(".codex-global-state.json"))
+        try Data("{unfinished".utf8).write(
+            to: fixture.home.appendingPathComponent(".codex-global-state.json"))
+        await #expect(throws: ReaderFailure.self) {
+            try await CodexReader(home: fixture.home).read()
+        }
+        try FileManager.default.removeItem(
+            at: fixture.home.appendingPathComponent(".codex-global-state.json"))
         try fixture.execute("DROP TABLE threads")
-        await #expect(throws: ReaderFailure.self) { try await CodexReader(home: fixture.home).read() }
+        await #expect(throws: ReaderFailure.self) {
+            try await CodexReader(home: fixture.home).read()
+        }
     }
 }

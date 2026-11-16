@@ -7,11 +7,13 @@ Native UI coverage remains a separate follow-up (QA-04).
 ## Run locally
 
 ```sh
-swift run quality-gate test
-./build.sh
+./scripts/format.sh bootstrap  # once, to build the pinned formatter
+./scripts/check.sh             # formatter, concurrency probes, full test gate, release build
 ```
 
 The native Swift executable uses Foundation for processes, XML, files and JSON.
+`swift run quality-gate test` remains available to run only the test gate;
+the shared check command also treats compiler warnings as errors.
 Its own tests use Swift Testing alongside the app tests; there are no external
 package dependencies or additional runtime requirements. The gate executes the
 whole Swift Testing suite, then independently

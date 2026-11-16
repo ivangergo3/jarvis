@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 import QualitySupport
+import Testing
 
 @testable import Jarvis
 
@@ -13,8 +13,10 @@ struct ProcessConnectionTests {
         let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("Fixtures/EchoServer.swift")
         let compileLog = fixture.home.appendingPathComponent("compile.log")
-        let status = try Command("/usr/bin/xcrun", ["swiftc", source.path, "-o", executable.path],
-                                 directory: fixture.home).run(log: compileLog, timeout: 60)
+        let status = try Command(
+            "/usr/bin/xcrun", ["swiftc", source.path, "-o", executable.path],
+            directory: fixture.home
+        ).run(log: compileLog, timeout: 60)
         let diagnostic = try Diagnostics.tail(of: compileLog)
         try #require(status == 0, "Native fixture compilation failed: \(diagnostic)")
         let connection = CodexProcessConnection(executable: executable, timeout: .seconds(5))

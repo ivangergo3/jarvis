@@ -48,7 +48,9 @@ struct GlobalSettingsPanel: View {
                 }
                 HStack(spacing: 8) {
                     ForEach(RefreshInterval.allCases) { choice in
-                        Button { interval = choice } label: {
+                        Button {
+                            interval = choice
+                        } label: {
                             Text("\(choice.rawValue)s").font(HUD.mono(11))
                                 .frame(maxWidth: .infinity)
                         }
@@ -59,8 +61,10 @@ struct GlobalSettingsPanel: View {
                         .accessibilityIdentifier("settings.refresh.\(choice.rawValue)")
                     }
                 }
-                Text("Activity and chat updates across Jarvis. Updates slow down while hidden or inactive.")
-                    .font(.system(size: 12)).foregroundStyle(HUD.muted)
+                Text(
+                    "Activity and chat updates across Jarvis. Updates slow down while hidden or inactive."
+                )
+                .font(.system(size: 12)).foregroundStyle(HUD.muted)
             }
             .padding(18).frame(maxWidth: .infinity, alignment: .leading).modifier(HUDPanel())
             Spacer(minLength: 0)
@@ -83,15 +87,20 @@ struct ProjectChooser: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             DashboardPopupHeader(title: "SELECT PROJECT", symbol: "folder", close: close)
-            option("All projects", subtitle: "Jarvis overview", symbol: "square.stack.3d.up", id: nil)
+            option(
+                "All projects", subtitle: "Jarvis overview", symbol: "square.stack.3d.up", id: nil)
             Rectangle().fill(HUD.line).frame(height: 1)
             if projects.isEmpty {
-                Text("No projects available yet.").font(.system(size: 12)).foregroundStyle(HUD.muted)
+                Text("No projects available yet.").font(.system(size: 12)).foregroundStyle(
+                    HUD.muted)
             } else {
                 ScrollView {
                     VStack(spacing: 6) {
                         ForEach(projects) { project in
-                            option(project.name, subtitle: project.isUnassigned ? "Unassigned chats" : "Project team",
+                            option(
+                                project.name,
+                                subtitle: project.isUnassigned
+                                    ? "Unassigned chats" : "Project team",
                                 symbol: project.isUnassigned ? "tray" : "folder", id: project.id)
                         }
                     }
@@ -103,8 +112,11 @@ struct ProjectChooser: View {
         .background(HUD.background).preferredColorScheme(.dark)
     }
 
-    private func option(_ name: String, subtitle: String, symbol: String, id: String?) -> some View {
-        Button { choose(id) } label: {
+    private func option(_ name: String, subtitle: String, symbol: String, id: String?) -> some View
+    {
+        Button {
+            choose(id)
+        } label: {
             HStack(spacing: 12) {
                 Image(systemName: symbol).foregroundStyle(HUD.gold).frame(width: 20)
                 VStack(alignment: .leading, spacing: 4) {

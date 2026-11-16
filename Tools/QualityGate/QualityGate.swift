@@ -20,16 +20,21 @@ enum QualityGate {
                     let url = URL(fileURLWithPath: arguments[index])
                     if value == "--root" { root = url } else { output = url }
                 } else {
-                    throw QualityFailure("Usage: swift run quality-gate [test|mutations] [--root path] [--output path] [--swift-arg=value]")
+                    throw QualityFailure(
+                        "Usage: swift run quality-gate [test|mutations] [--root path] [--output path] [--swift-arg=value]"
+                    )
                 }
                 index += 1
             }
             let destination = output ?? root.appendingPathComponent("test-results")
             switch mode {
             case "test":
-                let summary = try TestGate.run(root: root, swiftArguments: swiftArguments, output: destination)
+                let summary = try TestGate.run(
+                    root: root, swiftArguments: swiftArguments, output: destination)
                 print("Tests: \(summary.testCases), passed: \(summary.passed)")
-                if let error = summary.error { FileHandle.standardError.write(Data((error + "\n").utf8)) }
+                if let error = summary.error {
+                    FileHandle.standardError.write(Data((error + "\n").utf8))
+                }
                 if !summary.passed { exit(1) }
             case "mutations":
                 try FaultProbe.run(root: root, swiftArguments: swiftArguments, output: destination)
@@ -37,7 +42,8 @@ enum QualityGate {
                 throw QualityFailure("Unknown quality-gate command: \(mode)")
             }
         } catch {
-            FileHandle.standardError.write(Data((Diagnostics.redact(error.localizedDescription) + "\n").utf8))
+            FileHandle.standardError.write(
+                Data((Diagnostics.redact(error.localizedDescription) + "\n").utf8))
             exit(1)
         }
     }

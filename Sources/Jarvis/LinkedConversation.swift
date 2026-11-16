@@ -33,8 +33,10 @@ struct LinkedConversationSnapshot: Equatable {
         case "userMessage":
             let raw = item["content"].values.compactMap { $0["text"].text }.joined(separator: "\n")
             let display = ChatAttachments.unwrap(String(raw.prefix(64_000)))
-            let files = ChatAttachments.merge(display.files, ChatAttachments.fromContent(item["content"].values))
-            guard let text = LogObservation.cleanTask(display.text) ?? (files.isEmpty ? nil : "") else { return nil }
+            let files = ChatAttachments.merge(
+                display.files, ChatAttachments.fromContent(item["content"].values))
+            guard let text = LogObservation.cleanTask(display.text) ?? (files.isEmpty ? nil : "")
+            else { return nil }
             let id = item["clientId"].text.flatMap { $0.isEmpty ? nil : $0 } ?? recordID
             return CompanionMessage(id: id, role: .user, text: text, attachments: files)
         case "agentMessage":
@@ -49,7 +51,8 @@ struct LinkedConversationSnapshot: Equatable {
         guard let id = entry["clientUserMessageId"].text, !id.isEmpty else { return nil }
         let text = entry["input"].values.compactMap { $0["text"].text }.joined(separator: "\n")
         let display = ChatAttachments.unwrap(String(text.prefix(16_000)))
-        let files = ChatAttachments.merge(display.files, ChatAttachments.fromContent(entry["input"].values))
+        let files = ChatAttachments.merge(
+            display.files, ChatAttachments.fromContent(entry["input"].values))
         guard !display.text.isEmpty || !files.isEmpty else { return nil }
         return CompanionMessage(
             id: id, role: .user, text: display.text, queued: true, attachments: files)

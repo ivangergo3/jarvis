@@ -10,7 +10,8 @@ import Combine
 
     override init() {
         super.init()
-        NotificationCenter.default.addObserver(self, selector: #selector(powerStateChanged),
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(powerStateChanged),
             name: .NSProcessInfoPowerStateDidChange, object: nil)
     }
     deinit { NotificationCenter.default.removeObserver(self) }
@@ -21,7 +22,8 @@ import Combine
     func windowDidMiniaturize(_ notification: Notification) { updateVisibility() }
     func windowDidDeminiaturize(_ notification: Notification) { updateVisibility() }
     private func updateVisibility() {
-        let visible = window?.occlusionState.contains(.visible) == true && window?.isMiniaturized != true
+        let visible =
+            window?.occlusionState.contains(.visible) == true && window?.isMiniaturized != true
         if windowVisible != visible { windowVisible = visible }
     }
     @Published private(set) var isFullScreen = false

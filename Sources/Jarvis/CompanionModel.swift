@@ -118,14 +118,22 @@ struct CompanionApproval: Identifiable {
     var canSend: Bool {
         !phase.busy && phase != .outcomeUnknown && !historyUnavailable
             && !importingImage
-            && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !draftImages.isEmpty)
+            && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !draftImages.isEmpty)
             && draft.count <= 16_000
     }
 
     @discardableResult
-    func pasteImage(_ image: ClipboardImage, store: ComposerImageStore = .shared) -> Task<Void, Never>? {
-        guard !phase.busy, phase != .outcomeUnknown, !importingImage, scope?.threadID != nil else { return nil }
-        guard draftImages.count < 6 else { notice = "Attach up to six images per message."; return nil }
+    func pasteImage(_ image: ClipboardImage, store: ComposerImageStore = .shared) -> Task<
+        Void, Never
+    >? {
+        guard !phase.busy, phase != .outcomeUnknown, !importingImage, scope?.threadID != nil else {
+            return nil
+        }
+        guard draftImages.count < 6 else {
+            notice = "Attach up to six images per message."
+            return nil
+        }
         importingImage = true
         let token = generation
         imageImportTask = Task { [weak self] in
@@ -159,8 +167,10 @@ struct CompanionApproval: Identifiable {
         }
         guard discardDraft || phase != .outcomeUnknown else { return }
         if !discardDraft, let current = scope?.threadID {
-            if draft.isEmpty && draftImages.isEmpty { chatDrafts.removeValue(forKey: current); chatImageDrafts.removeValue(forKey: current) }
-            else {
+            if draft.isEmpty && draftImages.isEmpty {
+                chatDrafts.removeValue(forKey: current)
+                chatImageDrafts.removeValue(forKey: current)
+            } else {
                 guard chatDrafts[current] != nil || chatDrafts.count < 100 else {
                     notice = "Send or clear an existing draft before opening more chats."
                     return
@@ -169,7 +179,10 @@ struct CompanionApproval: Identifiable {
                 chatImageDrafts[current] = draftImages
             }
         }
-        if discardDraft { chatDrafts.removeValue(forKey: id); chatImageDrafts.removeValue(forKey: id) }
+        if discardDraft {
+            chatDrafts.removeValue(forKey: id)
+            chatImageDrafts.removeValue(forKey: id)
+        }
         let restoredDraft = chatDrafts[id] ?? ""
         let restoredImages = chatImageDrafts[id] ?? []
         await newConversation()
@@ -251,7 +264,9 @@ struct CompanionApproval: Identifiable {
         if scope?.threadID == nil {
             draft = ""
             draftImages = []
-            messages.append(CompanionMessage(id: UUID().uuidString, role: .user, text: text, attachments: images))
+            messages.append(
+                CompanionMessage(
+                    id: UUID().uuidString, role: .user, text: text, attachments: images))
         } else {
             historyRevision += 1
         }
@@ -264,7 +279,9 @@ struct CompanionApproval: Identifiable {
         replyIDs.removeAll()
         fileChangeReviews.removeAll()
         let token = generation
-        sendTask = Task { [weak self] in await self?.performSend(text, images: images, generation: token) }
+        sendTask = Task { [weak self] in
+            await self?.performSend(text, images: images, generation: token)
+        }
         return sendTask
     }
 
@@ -301,10 +318,14 @@ struct CompanionApproval: Identifiable {
         return connection
     }
 
-    private func performSend(_ text: String, images: [ChatAttachment], generation token: UUID) async {
-        var input: [WireValue] = text.isEmpty ? [] : [.object(["type": .string("text"), "text": .string(text)])]
+    private func performSend(_ text: String, images: [ChatAttachment], generation token: UUID) async
+    {
+        var input: [WireValue] =
+            text.isEmpty ? [] : [.object(["type": .string("text"), "text": .string(text)])]
         input += images.compactMap { image in
-            image.localURL.map { .object(["type": .string("localImage"), "path": .string($0.path)]) }
+            image.localURL.map {
+                .object(["type": .string("localImage"), "path": .string($0.path)])
+            }
         }
         do {
             let connection = try await prepareConnection(generation: token)
@@ -473,7 +494,9 @@ struct CompanionApproval: Identifiable {
             }
             dispatched = false
         case "error": notice = event.params["message"].text ?? "Codex reported an error."
-        default: break  // Tool output and instruction-like text are never interpreted as UI commands.
+        default:
+            // Tool output and instruction-like text are never interpreted as UI commands.
+            break
         }
     }
 
