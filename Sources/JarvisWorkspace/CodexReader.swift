@@ -1,5 +1,5 @@
-import Combine
 import Foundation
+import JarvisDomain
 import SQLite3
 
 struct ReaderFailure: LocalizedError {
@@ -8,7 +8,7 @@ struct ReaderFailure: LocalizedError {
 }
 
 /// Local-only adapter. Databases are opened SQLITE_OPEN_READONLY; logs are never changed.
-actor CodexReader {
+public actor CodexReader: WorkspaceSource {
     struct CachedLog {
         var path: String
         var offset: UInt64
@@ -18,7 +18,7 @@ actor CodexReader {
     private var cache: [String: CachedLog] = [:]
     private let home: URL
     private let now: @Sendable () -> Date
-    init(
+    public init(
         home: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
             ".codex"),
         now: @escaping @Sendable () -> Date = { Date() }
@@ -27,7 +27,7 @@ actor CodexReader {
         self.now = now
     }
 
-    func read() throws -> FleetSnapshot {
+    public func read() throws -> FleetSnapshot {
         let readAt = now()
         let db = try ReadOnlyDatabase(home.appendingPathComponent("state_5.sqlite").path)
         let membership = try projectMembership(db)
@@ -316,22 +316,5 @@ final class ReadOnlyDatabase {
             throw ReaderFailure(message: "Local Codex records are busy. Retrying shortly.")
         }
         return result
-    }
-}
-
-@MainActor final class FleetStore: ObservableObject {
-    @Published var snapshot: FleetSnapshot?
-    @Published var error: String?
-    private(set) var refreshing = false
-    private let reader = CodexReader()
-    func refresh() async {
-        guard !refreshing else { return }
-        refreshing = true
-        defer { refreshing = false }
-        do {
-            let next = try await reader.read()
-            if snapshot?.hasSameDisplayContent(as: next) != true { snapshot = next }
-            if error != nil { error = nil }
-        } catch { self.error = error.localizedDescription }
     }
 }

@@ -1,4 +1,11 @@
 [
+  "JarvisTests.WorkspaceLaunchTests/reopeningFixtureWithoutArgumentsUsesEmbeddedDataInsteadOfLiveRecords",
+  "JarvisTests.WorkspaceLaunchTests/fixtureWithMissingConfigurationFailsClosed",
+  "JarvisTests.FleetStoreTests/cancelledLateSuccessCannotPublishAndTheNextRefreshCanRecover",
+  "JarvisTests.FleetStoreTests/failureRetainsUsableSnapshotAndSuccessfulRefreshClearsTheError",
+  "JarvisTests.FleetStoreTests/overlappingRefreshesDoNotStartCompetingReads",
+  "QualitySupportTests.WorkspaceArchitectureTests/forbiddenDependencyInADisposableSourceIsDetectedAndCorrectionPasses",
+  "QualitySupportTests.WorkspaceArchitectureTests/actualTargetGraphMustPreserveTheAllowedEdgesAndRoots",
   "QualitySupportTests.QualitySupportTests/discoveryRecognisesBothTestModulesAndIgnoresCompilerOutput",
   "QualitySupportTests.QualitySupportTests/diagnosticsAreBoundedAndRedactPathsQuotedCredentialsAndBearerValues",
   "QualitySupportTests.QualitySupportTests/validResultsRequireTheCompleteDiscoveredAndCriticalInventory",

@@ -5,8 +5,14 @@ let package = Package(
     name: "Jarvis",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "Jarvis", linkerSettings: [.linkedLibrary("sqlite3")]),
-        .testTarget(name: "JarvisTests", dependencies: ["Jarvis", "QualitySupport"]),
+        .target(name: "JarvisDomain"),
+        .target(
+            name: "JarvisWorkspace", dependencies: ["JarvisDomain"],
+            linkerSettings: [.linkedLibrary("sqlite3")]),
+        .executableTarget(name: "Jarvis", dependencies: ["JarvisDomain", "JarvisWorkspace"]),
+        .testTarget(
+            name: "JarvisTests",
+            dependencies: ["Jarvis", "JarvisDomain", "JarvisWorkspace", "QualitySupport"]),
         .target(
             name: "QualitySupport", path: "Tools/QualitySupport",
             swiftSettings: [.swiftLanguageMode(.v6)]),

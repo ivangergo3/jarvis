@@ -1,7 +1,9 @@
 import Foundation
+import JarvisDomain
 import Testing
 
 @testable import Jarvis
+@testable import JarvisWorkspace
 
 @Suite("Read-only Codex adapter")
 struct ReaderTests {

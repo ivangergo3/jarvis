@@ -1,7 +1,9 @@
 import Foundation
+import JarvisDomain
 import Testing
 
 @testable import Jarvis
+@testable import JarvisWorkspace
 
 @Suite("Controlled lifecycle time")
 struct LifecycleBoundaryTests {

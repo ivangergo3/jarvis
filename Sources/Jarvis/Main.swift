@@ -1,8 +1,27 @@
 import AppKit
+import JarvisDomain
+import JarvisWorkspace
 import SwiftUI
 
 @main enum JarvisMain {
     @MainActor static func main() {
+        let arguments = CommandLine.arguments
+        let launch: WorkspaceLaunch
+        do {
+            launch = try WorkspaceLaunch.resolve(
+                arguments: arguments,
+                bundleIdentifier: Bundle.main.bundleIdentifier,
+                fixtureDirectory: Bundle.main.object(
+                    forInfoDictionaryKey: "JarvisWorkspaceFixtureDirectory") as? String)
+        } catch {
+            FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
+            exit(64)
+        }
+        let source: any WorkspaceSource
+        switch launch {
+        case .live: source = CodexReader()
+        case .fixture(let home): source = CodexReader(home: home)
+        }
         if CommandLine.arguments.contains("--self-test") {
             fputs("Tests now run separately: use swift test from the project folder.\n", stderr)
             exit(64)
@@ -10,7 +29,7 @@ import SwiftUI
         if CommandLine.arguments.contains("--diagnose") {
             Task {
                 do {
-                    let snapshot = try await CodexReader().read()
+                    let snapshot = try await source.read()
                     let encoder = JSONEncoder()
                     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
                     encoder.dateEncodingStrategy = .iso8601
@@ -24,7 +43,7 @@ import SwiftUI
             dispatchMain()
         }
         let app = NSApplication.shared
-        let delegate = AppDelegate()
+        let delegate = AppDelegate(source: source, workspaceFixture: launch.isFixture)
         app.delegate = delegate
         app.setActivationPolicy(.regular)
         // AppKit owns the main run loop; do not hold a Swift concurrency job across app.run().
@@ -34,9 +53,21 @@ import SwiftUI
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
-    private let companion = CompanionModel()
+    private let companion: CompanionModel
     private let voice = LocalVoice()
     private let windowControls = WindowControls()
+    private let store: FleetStore
+    private let workspaceFixture: Bool
+
+    init(source: any WorkspaceSource, workspaceFixture: Bool = false) {
+        store = FleetStore(source: source)
+        self.workspaceFixture = workspaceFixture
+        companion =
+            workspaceFixture
+            ? CompanionModel(makeConnection: { DisabledWorkspaceFixtureConnection() })
+            : CompanionModel()
+        super.init()
+    }
     func applicationDidBecomeActive(_ notification: Notification) {
         windowControls.applicationActive = true
     }
@@ -95,7 +126,9 @@ import SwiftUI
         window.minSize = NSSize(width: 1180, height: 760)
         windowControls.attach(to: window)
         window.contentView = NSHostingView(
-            rootView: Dashboard(windowControls: windowControls, companion: companion, voice: voice))
+            rootView: Dashboard(
+                windowControls: windowControls, companion: companion, voice: voice, store: store,
+                workspaceFixture: workspaceFixture))
         window.collectionBehavior = [.fullScreenPrimary]
         window.setFrameAutosaveName("JarvisMissionControl")
         window.center()
@@ -119,4 +152,16 @@ import SwiftUI
         window?.makeKeyAndOrderFront(nil)
         return true
     }
+}
+
+/// Explicit fixture launches never start Codex or send a real conversation request.
+private actor DisabledWorkspaceFixtureConnection: CodexConnection {
+    func request(_ method: String, params: WireValue) throws -> WireValue {
+        throw ConnectionFailure.unavailable
+    }
+    func notify(_ method: String) {}
+    func respond(to id: WireValue, result: WireValue) {}
+    func reject(_ id: WireValue, message: String) {}
+    func events() -> AsyncStream<CodexEvent> { AsyncStream { $0.finish() } }
+    func close() {}
 }

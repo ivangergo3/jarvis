@@ -11,6 +11,7 @@ Read [REQUIREMENTS.md](REQUIREMENTS.md) before implementing or reviewing a chang
 - Preserve the configured formatter, test and CI gates. Wider build-system and native UI checks remain separate work; do not claim unconfigured checks are enforced.
 - Verify changes according to risk. Report checks actually run and limitations. Record justified deviations by requirement ID rather than weakening requirements silently.
 - Keep app, test and quality tooling in Swift using native libraries. Bash is acceptable for small orchestration steps. Do not introduce Python or another runtime without explicit user agreement.
+- Workspace architecture follows the agreed [first slice](docs/engineering/workspace-boundaries-46.md): domain contracts have no UI/storage/process dependencies; the read-only workspace adapter depends on domain; only app composition constructs that adapter. Keep views and the UI refresh store behind the domain source contract. Other integrations remain separate follow-ups.
 
 ## Reusable skills and private context
 

@@ -1,4 +1,5 @@
 import AppKit
+import JarvisDomain
 import SwiftUI
 
 // ObservableObject keeps compatibility with the project's command-line SDK/toolchain.

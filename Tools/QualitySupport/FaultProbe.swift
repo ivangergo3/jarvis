@@ -34,7 +34,7 @@ public enum FaultProbe {
                 "JarvisTests.ConversationRegressionTests/historyStartedBeforeSendCannotEraseTheQueuedMessage"
         ),
         Fault(
-            name: "stale lifecycle boundary", path: "Sources/Jarvis/CodexReader.swift",
+            name: "stale lifecycle boundary", path: "Sources/JarvisWorkspace/CodexReader.swift",
             before: "readAt.timeIntervalSince(date) > 1800",
             after: "readAt.timeIntervalSince(date) >= 1800",
             test: "JarvisTests.LifecycleBoundaryTests/startMarkerExpiresOnlyAfterThirtyMinutes"),
