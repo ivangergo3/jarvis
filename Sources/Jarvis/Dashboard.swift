@@ -1,4 +1,5 @@
 import AppKit
+import JarvisDomain
 import SwiftUI
 
 @MainActor final class DashboardState: ObservableObject {
@@ -33,7 +34,8 @@ struct Dashboard: View {
     @ObservedObject var windowControls: WindowControls
     @ObservedObject var companion: CompanionModel
     @ObservedObject var voice: LocalVoice
-    @StateObject private var store = FleetStore()
+    @ObservedObject var store: FleetStore
+    var workspaceFixture = false
     @StateObject private var ui = DashboardState()
     @StateObject private var imagePreview = ImagePreviewPresentation()
     private var selection: String? {
@@ -130,6 +132,14 @@ struct Dashboard: View {
         }
         .background(HUD.background).foregroundStyle(HUD.text).preferredColorScheme(.dark)
         .frame(minWidth: 1180, minHeight: 760)
+        .accessibilityIdentifier("workspace.dashboard")
+        .overlay(alignment: .bottomLeading) {
+            if workspaceFixture {
+                Text("WORKSPACE FIXTURE").font(HUD.mono(9)).foregroundStyle(HUD.gold)
+                    .padding(8).background(HUD.background)
+                    .accessibilityIdentifier("workspace.fixture")
+            }
+        }
         .environmentObject(imagePreview)
         .accessibilityHidden(imagePreview.file != nil)
         .overlay {
@@ -191,6 +201,7 @@ struct Dashboard: View {
                                         .font(HUD.mono(9))
                                 }.foregroundStyle(HUD.muted).padding(.vertical, 10)
                             }.buttonStyle(.plain)
+                                .accessibilityIdentifier("workspace.project.\(p.id)")
                         }
                     } else {
                         ForEach(MissionNavigation.ordered(missions)) { mission in
@@ -207,6 +218,7 @@ struct Dashboard: View {
                                     Spacer()
                                 }.padding(.vertical, 10)
                             }.buttonStyle(.plain)
+                                .accessibilityIdentifier("workspace.chat.\(mission.id)")
                         }
                     }
                 }
@@ -309,6 +321,7 @@ struct Dashboard: View {
                     .contentShape(Rectangle())
             }.buttonStyle(.plain).keyboardShortcut("r", modifiers: .command)
                 .help("Refresh now; automatic updates every \(ui.refreshInterval.rawValue) seconds")
+                .accessibilityIdentifier("workspace.refresh")
                 .accessibilityLabel("Refresh activity and conversation")
             Button {
                 ui.globalSettingsVisible.toggle()

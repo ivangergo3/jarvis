@@ -1,7 +1,9 @@
 import Foundation
+import JarvisDomain
 import Testing
 
 @testable import Jarvis
+@testable import JarvisWorkspace
 
 @Suite("Session observations")
 struct ObservationTests {

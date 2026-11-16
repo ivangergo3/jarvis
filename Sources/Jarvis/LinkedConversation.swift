@@ -1,4 +1,5 @@
 import Foundation
+import JarvisDomain
 
 /// Read-only history plus the shared queue: neither operation resumes or owns the target chat.
 struct LinkedConversationSnapshot: Equatable {
@@ -35,7 +36,7 @@ struct LinkedConversationSnapshot: Equatable {
             let display = ChatAttachments.unwrap(String(raw.prefix(64_000)))
             let files = ChatAttachments.merge(
                 display.files, ChatAttachments.fromContent(item["content"].values))
-            guard let text = LogObservation.cleanTask(display.text) ?? (files.isEmpty ? nil : "")
+            guard let text = TaskText.cleanTask(display.text) ?? (files.isEmpty ? nil : "")
             else { return nil }
             let id = item["clientId"].text.flatMap { $0.isEmpty ? nil : $0 } ?? recordID
             return CompanionMessage(id: id, role: .user, text: text, attachments: files)
