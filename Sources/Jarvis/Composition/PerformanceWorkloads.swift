@@ -1,5 +1,47 @@
+import CryptoKit
 import Foundation
 import JarvisDomain
+
+struct PerformanceBuildIdentity: Codable, Sendable {
+    let revision: String
+    let trackedTreeDirty: Bool?
+    let untrackedAppSources: Bool?
+    let binarySHA256: String
+    let architecture: String
+    let toolchain: String
+}
+
+/// Bounded executable hashing runs after measurement on an actor, never during UI work.
+actor PerformanceIdentityCapture {
+    func capture() throws -> PerformanceBuildIdentity {
+        guard let executable = Bundle.main.executableURL else {
+            throw PerformanceFailure("Executable identity unavailable")
+        }
+        let file = try FileHandle(forReadingFrom: executable)
+        defer { try? file.close() }
+        var hash = SHA256()
+        var bytes = 0
+        while let data = try file.read(upToCount: 65_536), !data.isEmpty {
+            bytes += data.count
+            guard bytes <= 128 * 1_024 * 1_024 else {
+                throw PerformanceFailure("Executable exceeds identity capture limit")
+            }
+            hash.update(data: data)
+        }
+        return PerformanceBuildIdentity(
+            revision: Bundle.main.object(forInfoDictionaryKey: "JarvisBuildRevision") as? String
+                ?? "unknown",
+            trackedTreeDirty: Bundle.main.object(forInfoDictionaryKey: "JarvisBuildTrackedDirty")
+                as? Bool,
+            untrackedAppSources: Bundle.main.object(
+                forInfoDictionaryKey: "JarvisBuildUntrackedSources") as? Bool,
+            binarySHA256: hash.finalize().map { String(format: "%02x", $0) }.joined(),
+            architecture: Bundle.main.object(forInfoDictionaryKey: "JarvisBuildArchitecture")
+                as? String ?? "unknown",
+            toolchain: Bundle.main.object(forInfoDictionaryKey: "JarvisBuildToolchain") as? String
+                ?? "unknown")
+    }
+}
 
 struct PerformanceSeries: Encodable, Sendable {
     let name: String
@@ -59,6 +101,9 @@ private actor PerformanceComputation {
 
 @MainActor enum PerformanceWorkloads {
     struct Report: Encodable {
+        let schema = 2
+        let measurementProtocol = "computation-v2"
+        let buildIdentity: PerformanceBuildIdentity
         let revision: String
         let hardware: String
         let architecture: String
@@ -78,6 +123,10 @@ private actor PerformanceComputation {
         #if DEBUG
             throw PerformanceFailure("Performance evidence requires a release build")
         #else
+            let identity = try await PerformanceIdentityCapture().capture()
+            guard revision == identity.revision else {
+                throw PerformanceFailure("Requested revision does not match the built artifact")
+            }
             let fixture = try JSONDecoder().decode(
                 [String: Int].self,
                 from: Data(contentsOf: home.appendingPathComponent("performance-fixture.json")))
@@ -134,11 +183,9 @@ private actor PerformanceComputation {
                         checksum: Double(initial.missions.count * 7)))
             }
             let report = Report(
+                buildIdentity: identity,
                 revision: revision, hardware: PerformanceResources.hardwareModel(),
-                architecture: Bundle.main.object(
-                    forInfoDictionaryKey: "JarvisPerformanceArchitecture") as? String ?? "unknown",
-                toolchain: Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceToolchain")
-                    as? String ?? "unknown",
+                architecture: identity.architecture, toolchain: identity.toolchain,
                 os: ProcessInfo.processInfo.operatingSystemVersionString, fixture: fixture,
                 series: series)
             let encoder = JSONEncoder()

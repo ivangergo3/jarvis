@@ -46,9 +46,10 @@ CI merge gates. Existing deterministic hover gates remain enforced.
 These are accepted-criterion gaps repaired within the authorized scope. No
 requirement, existing test or threshold is being relaxed.
 
-## Proposed owner-scoped investigation budgets
+## Accepted owner-scoped investigation budgets
 
-Pending owner agreement, based on the observed post-fix Mac15,13 baseline:
+Owner explicitly accepted these warning budgets in chat on 17 November 2026,
+before new measurements. Based on the observed post-fix Mac15,13 baseline:
 Release/instrumented build, 1500×940 window, 2× backing, 60 Hz, synthetic 125-chat
 fixture, animations enabled, visible/foreground with stable power state.
 

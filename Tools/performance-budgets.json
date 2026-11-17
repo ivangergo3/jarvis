@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "mac15-13-hover-2026-11-17",
+  "agreement": "Owner explicitly accepted warning budgets in chat on 2026-11-17",
+  "hardware": "Mac15,13",
+  "architecture": "arm64",
+  "windowWidth": 1500,
+  "windowHeight": 940,
+  "backingScale": 2,
+  "displayMaximumHz": 60,
+  "idle20CPU": 5,
+  "hover20CPU": 12,
+  "hover100CPU": 20
+}

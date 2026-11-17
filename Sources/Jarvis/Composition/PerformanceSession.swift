@@ -23,9 +23,18 @@ import SwiftUI
         let work: [String: Int]
         let foregroundThroughout: Bool
         let selectionPreserved: Bool
+        let loopIterations: Int
+        let targetHz: Double
+        let unoccludedThroughout: Bool
+        let powerStateStable: Bool
+        let lowPowerMode: Bool
     }
     struct Report: Encodable {
-        let schema = 1
+        let schema = 2
+        let measurementProtocol = "ui-v2"
+        let buildIdentity: PerformanceBuildIdentity?
+        let animationRequested: Bool
+        let reduceMotion: Bool
         let revision: String
         let toolchain: String
         let hardware: String
@@ -174,6 +183,11 @@ import SwiftUI
         var lateness: [Double] = []
         var index = 0
         var foreground = true
+        var unoccluded = true
+        var stablePower = true
+        var selectionPreserved = dashboard.projectID == expectedProject
+        let lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+        let thermal = ProcessInfo.processInfo.thermalState
         while ProcessInfo.processInfo.systemUptime - start < seconds {
             let interval = hover ? 1.0 / 60 : 0.05
             try await Task.sleep(for: .seconds(interval))
@@ -185,6 +199,13 @@ import SwiftUI
             }
             index += 1
             foreground = foreground && NSApp.isActive && window?.isVisible == true
+            selectionPreserved = selectionPreserved && dashboard.projectID == expectedProject
+            unoccluded =
+                unoccluded && window?.isMiniaturized == false
+                && window?.occlusionState.contains(.visible) == true
+            stablePower =
+                stablePower && ProcessInfo.processInfo.isLowPowerModeEnabled == lowPower
+                && ProcessInfo.processInfo.thermalState == thermal
             if now >= nextMemorySample {
                 let resource = try PerformanceResources.capture()
                 let interval = now - previousResourceTime
@@ -215,7 +236,10 @@ import SwiftUI
                 mainThreadCPUPercentSamples: mainCPU,
                 cadenceLatenessMilliseconds: try PerformanceDistribution(lateness),
                 work: delta, foregroundThroughout: foreground,
-                selectionPreserved: dashboard.projectID == expectedProject))
+                selectionPreserved: selectionPreserved,
+                loopIterations: index, targetHz: hover ? 60 : 20,
+                unoccludedThroughout: unoccluded, powerStateStable: stablePower,
+                lowPowerMode: lowPower))
         dashboard.graphHover.clear()
         try await Task.sleep(for: .milliseconds(200))
     }
@@ -264,14 +288,17 @@ import SwiftUI
         do {
             if !switchSamples.isEmpty { switches = try PerformanceDistribution(switchSamples) }
         } catch { failure = error.localizedDescription }
+        var identity: PerformanceBuildIdentity?
+        do { identity = try await PerformanceIdentityCapture().capture() } catch {
+            failure = failure ?? "Executable identity unavailable"
+        }
         let report = Report(
-            revision: Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceRevision")
-                as? String ?? "unknown",
-            toolchain: Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceToolchain")
-                as? String ?? "unknown",
+            buildIdentity: identity, animationRequested: dashboard.motion,
+            reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+            revision: identity?.revision ?? "unknown",
+            toolchain: identity?.toolchain ?? "unknown",
             hardware: PerformanceResources.hardwareModel(),
-            architecture: Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceArchitecture")
-                as? String ?? "unknown",
+            architecture: identity?.architecture ?? "unknown",
             os: ProcessInfo.processInfo.operatingSystemVersionString,
             processors: ProcessInfo.processInfo.processorCount, buildMode: "release-instrumented",
             processID: ProcessInfo.processInfo.processIdentifier,

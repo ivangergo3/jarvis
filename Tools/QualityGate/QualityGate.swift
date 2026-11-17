@@ -10,24 +10,48 @@ enum QualityGate {
             var root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             var output: URL?
             var swiftArguments: [String] = []
+            var evidence: [String: URL] = [:]
             var index = 1
             while index < arguments.count {
                 let value = arguments[index]
                 if value.hasPrefix("--swift-arg=") {
                     swiftArguments.append(String(value.dropFirst("--swift-arg=".count)))
+                } else if mode == "performance",
+                    ["--report", "--baseline", "--policy"].contains(value),
+                    index + 1 < arguments.count
+                {
+                    guard evidence[value] == nil else {
+                        throw QualityFailure("Duplicate performance option")
+                    }
+                    index += 1
+                    evidence[value] = URL(fileURLWithPath: arguments[index])
                 } else if ["--root", "--output"].contains(value), index + 1 < arguments.count {
                     index += 1
                     let url = URL(fileURLWithPath: arguments[index])
                     if value == "--root" { root = url } else { output = url }
                 } else {
                     throw QualityFailure(
-                        "Usage: swift run quality-gate [test|mutations|architecture|app-architecture|authority|skills] [--root path] [--output path] [--swift-arg=value]"
+                        "Usage: swift run quality-gate [test|mutations|hover-fault|architecture|app-architecture|authority|skills|performance] [--root path] [--output path] [--swift-arg=value]; performance requires --report path, optional --baseline path and --policy path"
                     )
                 }
                 index += 1
             }
             let destination = output ?? root.appendingPathComponent("test-results")
             switch mode {
+            case "performance":
+                guard let report = evidence["--report"] else {
+                    throw QualityFailure("Performance audit requires --report")
+                }
+                let result = try PerformanceAudit.run(
+                    report: report, baseline: evidence["--baseline"],
+                    policy: evidence["--policy"]
+                        ?? root.appendingPathComponent("Tools/performance-budgets.json"),
+                    output: destination)
+                print(
+                    "Performance evidence: \(result.conclusion); comparison: \(result.comparison)")
+                if result.conclusion == "inconclusive" || result.comparison == "incomparable" {
+                    exit(2)
+                }
             case "test":
                 try WorkspaceArchitecture.check(root: root, output: destination)
                 try AppArchitecture.check(root: root, output: destination)

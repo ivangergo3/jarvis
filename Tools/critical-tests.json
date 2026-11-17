@@ -1,4 +1,7 @@
 [
+  "QualitySupportTests.PerformanceAuditTests/invalidConditionsRemainVisibleAndCannotPass",
+  "QualitySupportTests.PerformanceAuditTests/changedConfigurationAndWorkCannotBeCompared",
+  "QualitySupportTests.PerformanceAuditTests/failureInvalidatesOldSuccessWithoutTouchingInputs",
   "JarvisTests.AnimationEfficiencyTests/nativeHoverBindingsRenderLatestStateAndStopAfterCancellation",
   "JarvisTests.AnimationEfficiencyTests/connectorHoverLoadOnlyWritesChangedLayerStyles",
   "JarvisTests.PerformanceRegressionTests/hoverLoadOnlyNotifiesChangedCards",
