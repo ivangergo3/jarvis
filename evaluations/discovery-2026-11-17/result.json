@@ -1,0 +1,180 @@
+{
+  "date": "2026-11-17",
+  "base_commit": "4228a6b1db19e5108bcf0e6e4d1076ad76f4bd61",
+  "client": "codex-cli 0.169.0-alpha.11.1",
+  "platform": "macOS arm64",
+  "mode": "fresh local stdio App Server; disposable HOME/CODEX_HOME; scrubbed environment",
+  "methods": [
+    "initialize",
+    "initialized",
+    "skills/list"
+  ],
+  "model_turns_started": 0,
+  "before": {
+    "repo_skills": [],
+    "load_error_count": 0
+  },
+  "after": [
+    {
+      "cwd": ".",
+      "errors": [],
+      "skills": [
+        {
+          "name": "acceptance-criteria",
+          "path": "skills/acceptance-criteria/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "acceptance-verification",
+          "path": "skills/acceptance-verification/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "code-review",
+          "path": "skills/code-review/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "decision-recording",
+          "path": "skills/decision-recording/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "delivery-reporting",
+          "path": "skills/delivery-reporting/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "pull-request-preparation",
+          "path": "skills/pull-request-preparation/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "software-implementation",
+          "path": "skills/software-implementation/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "task-decomposition",
+          "path": "skills/task-decomposition/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "technical-design",
+          "path": "skills/technical-design/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "test-automation",
+          "path": "skills/test-automation/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "test-design",
+          "path": "skills/test-design/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "test-maintenance",
+          "path": "skills/test-maintenance/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "verification-planning",
+          "path": "skills/verification-planning/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "work-handoffs",
+          "path": "skills/work-handoffs/SKILL.md",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "cwd": "Sources/Jarvis",
+      "errors": [],
+      "skills": [
+        {
+          "name": "acceptance-criteria",
+          "path": "skills/acceptance-criteria/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "acceptance-verification",
+          "path": "skills/acceptance-verification/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "code-review",
+          "path": "skills/code-review/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "decision-recording",
+          "path": "skills/decision-recording/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "delivery-reporting",
+          "path": "skills/delivery-reporting/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "pull-request-preparation",
+          "path": "skills/pull-request-preparation/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "software-implementation",
+          "path": "skills/software-implementation/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "task-decomposition",
+          "path": "skills/task-decomposition/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "technical-design",
+          "path": "skills/technical-design/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "test-automation",
+          "path": "skills/test-automation/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "test-design",
+          "path": "skills/test-design/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "test-maintenance",
+          "path": "skills/test-maintenance/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "verification-planning",
+          "path": "skills/verification-planning/SKILL.md",
+          "enabled": true
+        },
+        {
+          "name": "work-handoffs",
+          "path": "skills/work-handoffs/SKILL.md",
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "claude": {
+    "runtime": "not assessed",
+    "reason": "command -v claude found no executable on PATH"
+  },
+  "limits": [
+    "Metadata discovery only; no automatic selection or instruction compliance claim.",
+    "Desktop-session cache and personal/managed configuration not exercised.",
+    "Startup notifications and non-repository inventories omitted from public evidence."
+  ]
+}
