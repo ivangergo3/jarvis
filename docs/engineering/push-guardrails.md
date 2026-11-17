@@ -53,7 +53,8 @@ have separate directories so retries preserve failed logs. Review and tests run
 against the detached candidate, with only the pinned formatter cache shared;
 the worktree is removed afterwards and nested test diagnostics retained. Do not
 commit them or expose private context. Read diagnostics when blocked. The secret
-scan catches common private-key/API-token forms in added text; it does not prove
+scan catches common private-key/API-token forms in added text and outgoing commit
+patches/messages, including secrets later removed before pushing; it does not prove
 absence of confidential data. Model review and passing tests do not guarantee
 correctness. UI changes need the owner's relevant app check, and sensitive changes
 (permissions, execution, sends, credentials, destruction, dependencies or weakened

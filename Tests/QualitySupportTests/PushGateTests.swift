@@ -29,6 +29,7 @@ struct PushGateTests {
     @Test func secretsFailWithoutEchoingTheSecret() throws {
         let secret = "sk-" + String(repeating: "x", count: 40)
         #expect(throws: QualityFailure.self) { try PushGate.checkSecrets("+key = \(secret)") }
+        #expect(throws: QualityFailure.self) { try PushGate.checkSecrets("+++" + secret) }
         #expect(throws: QualityFailure.self) {
             try PushGate.checkSecrets("+-----BEGIN " + "PRIVATE KEY-----")
         }
@@ -233,6 +234,48 @@ struct PushGateTests {
         #expect(throws: QualityFailure.self) { try gate.run(["ci"]) }
         #expect(throws: QualityFailure.self) { try gate.run(["ci", "--staged"]) }
         #expect(throws: QualityFailure.self) { try gate.run(["prepare"]) }
+    }
+
+    @Test func gitDisplayPreferencesCannotHideAddedCredentials() throws {
+        let fixture = try Fixture()
+        try fixture.setup()
+        _ = try fixture.git(["config", "color.ui", "always"])
+        _ = try fixture.git(["config", "diff.outputIndicatorNew", "!"])
+        try ("++sk-" + String(repeating: "x", count: 40)).write(
+            to: fixture.root.appendingPathComponent("example.txt"), atomically: true,
+            encoding: .utf8)
+        _ = try fixture.git(["add", "example.txt"])
+        do {
+            try fixture.gate().run(["size", "--staged"])
+            Issue.record("Credential scan accepted custom diff markers")
+        } catch let error as QualityFailure {
+            #expect(error.message.hasPrefix("Possible credential/private key"))
+        }
+    }
+
+    @Test func outgoingHistoryAndCommitMessagesCannotHideCredentials() throws {
+        for location in ["file", "message"] {
+            let fixture = try Fixture()
+            try fixture.setup()
+            let secret = "sk-" + String(repeating: "x", count: 40)
+            if location == "file" {
+                try secret.write(
+                    to: fixture.root.appendingPathComponent("example.txt"), atomically: true,
+                    encoding: .utf8)
+                _ = try fixture.git(["add", "example.txt"])
+                _ = try fixture.git(["commit", "-qm", "synthetic addition"])
+                _ = try fixture.git(["rm", "example.txt"])
+                _ = try fixture.git(["commit", "-qm", "synthetic removal"])
+            } else {
+                _ = try fixture.git(["commit", "--allow-empty", "-qm", secret])
+            }
+            do {
+                try fixture.gate().run(["ci"])
+                Issue.record("Outgoing history credential was accepted")
+            } catch let error as QualityFailure {
+                #expect(error.message.hasPrefix("Possible credential/private key"))
+            }
+        }
     }
 
     @Test func actualHookBlocksMissingEvidenceAndAcceptsExactCandidate() throws {

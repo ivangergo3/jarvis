@@ -127,8 +127,8 @@ public struct PushGate {
             #"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"#,
             #"\b(?:sk-(?:proj-)?[A-Za-z0-9_-]{32,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b"#,
         ]
-        for line in patch.split(separator: "\n") where line.hasPrefix("+") && !line.hasPrefix("+++")
-        {
+        // Include file headers too: added content may itself start with two plus signs.
+        for line in patch.split(separator: "\n") where line.hasPrefix("+") {
             if patterns.contains(where: { line.range(of: $0, options: .regularExpression) != nil })
             {
                 throw QualityFailure(
@@ -140,9 +140,18 @@ public struct PushGate {
     func inspect(base: String, head: String?, staged: Bool = false) throws {
         let anchor = try git(["merge-base", try commit(base), try commit(head ?? "HEAD")])
         let range = staged ? ["--cached", anchor] : [anchor] + (head.map { [$0] } ?? [])
-        let safeDiff = ["diff", "--no-ext-diff", "--no-textconv", "--no-renames"]
+        let safeDiff = [
+            "diff", "--no-ext-diff", "--no-textconv", "--no-renames", "--no-color",
+            "--output-indicator-new=+", "--output-indicator-old=-", "--output-indicator-context= ",
+        ]
         try Self.checkSize(Self.size(git(safeDiff + ["--numstat", "-z"] + range + ["--"])))
         try Self.checkSecrets(git(safeDiff + ["--unified=0"] + range + ["--"]))
+        let outgoing = anchor + ".." + (try commit(head ?? "HEAD"))
+        try Self.checkSecrets(
+            git(["log", "--format=", "--patch", "-m"] + safeDiff.dropFirst() + [outgoing, "--"]))
+        let messages = try git(["log", "--no-color", "--format=%B", outgoing, "--"])
+        try Self.checkSecrets(
+            messages.split(separator: "\n").map { "+" + $0 }.joined(separator: "\n"))
     }
     func directory(_ head: String) -> URL {
         root.appendingPathComponent(".build/push-gate/\(head)")
