@@ -72,6 +72,7 @@ struct WorkspaceArchitectureTests {
     @Test func actualTargetGraphMustPreserveTheAllowedEdgesAndRoots() throws {
         let positive = #"""
             {"targets":[
+                {"name":"JarvisAuthority","type":"regular","exclude":[],"dependencies":[]},
                 {"name":"JarvisDomain","type":"regular","exclude":[],"dependencies":[]},
                 {"name":"JarvisWorkspace","type":"regular","exclude":[],"dependencies":[{"byName":["JarvisDomain",null]}]},
                 {"name":"Jarvis","type":"executable","exclude":[],"dependencies":[{"byName":["JarvisDomain",null]},{"byName":["JarvisWorkspace",null]}]}
@@ -83,7 +84,8 @@ struct WorkspaceArchitectureTests {
             with: #""type":"regular","exclude":[],"dependencies":[{"byName":["Jarvis",null]}]"#)
         #expect(
             try WorkspaceArchitecture.graphViolations(Data(bad.utf8)) == [
-                "JarvisDomain: dependencies must be []"
+                "JarvisAuthority: dependencies must be []",
+                "JarvisDomain: dependencies must be []",
             ])
         let wrongRoot = positive.replacingOccurrences(
             of: #""name":"JarvisDomain""#,

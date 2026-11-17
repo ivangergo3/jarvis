@@ -21,7 +21,7 @@ enum QualityGate {
                     if value == "--root" { root = url } else { output = url }
                 } else {
                     throw QualityFailure(
-                        "Usage: swift run quality-gate [test|mutations|architecture|app-architecture] [--root path] [--output path] [--swift-arg=value]"
+                        "Usage: swift run quality-gate [test|mutations|architecture|app-architecture|authority] [--root path] [--output path] [--swift-arg=value]"
                     )
                 }
                 index += 1
@@ -47,6 +47,8 @@ enum QualityGate {
                     root: root, swiftArguments: swiftArguments, output: destination)
             case "app-architecture":
                 try AppArchitecture.check(root: root, output: destination)
+            case "authority":
+                try AuthorityGate.run(root: root, output: destination)
             default:
                 throw QualityFailure("Unknown quality-gate command: \(mode)")
             }
