@@ -1,6 +1,6 @@
 # Jarvis skill evaluation
 
-Latest focused run: [16 November engineering guardrails](../../evaluations/guardrails-2026-11-16/REPORT.md), with exact versions, twelve actual answers and two reproduced red/green code fixtures. This supplements the historical full-library run; it does not revalidate every earlier case against revised skills.
+Latest focused check: [17 November traceability guidance](../../evaluations/traceability-2026-11-17/REPORT.md), with exact versions, six author self-check answers and a separately labelled retrospective. It is not an independent evaluation or a completed live-feature pilot. The [16 November engineering guardrails](../../evaluations/guardrails-2026-11-16/REPORT.md) retain twelve actual answers and two reproduced red/green code fixtures. Neither record revalidates all earlier cases against later skill edits.
 
 Each skill includes synthetic normal and boundary cases in its references/evaluation.md. These cases define what to exercise; they do not establish that an execution passed.
 

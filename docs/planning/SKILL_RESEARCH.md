@@ -1,5 +1,9 @@
 # Skill research and authoring decisions
 
+## Traceability adaptation — 17 November 2026
+
+The [short Spec Kit decision note](../engineering/traceability-54.md) records the current official sources inspected, existing skill overlap, original adaptations and deferred integration. No upstream scripts, hooks or skill files were imported. [Focused self-checks](../../evaluations/traceability-2026-11-17/REPORT.md) retain actual outputs and their limits; a prospective feature pilot remains pending.
+
 ## Engineering guardrail follow-up — 16 November 2026
 
 Read the organiser's [Lauren Tan talk transcript](https://www.ai.engineer/code/2026/talks/lauren-tan) and selectively inspected [pstack](https://github.com/cursor/plugins/tree/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7/pstack). The organiser labels its transcript machine-generated; it was read as text, not watched as a video. The reported throughput, revert rate and performance outcomes are speaker claims, not independently audited causal evidence. They are not targets for this library.

@@ -1,0 +1,18 @@
+{
+  "artifact_tree_comparison" : {
+    "ci_merge_ref" : "3b6a5602c59e3a97d8d5d7d22714e1c2da667fe6",
+    "equal_tree" : "34d8f877ec22a519d87fc82a63f6cac5de0fa732",
+    "merged_squash" : "b400150f9ca86f94f336b1822c234fe986c3d1c4",
+    "method" : "local git rev-parse squash^{tree}; GitHub git commit API merge-ref tree.sha"
+  },
+  "case_outputs_present" : 6,
+  "catalogue_hashes_checked" : 68,
+  "changed_skills_checked" : 8,
+  "errors" : [
+
+  ],
+  "limits" : "Structural checks and targeted private-context patterns only; no behaviour execution, full YAML parser, heading-anchor check or security audit. One-off native Swift validator, not installed tooling.",
+  "markdown_files_checked" : 23,
+  "passed" : true,
+  "relative_file_links_checked" : 32
+}
