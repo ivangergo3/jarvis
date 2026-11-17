@@ -51,12 +51,25 @@ public enum HoverFaultProbe {
             with: cardAnchor
                 + "\n        for state in destinations.values { state.value?.objectWillChange.send() }"
         )
+        let styleFile = fixture.url.appendingPathComponent(
+            "Sources/Jarvis/Presentation/Platform/HUDAnimations.swift")
+        let styleOriginal = try String(contentsOf: styleFile, encoding: .utf8)
+        let styleAnchor = "            guard appliedStyles[index] != style else { continue }"
+        guard styleOriginal.components(separatedBy: styleAnchor).count == 2 else {
+            throw QualityFailure("Connector style fault anchor changed")
+        }
+        let styleDefective = styleOriginal.replacingOccurrences(of: styleAnchor, with: "")
         for (name, target, good, bad, test, assertion) in [
             ("dashboard-forwarding", file, original, defective, selected, "rootUpdates"),
             (
                 "all-card-fanout", cardFile, cardOriginal, cardDefective,
                 "JarvisTests.PerformanceRegressionTests/hoverLoadOnlyNotifiesChangedCards",
                 "notifications"
+            ),
+            (
+                "all-line-styles", styleFile, styleOriginal, styleDefective,
+                "JarvisTests.AnimationEfficiencyTests/connectorHoverLoadOnlyWritesChangedLayerStyles",
+                "writes"
             ),
         ] {
             for fault in [false, true, false] {

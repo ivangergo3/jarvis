@@ -279,6 +279,12 @@ struct CompositorTopology: NSViewRepresentable {
 }
 
 @MainActor final class TopologyLayerView: DecorationLayerView {
+    private struct Style: Equatable {
+        let active: Bool
+        let focused: Bool
+        let running: Bool
+    }
+    private var appliedStyles: [Style?] = []
     private var routes: [GraphConnection] = []
     private var active: [Bool] = []
     private var highlighted: [Bool] = []
@@ -304,6 +310,7 @@ struct CompositorTopology: NSViewRepresentable {
     }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        appliedStyles = Array(repeating: nil, count: lines.count)
         HUDLayers.change { updateStyles() }
     }
     private func rebuildGeometry() {
@@ -311,6 +318,7 @@ struct CompositorTopology: NSViewRepresentable {
         for sublayer in layer?.sublayers ?? [] { sublayer.removeFromSuperlayer() }
         lines = []
         dots = []
+        appliedStyles = Array(repeating: nil, count: routes.count)
         for route in routes {
             let path = CGMutablePath()
             if let first = route.points.first {
@@ -336,6 +344,11 @@ struct CompositorTopology: NSViewRepresentable {
         for index in lines.indices {
             let on = index < active.count && active[index]
             let focused = index < highlighted.count && highlighted[index]
+            // Active styling already wins over hover; don't dirty unchanged CA layers.
+            let style = Style(active: on, focused: !on && focused, running: on && running)
+            guard appliedStyles[index] != style else { continue }
+            appliedStyles[index] = style
+            RenderWorkCounters.count(.connectorStyle)
             let line = lines[index]
             let dot = dots[index]
             line.strokeColor = on ? HUDLayers.cyan : focused ? HUDLayers.gold : HUDLayers.muted

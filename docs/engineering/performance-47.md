@@ -87,6 +87,15 @@ holds weak references and prunes dead entries when registering another card;
 navigation does not retain old card state. Selected/active highlighting and
 the existing retained Core Animation layers remain separate.
 
+The next measured slice exposed another fanout: the overlay retained geometry
+but reassigned every line's Core Animation properties on every move. Applied
+line styles are now cached; only a changed visible style writes layer properties.
+Active styling continues to win over hover, and moving the view to a window or
+rebuilding routes invalidates the cache. A native layer workload exercises 1,000
+moves at 4 and 100 lines, verifies exactly two style writes per move including
+final clearing, and checks layer identity and restored colors. Its deliberate
+fault removes the cache guard and must fail the `writes` assertion.
+
 Required ordinary tests run 10,000 transitions for each of 1/4/20/100/1,000
 mounted destination states. They require exactly two destination notifications
 per genuine move (including final clearing), no root publication, correct final
@@ -102,7 +111,8 @@ warms it, then performs 200 paced transitions and clears the highlight. It
 requires zero dashboard/conversation body or publisher updates, graph layout,
 card factory or connector geometry work. Destination modifiers may evaluate at
 most twice per move plus once for clearing; topology must evaluate but at most
-once per move plus clearing. Zero recorded rendering is not accepted as a pass.
+once per move plus clearing. Native line-style writes are bounded to the two
+affected connections as well. Zero recorded rendering is not accepted as a pass.
 This detects accidentally reconnecting the rendered modifier to shared hover
 state, which publisher-only tests cannot prove. The existing native UI runner
 checks the required journey inventory and captures results/screenshots on PR,

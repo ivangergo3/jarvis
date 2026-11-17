@@ -329,11 +329,13 @@ import SwiftUI
                 let unrelated = forbidden.reduce(0) { $0 + work[$1, default: 0] }
                 let modifiers = work[.hoverDestinationBody, default: 0]
                 let topology = work[.hoverTopologyBody, default: 0]
+                let styles = work[.connectorStyle, default: 0]
                 let passed =
                     unrelated == 0 && modifiers > 0 && modifiers <= transitions * 2 + 1
                     && topology > 0 && topology <= transitions + 1 && ui.projectID == "alpha"
+                    && styles <= transitions * 2 + 1
                 evidence.hoverLoad =
-                    "\(passed ? "PASS" : "FAIL") cards=100 transitions=200 unrelated=\(unrelated) modifiers=\(modifiers) topology=\(topology)"
+                    "\(passed ? "PASS" : "FAIL") cards=100 transitions=200 unrelated=\(unrelated) modifiers=\(modifiers) topology=\(topology) styles=\(styles)"
             } catch {
                 evidence.hoverLoad = "FAIL \(error.localizedDescription)"
             }

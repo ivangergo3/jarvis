@@ -7,6 +7,41 @@ import Testing
 @testable import Jarvis
 
 @Suite("Animation efficiency") @MainActor struct AnimationEfficiencyTests {
+    @Test func connectorHoverLoadOnlyWritesChangedLayerStyles() throws {
+        for count in [4, 100] {
+            let view = TopologyLayerView(frame: CGRect(x: 0, y: 0, width: 300, height: 200))
+            let routes = (0..<count).map { index in
+                GraphConnection(points: [.zero, CGPoint(x: index + 1, y: 100)])
+            }
+            let inactive = Array(repeating: false, count: count)
+            view.configure(
+                active: inactive, highlighted: inactive, running: true, connections: routes)
+            let lines = view.layer?.sublayers ?? []
+            var writes = 0
+            RenderWorkCounters.onCount = { if $0 == .connectorStyle { writes += 1 } }
+            defer { RenderWorkCounters.onCount = nil }
+            let transitions = 1_000
+            for index in 0..<transitions {
+                var highlight = inactive
+                highlight[index % count] = true
+                view.configure(
+                    active: inactive, highlighted: highlight, running: true, connections: routes)
+                view.configure(
+                    active: inactive, highlighted: highlight, running: true, connections: routes)
+            }
+            view.configure(
+                active: inactive, highlighted: inactive, running: false, connections: routes)
+            #expect(writes == transitions * 2)
+            #expect(view.layer?.sublayers?.count == lines.count)
+            #expect(zip(lines, view.layer?.sublayers ?? []).allSatisfy { $0.0 === $0.1 })
+            let shapes = (view.layer?.sublayers ?? []).compactMap { $0 as? CAShapeLayer }
+            #expect(
+                shapes.filter { $0.name == "connectorLine" }.allSatisfy {
+                    $0.strokeColor == HUDLayers.muted
+                })
+        }
+    }
+
     @Test func borderUsesOneCompositorAnimationAndStopsWhenDisabled() {
         let view = BorderLayerView(frame: CGRect(x: 0, y: 0, width: 300, height: 150))
         view.configure(active: true, running: true, radius: 12)
