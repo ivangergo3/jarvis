@@ -1,4 +1,5 @@
 [
+  "QualitySupportTests.CommandEnvironmentTests/ordinaryCommandsInheritPathButExplicitEnvironmentsReplaceIt",
   "QualitySupportTests.AuthorityTests/eachCapabilityCanExecuteWithinItsOwnExplicitScope",
   "QualitySupportTests.AuthorityTests/preauthorizedActionsDoNotNeedAnotherApprovalAndNeverReplay",
   "QualitySupportTests.AuthorityTests/stableDestinationResourcesAndCapabilitiesAreNotInterchangeable",

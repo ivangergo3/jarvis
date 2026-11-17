@@ -31,7 +31,7 @@ public struct Command: Sendable {
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
         process.currentDirectoryURL = directory
-        process.environment = environment
+        if let environment { process.environment = environment }
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = output
         process.standardError = output
