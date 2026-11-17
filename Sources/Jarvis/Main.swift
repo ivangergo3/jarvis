@@ -19,9 +19,12 @@ import SwiftUI
             exit(64)
         }
         let source: any WorkspaceSource
+        let fixtureClock =
+            (Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceClock") as? NSNumber)
+            .map { Date(timeIntervalSince1970: $0.doubleValue) }
         switch launch {
         case .live: source = CodexReader()
-        case .fixture(let home): source = CodexReader(home: home)
+        case .fixture(let home): source = CodexReader(home: home, now: { fixtureClock ?? Date() })
         }
         if arguments.contains("--performance-baseline") {
             guard case .fixture(let home) = launch,
@@ -34,7 +37,7 @@ import SwiftUI
                         output: home.deletingLastPathComponent().appendingPathComponent(
                             "performance-workloads.json"),
                         revision: String(revision.dropFirst("--revision=".count)),
-                        makeSource: { CodexReader(home: home) })
+                        makeSource: { CodexReader(home: home, now: { fixtureClock ?? Date() }) })
                     exit(0)
                 } catch {
                     FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))

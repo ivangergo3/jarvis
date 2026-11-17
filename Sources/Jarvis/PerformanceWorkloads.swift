@@ -149,6 +149,7 @@ private actor PerformanceComputation {
 
     private static func validate(_ snapshot: FleetSnapshot) throws {
         guard snapshot.missions.count == 125,
+            snapshot.activeCount == 44,
             Set(snapshot.projects.map(\.id)) == Set([0, 1, 4, 20, 100].map { "perf-\($0)" }),
             snapshot.missions.allSatisfy({
                 $0.id.hasPrefix("perf-") && $0.task.hasPrefix("Synthetic task for perf-")

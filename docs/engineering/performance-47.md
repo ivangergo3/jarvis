@@ -16,7 +16,10 @@ reviewable changes; no broad optimization is presumed necessary.
 - Seven measured repetitions after an explicit warm-up for parser framing,
   graph routing (0/1/4/20/100 nodes), fresh-adapter workspace reads and cached
   unchanged reads. Record all samples, not only the fastest.
-- Three fresh fixture process launches with isolated/reset fixture preferences. Measure process-main entry
+- Native-control launches are background-only; retain their startup proxies
+  separately. For active interaction, collect three warm phase repetitions in
+  one explicitly activated fixture process. This avoids pretending background
+  launches measure foreground behaviour. Measure process-main entry
   to first native draw and first populated workspace body evaluation. These exclude work
   before main/LaunchServices and are not cold-disk launch claims.
   Project-switch timings stop at the target SwiftUI body evaluation, not GPU
@@ -34,6 +37,11 @@ reviewable changes; no broad optimization is presumed necessary.
 - Programmatic hover state is the same path used by `.onHover`; it does not
   include physical pointer/event-dispatch/hit-testing overhead. A manual cursor
   recording is a separately labelled supplement, never silently pooled with it.
+  Physical hover callback counts distinguish pointer activity from scripted
+  state changes; coordinates and text are never recorded. The human segment is
+  sixty seconds; automatic warm repetitions/soak continue afterward without
+  requiring further pointer activity. Offscreen nodes remain mounted in the
+  graph workload. These are different workloads, not interchangeable input rates.
 
 Fresh processes/adapters are distinguished from warm caches. OS filesystem and
 graphics caches are uncontrolled: do not call them truly cold, flush global

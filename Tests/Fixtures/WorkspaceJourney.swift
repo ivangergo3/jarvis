@@ -71,6 +71,10 @@ for (id, project, name, state) in records {
 
             """
     try contents.write(to: log, atomically: true, encoding: .utf8)
+    if performance {
+        try FileManager.default.setAttributes(
+            [.modificationDate: Date(timeIntervalSince1970: 1_700_000_000)], ofItemAtPath: log.path)
+    }
     logBytes += contents.utf8.count
     // All interpolated values are our fixed synthetic constants; only the owned path is escaped.
     let path = log.path.replacingOccurrences(of: "'", with: "''")
@@ -80,6 +84,7 @@ for (id, project, name, state) in records {
 }
 if performance {
     let metadata = [
+        "clockSeconds": 1_700_000_000,
         "projects": 5, "chats": records.count, "eventsPerChat": 1_002, "logBytes": logBytes,
     ]
     try JSONEncoder().encode(metadata).write(

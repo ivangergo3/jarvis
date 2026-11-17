@@ -6,6 +6,7 @@ import SwiftUI
 
 @MainActor final class PerformanceProgress: ObservableObject {
     @Published var stage = "Preparing synthetic performance recording"
+    @Published var cursorFinished = false
 }
 
 /// Instrumentation does not publish. Enabled only by an explicitly prepared fixture bundle.
@@ -14,10 +15,12 @@ import SwiftUI
         case dashboardBody, conversationBody, graphLayout, cardFactory
         case hoverTopologyBody, hoverDestinationBody, connectorRebuild, nativeDraw
         case dashboardPublication, conversationPublication, hoverPublication
+        case physicalHoverCallback
     }
     struct Phase: Codable {
         let name: String
         let nodes: Int
+        let repetition: Int
         let elapsedSeconds: Double
         let cpuPercentOfOneCore: Double
         let mainThreadCPUPercentOfOneCore: Double
@@ -129,13 +132,16 @@ import SwiftUI
                 .appendingPathComponent("performance-status.json"), options: .atomic)
     }
 
-    private func waitUntil(_ predicate: () -> Bool, seconds: Double) async throws {
+    private func waitUntil(
+        _ predicate: () -> Bool, seconds: Double,
+        pollingMilliseconds: Int = 10
+    ) async throws {
         let deadline = ProcessInfo.processInfo.systemUptime + seconds
         while !predicate() {
             guard ProcessInfo.processInfo.systemUptime < deadline else {
-                throw PerformanceFailure("Native fixture readiness/draw timed out")
+                throw PerformanceFailure("Native fixture readiness or human start timed out")
             }
-            try await Task.sleep(for: .milliseconds(10))
+            try await Task.sleep(for: .milliseconds(pollingMilliseconds))
         }
     }
 
@@ -149,7 +155,10 @@ import SwiftUI
         try await Task.sleep(for: .milliseconds(200))
     }
 
-    private func phase(_ name: String, nodes: Int, seconds: Double, hover: Bool) async throws {
+    private func phase(
+        _ name: String, nodes: Int, seconds: Double, hover: Bool,
+        repetition: Int = 0
+    ) async throws {
         try status(name, nodes: nodes)
         let expectedProject = dashboard.projectID
         let ids =
@@ -202,7 +211,7 @@ import SwiftUI
             })
         phases.append(
             Phase(
-                name: name, nodes: nodes, elapsedSeconds: elapsed,
+                name: name, nodes: nodes, repetition: repetition, elapsedSeconds: elapsed,
                 cpuPercentOfOneCore: (after.cpuSeconds - before.cpuSeconds) / elapsed * 100,
                 mainThreadCPUPercentOfOneCore: (after.callingThreadCPUSeconds
                     - before.callingThreadCPUSeconds) / elapsed * 100,
@@ -225,7 +234,9 @@ import SwiftUI
                     { NSApp.isActive && self.window?.isVisible == true }, seconds: 300)
             }
             let expected = Set([0, 1, 4, 20, 100].map { "perf-\($0)" })
-            guard Set(store?.snapshot?.projects.map(\.id) ?? []) == expected else {
+            guard Set(store?.snapshot?.projects.map(\.id) ?? []) == expected,
+                store?.snapshot?.activeCount == 44
+            else {
                 throw PerformanceFailure(
                     "Performance probe requires its generated synthetic workspace")
             }
@@ -233,18 +244,24 @@ import SwiftUI
             if manual {
                 try await select(20)
                 try status("Ready for the one-minute physical cursor recording", nodes: 20)
-                try await waitUntil({ self.manualStarted }, seconds: 300)
+                try await waitUntil(
+                    { self.manualStarted }, seconds: 1_800, pollingMilliseconds: 100)
                 try await phase("manual-pointer", nodes: 20, seconds: 60, hover: false)
+                progress.cursorFinished = true
             } else {
                 for _ in 0..<2 { for nodes in [0, 1, 4, 20, 100] { try await select(nodes) } }
+            }
+            for repetition in 1...3 {
                 try await select(20)
-                try await phase("idle", nodes: 20, seconds: 4, hover: false)
+                try await phase("idle", nodes: 20, seconds: 4, hover: false, repetition: repetition)
                 for nodes in [4, 20, 100] {
                     try await select(nodes)
-                    try await phase("hover-state", nodes: nodes, seconds: 8, hover: true)
+                    try await phase(
+                        "hover-state", nodes: nodes, seconds: 8, hover: true, repetition: repetition
+                    )
                 }
-                try await phase("bounded-soak", nodes: 100, seconds: 30, hover: true)
             }
+            try await phase("bounded-soak", nodes: 100, seconds: 30, hover: true)
         } catch {
             failure = error.localizedDescription
         }
@@ -276,8 +293,9 @@ import SwiftUI
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(report).write(to: output, options: .atomic)
-            progress.stage =
-                failure == nil ? "Performance recording complete" : "Performance recording failed"
+            try status(
+                failure == nil ? "Performance recording complete" : "Performance recording failed",
+                nodes: phases.last?.nodes ?? 0)
             window?.title =
                 failure == nil ? "Performance probe complete" : "Performance probe failed"
         } catch {
@@ -292,7 +310,13 @@ struct PerformanceStatusView: View {
     let session: PerformanceSession
     var body: some View {
         VStack(spacing: 4) {
-            Text(progress.stage).font(HUD.mono(10))
+            Text(
+                progress.stage == "manual-pointer"
+                    ? "Recording cursor movement — 60 seconds" : progress.stage
+            ).font(HUD.mono(10))
+            if progress.cursorFinished, !progress.stage.hasPrefix("Performance recording") {
+                Text("Your mouse part is complete — automatic checks are running").font(HUD.mono(9))
+            }
             if session.manual, progress.stage.hasPrefix("Ready") {
                 Button("Start 60-second cursor recording") { session.startManual() }
                     .accessibilityIdentifier("performance.startManual")

@@ -539,6 +539,7 @@ struct Dashboard: View {
             index: index, left: layout.nodes[index].x < layout.center.x)
     }
     private func hoverNode(_ id: String, inside: Bool) {
+        PerformanceSession.count(.physicalHoverCallback)
         ui.graphHover.update(id, inside: inside)
     }
 
