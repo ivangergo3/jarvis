@@ -3,6 +3,7 @@
   "QualitySupportTests.QualitySupportTests/anExitedTimeoutSupervisorReportsUncertainOwnership",
   "QualitySupportTests.QualitySupportTests/uncertainCleanupRetainsOwnedWorkspacesAndFailedSummary",
   "QualitySupportTests.QualitySupportTests/timeoutStopsNestedIsolatedProcessGroups",
+  "QualitySupportTests.PushGateTests/incompleteReviewCannotApproveEvenWithNoFindings",
   "QualitySupportTests.PushGateTests/countsAllChangesAndBlocksOverLimit",
   "QualitySupportTests.PushGateTests/receiptsRequireExactPassingEvidence",
   "QualitySupportTests.PushGateTests/successfulPrepareRunsReviewThenTestsAndReusesExactReceipt",

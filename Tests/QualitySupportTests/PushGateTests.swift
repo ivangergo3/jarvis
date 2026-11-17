@@ -5,6 +5,17 @@ import Testing
 
 @Suite("Small PR and push guardrails")
 struct PushGateTests {
+    @Test func incompleteReviewCannotApproveEvenWithNoFindings() throws {
+        let json =
+            #"{"base":"base","head":"head","summary":"Unable to finish","findings":[],"limitations":["Could not read changed files"],"completed":false}"#
+        let review = try JSONDecoder().decode(PushGate.Review.self, from: Data(json.utf8))
+        let identity = PushGate.Identity(
+            base: "base", head: "head", toolchain: "swift", nativeAvailable: false)
+        let receipt = PushGate.Receipt(
+            identity: identity, review: review, intent: "Expected behaviour", swiftArguments: [],
+            checksPassed: true, nativeUI: "unavailable: requires full Xcode; CI required")
+        #expect(throws: QualityFailure.self) { try PushGate.validate(receipt, identity: identity) }
+    }
     @Test func countsAllChangesAndBlocksOverLimit() throws {
         let value = try PushGate.size(
             "400\t400\tTests/new.swift\0-\t-\timage.png\0200\t0\tdocs/a\tb.md\0")
@@ -40,7 +51,8 @@ struct PushGateTests {
         let identity = PushGate.Identity(
             base: "base", head: "head", toolchain: "swift", nativeAvailable: false)
         let good = PushGate.Review(
-            base: "base", head: "head", summary: "Reviewed", findings: [], limitations: [])
+            base: "base", head: "head", summary: "Reviewed", findings: [], limitations: [],
+            completed: true)
         func receipt(
             _ review: PushGate.Review = good, passed: Bool = true,
             native: String = "unavailable: requires full Xcode; CI required"
@@ -66,14 +78,18 @@ struct PushGateTests {
         }
         for bad in [
             receipt(passed: false), receipt(native: "passed"),
-            receipt(.init(base: "base", head: "head", summary: "", findings: [], limitations: [])),
+            receipt(
+                .init(
+                    base: "base", head: "head", summary: "", findings: [], limitations: [],
+                    completed: true)),
             receipt(
                 .init(
                     base: "base", head: "head", summary: "Reviewed", findings: ["A bug"],
-                    limitations: [])),
+                    limitations: [], completed: true)),
             receipt(
                 .init(
-                    base: "base", head: "wrong", summary: "Reviewed", findings: [], limitations: [])
+                    base: "base", head: "wrong", summary: "Reviewed", findings: [], limitations: [],
+                    completed: true)
             ),
         ] {
             #expect(throws: QualityFailure.self) { try PushGate.validate(bad, identity: identity) }
@@ -134,7 +150,8 @@ struct PushGateTests {
                             base: git(["rev-parse", "origin/main"]),
                             head: git(["rev-parse", "HEAD"]),
                             summary: "Synthetic independent review",
-                            findings: failure == "findings" ? ["Bug"] : [], limitations: []),
+                            findings: failure == "findings" ? ["Bug"] : [], limitations: [],
+                            completed: failure != "incomplete"),
                         to: url)
                 }
                 return 0
@@ -181,7 +198,7 @@ struct PushGateTests {
     @Test func failuresAndMutationsCannotCreateReceipts() throws {
         for failure in [
             "review-exit", "review-timeout", "malformed", "findings", "tests", "mutation",
-            "snapshot-mutation", "review-head", "snapshot-head",
+            "snapshot-mutation", "review-head", "snapshot-head", "incomplete",
         ] {
             let fixture = try Fixture()
             try fixture.setup()
@@ -194,7 +211,9 @@ struct PushGateTests {
             #expect(
                 !FileManager.default.fileExists(
                     atPath: gate.directory(head).appendingPathComponent("receipt.json").path))
-            if failure.hasPrefix("review") || failure == "malformed" || failure == "findings" {
+            if failure.hasPrefix("review") || failure == "malformed" || failure == "findings"
+                || failure == "incomplete"
+            {
                 #expect(fixture.checks == 0)
             }
         }
@@ -261,7 +280,7 @@ struct PushGateTests {
                 identity: identity,
                 review: .init(
                     base: identity.base, head: identity.head, summary: "Fixture", findings: [],
-                    limitations: []),
+                    limitations: [], completed: true),
                 intent: "Fixture", swiftArguments: [], checksPassed: true,
                 nativeUI: identity.nativeAvailable
                     ? "passed" : "unavailable: requires full Xcode; CI required"),

@@ -18,7 +18,8 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
    launches an independent ephemeral read-only `codex exec`, validates its structured
    result and runs `scripts/check.sh`. No implementation conversation is forwarded.
    The reviewer gets exact base/head, project requirements, changed files and
-   necessary callers. All actionable findings block; optional preferences should
+   necessary callers. Review must explicitly report completion; an incomplete or
+   blocked review cannot approve even with no findings. All actionable findings block; optional preferences should
    not be manufactured as findings. Review unknowns remain in `limitations`.
 4. Fix findings, commit and repeat. No evidence is reused across a changed
    head/base/Swift or Xcode identity/SDK configuration. An unchanged verified candidate
