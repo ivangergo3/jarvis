@@ -1,0 +1,353 @@
+{
+  "comparison" : "not-requested",
+  "comparisonIssues" : [
+
+  ],
+  "conclusion" : "within-warning-budgets",
+  "identityIssues" : [
+
+  ],
+  "limitations" : [
+    "CPU warnings are owner-scoped investigation thresholds, not CI CPU gates.",
+    "Main-entry\/body and cadence metrics do not certify OS launch or input-to-photon latency.",
+    "Source stamps and executable digests identify artifacts; they are not cryptographic attestations.",
+    "OS caches and competing system load remain uncontrolled; raw inputs are retained by the caller.",
+    "Eligibility applies only to the listed workloads; a partial report cannot establish full feature coverage.",
+    "UI evidence requires ui-v3 phase configuration and requested duration; legacy records are descriptive only."
+  ],
+  "observations" : [
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 19.01939557408324,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 2.8907505231507926,
+      "nodes" : 20,
+      "observedSeconds" : 4.048498791671591,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "requestedSeconds" : 4,
+      "residentGrowthBytes" : -147456,
+      "warningCPU" : 5,
+      "workload" : "idle"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 54.42241234770071,
+      "eligible" : true,
+      "measuredCPU" : 6.642629893176884,
+      "nodes" : 4,
+      "observedSeconds" : 8.01140524999937,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -81920,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 53.74953305089576,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 7.464847649131065,
+      "nodes" : 20,
+      "observedSeconds" : 8.000069500005338,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -114688,
+      "warningCPU" : 12,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 51.681801287088646,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 11.275845523423449,
+      "nodes" : 100,
+      "observedSeconds" : 8.010556708351942,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -32768,
+      "warningCPU" : 20,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 19.023846102799084,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 3.0218020688146474,
+      "nodes" : 20,
+      "observedSeconds" : 4.047551666677464,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "requestedSeconds" : 4,
+      "residentGrowthBytes" : -98304,
+      "warningCPU" : 5,
+      "workload" : "idle"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 54.46048466371537,
+      "eligible" : true,
+      "measuredCPU" : 6.383106057882368,
+      "nodes" : 4,
+      "observedSeconds" : 8.00580462499056,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -49152,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 53.7600154469488,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 7.608501564352819,
+      "nodes" : 20,
+      "observedSeconds" : 8.017110791668529,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -81920,
+      "warningCPU" : 12,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 51.81546915344337,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 11.106901768972554,
+      "nodes" : 100,
+      "observedSeconds" : 8.009191208344419,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -98304,
+      "warningCPU" : 20,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 19.069983920734746,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 2.918995382942402,
+      "nodes" : 20,
+      "observedSeconds" : 4.0377590416464955,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "requestedSeconds" : 4,
+      "residentGrowthBytes" : -98304,
+      "warningCPU" : 5,
+      "workload" : "idle"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 54.387147518686334,
+      "eligible" : true,
+      "measuredCPU" : 6.823952904346264,
+      "nodes" : 4,
+      "observedSeconds" : 8.016599875001702,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -81920,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 53.792943067963925,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 7.531199243934003,
+      "nodes" : 20,
+      "observedSeconds" : 8.012203374993987,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -81920,
+      "warningCPU" : 12,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 51.76650737631846,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 11.025829486153864,
+      "nodes" : 100,
+      "observedSeconds" : 8.016766458342317,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "requestedSeconds" : 8,
+      "residentGrowthBytes" : -720896,
+      "warningCPU" : 20,
+      "workload" : "hover-state"
+    },
+    {
+      "configuration" : {
+        "animationRequested" : true,
+        "backingScale" : 2,
+        "displayID" : 1,
+        "displayMaximumHz" : 60,
+        "reduceMotion" : false,
+        "thermalState" : 0,
+        "windowHeight" : 940,
+        "windowWidth" : 1500
+      },
+      "deliveredHz" : 51.8382296120497,
+      "eligible" : true,
+      "measuredCPU" : 11.207631061811918,
+      "nodes" : 100,
+      "observedSeconds" : 120.00795641666627,
+      "reasons" : [
+
+      ],
+      "repetition" : 0,
+      "requestedSeconds" : 120,
+      "residentGrowthBytes" : -393216,
+      "workload" : "bounded-soak"
+    }
+  ],
+  "policy" : "mac15-13-hover-2026-11-17",
+  "revision" : "9cfffeac4e2b702c9c0b1c4e60e6abeb6ab25473",
+  "schema" : 2
+}

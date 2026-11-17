@@ -41,8 +41,9 @@ qualification gaps; one was reproduced with a source-compiled offline harness
 and then independently confirmed through the ordinary quality CLI. The
 [retained pilot record](../../evaluations/fresh-review-51-2026-11-17/REPORT.md)
 contains the supplied context boundary, actual review output, reproduction and
-dispositions. The gaps remain work under #47, not silently marked fixed by a
-successful review. This was a post-merge review, not a pre-merge gate, and does
+dispositions. Those findings were kept open under #47; the later
+[v3 correction and evidence](../../evaluations/performance-v3-2026-11-17/REPORT.md)
+record their resolution separately from this successful review. This was a post-merge review, not a pre-merge gate, and does
 not replace the owner's acceptance.
 
 ## Minimal delivery observations
@@ -67,7 +68,8 @@ Rechecked official [Codex best practices](https://learn.chatgpt.com/guides/best-
 The accepted #51 setup scope (AC1–7) and fresh-reviewer pilot (AC8) now have
 recorded evidence. The conditional Claude runtime exercise remains deferred
 until that client is available, as already accepted for AC3; no runtime pass is
-claimed and no client was installed. #47 tracks the two review findings.
+claimed and no client was installed. #47 tracks the two review findings and their subsequent correction; #72 retains
+the separate release latency and longer memory qualification.
 Ticket #54 shared this real-feature exercise for its traceability pilot, avoiding
 a duplicate project. One pilot does not establish lower costs, faster delivery,
 general model compliance or a production coordination capability.

@@ -116,3 +116,11 @@ marked complete by the existence of an auditor or passing unit tests. For #54,
 the owner answered “Yes, this level of detail helps” about PR #68's concrete
 review summary on 17 November. This workflow feedback is separate from author
 assessment and does not authorize merging.
+
+## Subsequent audit protocol
+
+This report preserves the original v2 measurements and classifications. The
+current v3 auditor treats these UI records as descriptive/inconclusive because
+per-phase configuration and requested-window metadata were absent. A separate
+[clean v3 baseline](../performance-v3-2026-11-17/REPORT.md) records the R1/R2
+correction and new qualified observations without rewriting this evidence.

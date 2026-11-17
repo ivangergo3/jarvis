@@ -197,3 +197,18 @@ three-repetition measurements with `bash scripts/workspace-journey.sh prepare
 --performance`; launch its generated app, keep it foreground and leave the mouse
 outside the graph during automatic phases. Keep contaminated idle samples and
 label them; do not silently average pointer activity into idle CPU.
+
+## Observed v3 completion
+
+[The retained v3 report](../../evaluations/performance-v3-2026-11-17/REPORT.md)
+records the clean Release revision, thirteen qualified phases, all three accepted
+CPU warning scopes within budget, a 120-second soak and repeated computation
+captures. R1/R2 have red/green regressions, producer/decoder coverage and a
+retained v3 shortened-window CLI rejection. Historical v2 reports remain intact
+and are descriptive under the current auditor. Required CI is tracked in
+[PR #71](https://github.com/ivangergo3/jarvis/pull/71).
+
+The direct presentation-latency and longer-session memory gaps remain explicit
+in [release qualification #72](https://github.com/ivangergo3/jarvis/issues/72).
+This completes the bounded baseline/regression evidence scope; it does not
+certify the separate release latency targets or an absolute RAM ceiling.
