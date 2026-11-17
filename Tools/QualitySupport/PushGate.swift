@@ -199,8 +199,8 @@ public struct PushGate {
             try FileManager.default.removeItem(at: receiptURL)
         }
         // Verify the committed candidate in an owned detached worktree, not a moving editor tree.
-        let temporary = try TemporaryDirectory(prefix: "push-candidate-")
-        let source = temporary.url.appendingPathComponent("source")
+        let source = output.appendingPathComponent("candidate")
+        var verified = false
         _ = try git(["worktree", "add", "--detach", source.path, current.head])
         func verifySource() throws {
             let gate = PushGate(root: source, runner: runner)
@@ -217,9 +217,15 @@ public struct PushGate {
                         at: diagnostics, to: output.appendingPathComponent("test-results"))
                 }
             } catch { print("Could not retain nested diagnostics: \(error.localizedDescription)") }
-            do { _ = try git(["worktree", "remove", "--force", source.path]) } catch {
+            if verified {
+                do { _ = try git(["worktree", "remove", "--force", source.path]) } catch {
+                    print(
+                        "Could not unregister owned verification worktree: \(error.localizedDescription)"
+                    )
+                }
+            } else {
                 print(
-                    "Could not unregister owned verification worktree: \(error.localizedDescription)"
+                    "Retained failed candidate at \(source.path); confirm processes stopped before removing it"
                 )
             }
         }
@@ -313,6 +319,7 @@ public struct PushGate {
             checksPassed: true, nativeUI: native)
         try Self.validate(receipt, identity: current)
         try Diagnostics.writeJSON(receipt, to: receiptURL)
+        verified = true
         print("Review and local checks passed for \(current.head)")
     }
     static func validatePush(_ input: String, head: String) throws {

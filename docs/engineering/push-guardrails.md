@@ -51,7 +51,10 @@ CI must supply it, never a fabricated local pass. CPU benchmarks stay advisory.
 Receipts/reviewer output/logs stay under ignored `.build/push-gate/<head>/`; attempts
 have separate directories so retries preserve failed logs. Review and tests run
 against the detached candidate, with only the pinned formatter cache shared;
-the worktree is removed afterwards and nested test diagnostics retained. Do not
+successful worktrees are removed and nested test diagnostics retained. Failed
+candidate worktrees remain in their attempt directory: inspect the retained
+process/command diagnostics and confirm all workers stopped before explicitly
+removing an owned failed worktree with `git worktree remove`. Do not
 commit them or expose private context. Read diagnostics when blocked. The secret
 scan catches common private-key/API-token forms in added text and outgoing commit
 patches/messages, including secrets later removed before pushing; it does not prove

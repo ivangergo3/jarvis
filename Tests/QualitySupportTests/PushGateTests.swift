@@ -104,6 +104,7 @@ struct PushGateTests {
         var reviews = 0
         var checks = 0
         var failure = ""
+        var candidate: URL?
         func git(_ args: [String]) throws -> String { try PushGate(root: root).git(args) }
         func setup() throws {
             _ = try git(["init", "-q"])
@@ -129,6 +130,7 @@ struct PushGateTests {
                 return 0
             }
             if command.arguments.first == "codex" {
+                candidate = command.directory
                 reviews += 1
                 #expect(command.arguments.contains("read-only"))
                 #expect(command.arguments.contains("--ephemeral"))
@@ -190,6 +192,7 @@ struct PushGateTests {
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
         try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
         try gate.run(["verify"])
+        #expect(!FileManager.default.fileExists(atPath: try #require(fixture.candidate).path))
         try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
         #expect(fixture.reviews == 1 && fixture.checks == 1)
         _ = try fixture.git(["update-ref", "refs/remotes/origin/main", "HEAD"])
@@ -209,6 +212,7 @@ struct PushGateTests {
                 try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
             }
             let head = try fixture.git(["rev-parse", "HEAD"])
+            #expect(FileManager.default.fileExists(atPath: try #require(fixture.candidate).path))
             #expect(
                 !FileManager.default.fileExists(
                     atPath: gate.directory(head).appendingPathComponent("receipt.json").path))
