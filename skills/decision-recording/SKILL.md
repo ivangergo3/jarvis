@@ -13,6 +13,7 @@ The decision conversation, relevant evidence, alternatives, and existing decisio
 
 Identify whether a decision was actually made. Record the decider, date, scope, chosen option, rationale, consequential alternatives, and follow-up where known.
 Separate unresolved questions and reversible assumptions from approved choices. Record when a later decision supersedes an earlier one and why.
+For a requirement change, identify the affected IDs, old/new meaning, acceptance source and decision-maker. Keep proposals separate from the active baseline. Once accepted, update the authoritative source within scope and identify impacted design, tasks, tests and evidence needing recheck; retain supersession history without making a second requirements ledger. Do not request approval again for an already explicit decision.
 Preserve the user’s existing authority without expanding it to unrelated actions. Save only to the authorized destination and verify persistence when requested.
 
 ## Output

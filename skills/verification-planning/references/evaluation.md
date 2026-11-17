@@ -1,5 +1,11 @@
 # Verification planning evaluation cases
 
+## Traceability regression
+
+A feature has three accepted criteria but the task list covers only two. Plan checks with no test run yet.
+
+Review for: Include the missing criterion and a check or explicit gap; no observed pass from planned coverage.
+
 These are synthetic prompts for evaluation. Definitions are draft instructions; the existence of a case is not evidence that a model passed it.
 
 ## Normal case

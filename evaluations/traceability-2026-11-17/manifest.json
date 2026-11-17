@@ -1,0 +1,25 @@
+{
+  "base_commit" : "b400150f9ca86f94f336b1822c234fe986c3d1c4",
+  "cases_sha256" : "1fa80e455a50db7cf74a191ef25e3f67b1ceca9a1f526ec68cdbcd3048dec1ee",
+  "instruction_commit" : "0556a064d67496e0a1712ec7c6c13c4c6c46b077",
+  "kind" : "six text-only author self-checks in shared conversation; not independent evaluation",
+  "outputs_sha256" : "bc3b40abcf0bf2e478f69f8ce070b8933320479fa95901989fdf9bb7ee883643",
+  "sha256" : {
+    "skills/acceptance-criteria/references/evaluation.md" : "a5d8e3b60e9a40149ce35d34fb86a264477e87fd6e3aec21df90ffa52ebe0ef4",
+    "skills/acceptance-criteria/SKILL.md" : "7da74c85e9ef06189c2a2acd938548e572b351febf945809b18b63011db11d67",
+    "skills/acceptance-verification/references/evaluation.md" : "a154f5266057561d4d3f395673ae2bd915b91e62538fbac3e3d00e3924549eda",
+    "skills/acceptance-verification/SKILL.md" : "2f5c75e470d51bcfb4c8334e00980939df1da471fc43c09c0aa093b7b4707667",
+    "skills/decision-recording/references/evaluation.md" : "dccd3a6d5af2f3075ebc41653a22be6ccdb74ad0001a31827c7ed659f340af79",
+    "skills/decision-recording/SKILL.md" : "9c97134289b9ce2543e8201bdd1847693c8fdd391a04e90157cb1cbdafde2d9d",
+    "skills/delivery-reporting/references/evaluation.md" : "caeacd4585df9ca5bb94a60af7be29b879fa77f3121c355005fff29a6fcbce32",
+    "skills/delivery-reporting/SKILL.md" : "e39e8ef579712837fdc9f9d317710f1dff249500ca83d72d5948075da97ca70b",
+    "skills/software-implementation/references/evaluation.md" : "2451cfc8b3fefba898162d1d8a7049ba6c8af80a87283d0e72e81c6f79703fdb",
+    "skills/software-implementation/SKILL.md" : "1d0d9307800f787c21a5a785a9a267fa2dd81b645096fb69fdbe6c8bd41cdf38",
+    "skills/task-decomposition/references/evaluation.md" : "d1de5ab164bcf4b20811d9f3a420aea6e3583e60bc7d73f6b4bbcdddcfcec9a9",
+    "skills/task-decomposition/SKILL.md" : "33f3e19a13a58d3233fb9746dd54a08e32b80269d9ac7225beb6cb42caf34ca6",
+    "skills/technical-design/references/evaluation.md" : "e27f7662e5373f1f8f50b7c1ead403d6ed1856a9fff4febddece7719daad2187",
+    "skills/technical-design/SKILL.md" : "24ada7d7b8c3a6ff15d3fd3ddbac30ff53ed25de95304756447a553d0957a272",
+    "skills/verification-planning/references/evaluation.md" : "8f0f54ce2a37ce3685e6b6ea4ad8ec2ef8eae7b71d29db731a81aec8b45d0413",
+    "skills/verification-planning/SKILL.md" : "3fbcaf835ded0ad7a57df36c5af54acc7fac63122750e9a45fd078e08a09c594"
+  }
+}

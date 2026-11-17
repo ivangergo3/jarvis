@@ -1,5 +1,11 @@
 # Decision recording evaluation cases
 
+## Traceability regression
+
+The responsible owner explicitly replaces L1's export limit of 1000 rows with 500, retaining all other criteria. Record the decision and effects on tests.
+
+Review for: Preserve supersession and explicit acceptance; update source within scope, identify affected evidence and avoid redundant approval.
+
 These are synthetic prompts for evaluation. Definitions are draft instructions; the existence of a case is not evidence that a model passed it.
 
 ## Normal case

@@ -14,6 +14,7 @@ The brief, acceptance criteria, risk assessment if available, artifact/version, 
 Map important criteria and risks to suitable checks: inspection, automated tests, exploratory work, or user validation. Choose depth from consequence and uncertainty.
 Specify the version, environment, required data, expected observable result, and evidence to retain. Keep routine tests independent of real accounts, spending, or production mutation where practical.
 Identify coverage gaps, ownership of user-selected checks, and recheck triggers. Offer a smaller valid check when the ideal environment is unavailable; label the limitation.
+Carry accepted criterion IDs and baseline version into the plan. Include every in-scope criterion, even when its check is blocked or requires later human judgement. Keep planned commands and expected outcomes separate from observed evidence; links from tasks to tests establish intended coverage, not a passing result.
 
 ## Checks and enforcement
 

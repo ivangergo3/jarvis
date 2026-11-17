@@ -14,6 +14,8 @@ Accepted criteria, artifact/version, allowed environment and test/review evidenc
 For each criterion identify an adequate observable check and its source. Execute only permitted checks; inspect the actual outcome instead of inferring it from tool exit or a screenshot alone.
 Use pass, fail, blocked or not assessed with a reason. Distinguish mocked evidence, source inspection and live observation. Keep criteria lacking an oracle unresolved rather than defining an easier threshold after seeing results.
 Give an acceptance recommendation scoped to the version and environment. Record residual risk and decisions retained by the owner.
+Start from the complete accepted in-scope criteria, not just the task list or tests that happened to run. Retain stable IDs/source versions and report unimplemented, failed, blocked and unverified criteria with next actions. Completed tasks and a green build cannot establish missing acceptance evidence.
+For an accepted requirement change, record the decision and superseded version, update affected mappings and reassess relevant checks. Old results may support unchanged criteria when their artifact/configuration still applies; they do not automatically verify changed behaviour. Keep a proposed relaxation separate from the active baseline.
 
 ## Verify the delivered surface
 

@@ -1,5 +1,11 @@
 # Delivery reporting: evaluation cases
 
+## Traceability regression
+
+Tasks are complete but one accepted offline criterion is unverified. The board requires acceptance before Done. Report progress.
+
+Review for: Keep the missing criterion visible with a next action; distinguish review readiness from acceptance.
+
 Both cases use synthetic data. Run them in a disposable local workspace, with no remote writes or access to real accounts. Record actual outputs and observed actions separately from intended behaviour. A written case is not a passing execution.
 
 ## Normal task
