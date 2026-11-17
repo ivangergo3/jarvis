@@ -193,6 +193,12 @@ public enum PerformanceAudit {
         var result: [Observation] = []
         for phase in raw.phases ?? [] {
             var reasons = issues
+            let scriptedHover = ["hover-state", "bounded-soak"].contains(phase.name)
+            if !["idle", "hover-state", "bounded-soak", "manual-pointer"].contains(phase.name)
+                || phase.targetHz != (scriptedHover ? 60 : 20)
+            {
+                reasons.append("Unknown workload or changed requested cadence")
+            }
             if !phase.foregroundThroughout || phase.unoccludedThroughout != true {
                 reasons.append("Background, occluded or unknown visibility")
             }

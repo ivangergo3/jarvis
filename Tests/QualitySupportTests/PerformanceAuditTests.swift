@@ -85,6 +85,13 @@ struct PerformanceAuditTests {
             #expect(result.observations.first?.measuredCPU == 13)
             #expect(result.observations.first?.warningCPU == nil)
         }
+        var unknown = report()
+        var phases = unknown["phases"] as? [[String: Any]] ?? []
+        phases[0]["name"] = "unknown"
+        unknown["phases"] = phases
+        #expect(
+            try PerformanceAudit.evaluate(decode(unknown), baseline: nil, policy: policy())
+                .conclusion == "inconclusive")
         var value = report()
         value["schema"] = 1
         value.removeValue(forKey: "buildIdentity")
