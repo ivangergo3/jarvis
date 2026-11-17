@@ -19,12 +19,12 @@ CI merge gates. Existing deterministic hover gates remain enforced.
 
 | Source/criterion | Existing evidence or remaining task | Planned check | Observed result |
 | --- | --- | --- | --- |
-| #47 AC1: representative workloads | PR #64 supplies launch/body proxies, switching, parsing, graph scale and hover/soak fixtures. Audit both UI and computation reports. | Typed fixture reports; run existing Release workloads. | Not run for this feature. |
-| #47 AC2: reproducibility/provenance | Stamp source identity at build time; report actual executable digest, build/OS/toolchain/data/window and raw samples. | A stale prepared bundle cannot acquire the current checkout's revision; malformed/missing/dirty identity is unverified. | Not run. |
-| #47 AC3: agreed budgets | Owner decision below. Keep section-4 launch/input targets distinct from narrower body-evaluation proxies. | Unapproved policy cannot become a timing pass/fail gate. Environment-scoped warnings retain values and policy identity. | Decision pending. |
-| #47 AC4: correctness, cancellation, growth | Preserve existing dropped/stale/cancellation tests; qualify report phases by delivered work, selection, visibility and stable power state. Retain soak memory series. | Invalid work counts/selection fail evidence checks; slow input delivery never masquerades as lower CPU. | Not run. |
-| #47 AC5: stable regressions/noise | PR #64 already enforces root/card/style and real-pointer contracts with seeded faults. Add report/comparison regression cases. | Reject debug/release, hardware/fixture/window mismatches; keep dirty, occluded, failed and low-rate phases visible but ineligible. | Not run. |
-| #47 AC6: synthetic/private-data boundary | Read explicitly selected bounded report files only; no live chat, network or model calls. | Oversized/malformed reports fail with bounded diagnostics; output contains metrics, not paths/transcripts. | Not run. |
+| #47 AC1: representative workloads | PR #64 supplies launch/body proxies, switching, parsing, graph scale and hover/soak fixtures. Audit both UI and computation reports. | Typed fixture reports; run existing Release workloads. | Two eight-series computation runs × seven repetitions captured; all thirteen phases qualified in the owner-assisted UI run. Earlier excluded runs are retained (see linked evidence below). |
+| #47 AC2: reproducibility/provenance | Stamp source identity at build time; report actual executable digest, build/OS/toolchain/data/window and raw samples. | A stale prepared bundle cannot acquire the current checkout's revision; malformed/missing/dirty identity is unverified. | Clean built identity `bbc38db` and executable digest present. After checkout advanced to `f400c26`, requesting that new revision from the old bundle failed with exit 1. Legacy report classified inconclusive. |
+| #47 AC3: agreed budgets | Owner decision below. Keep section-4 launch/input targets distinct from narrower body-evaluation proxies. | Unapproved policy cannot become a timing pass/fail gate. Environment-scoped warnings retain values and policy identity. | Owner accepted 5% / 12% / 20% warning budgets in chat on 17 November 2026; versioned policy and machine-scope test added. |
+| #47 AC4: correctness, cancellation, growth | Preserve existing dropped/stale/cancellation tests; qualify report phases by delivered work, selection, visibility and stable power state. Retain soak memory series. | Invalid work counts/selection fail evidence checks; slow input delivery never masquerades as lower CPU. | 164-case gate passed; report regression cases reject changed selection/missing counters. Owner-assisted run preserved all qualified work, within CPU warnings; 30-second soak grew 65,536 resident bytes. Excluded runs retain all counter/cadence/visibility evidence. Longer memory ceiling remains unagreed. |
+| #47 AC5: stable regressions/noise | PR #64 already enforces root/card/style and real-pointer contracts with seeded faults. Add report/comparison regression cases. | Reject debug/release, hardware/fixture/window mismatches; keep dirty, occluded, failed and low-rate phases visible but ineligible. | Six audit tests passed at `f400c26`; all nine existing seeded hover stages passed. Exact-head macOS/native CI remains a separate check. |
+| #47 AC6: synthetic/private-data boundary | Read explicitly selected bounded report files only; no live chat, network or model calls. | Oversized/malformed reports fail with bounded diagnostics; output contains metrics, not paths/transcripts. | Malformed/oversized and input-overwrite tests passed. Retained JSON contains synthetic numeric data/build metadata; scanned for private paths/credential fields before inclusion. |
 | #54 AC1–7 | Accepted guidance/evaluations in PR #66; preserve them. | Inspect scope/source consistency, not install Spec Kit or manufacture another rules system. | Read before coding. |
 | #54 AC8: prospective pilot | This report-audit feature is newly authorized after guidance acceptance. Record this mapping before code, discrepancies now, observed evidence afterward, then owner feedback. | Versioned before/after mapping and honest pilot review; distinguish implementer findings from human review usefulness. | Owner feedback remains pending until a concrete result is reviewed. |
 
@@ -71,5 +71,61 @@ evidence; they are not frame-time or product-performance pass thresholds.
 
 ## Pilot outcome
 
-Implementation, execution, evidence links and owner feedback will be recorded
-here after they exist. No planned command in the table is a passing result.
+The mapping above was committed in `b5a2fe2` before implementation in `bbc38db`.
+The audit's unknown-workload check was tightened in `f400c26`. Upstream Spec Kit
+quickstart/analyze/converge references from the accepted #54 note were rechecked
+as text only; no upstream tools, hooks or installers were run.
+
+Observed checks so far:
+
+- `scripts/check.sh` at `bbc38db`: 164 ordinary test cases passed, including six
+  performance-audit cases; formatter, workspace/native architecture negative
+  probes, skill discovery, eight authority scenarios/five isolation checks,
+  and Swift 6 Release build passed. Local CLT needs the documented Swift Testing
+  plugin path. Full Xcode/native XCUITest is unavailable locally; PR CI runs it.
+- All nine existing hover-fault stages passed: dashboard forwarding, card
+  fanout and all-line style writes each gave good/assertion failure/restored
+  good. These test forbidden work, rather than machine-dependent CPU limits.
+- All six audit cases passed again after `f400c26`. They exercise unknown and
+  changed workloads, lost visibility/selection/work, dirty/legacy/failed
+  provenance, invalid measurements, changed computation units, raw-sample
+  statistics, oversized/malformed input and stale-success invalidation.
+- Fresh eight-series computation capture from the clean `bbc38db` bundle has
+  valid identity. The audit reports it without an applicable CPU budget, as
+  intended. The older UI recording is inconclusive because its provenance and
+  workload-delivery metadata are incomplete, rather than being upgraded to a
+  clean v2 result.
+- The owner-assisted foreground run qualified all thirteen phases: idle
+  2.33–2.55%, hover at 20 chats 8.56–8.94%, hover at 100 chats 12.60–12.64%,
+  within the accepted warnings. The [retained execution report](../../evaluations/performance-evidence-2026-11-17/REPORT.md)
+  includes raw compressed UI runs, computation samples, audit outputs,
+  exclusions and remaining direct-latency/longer-memory evidence gaps.
+
+Author assessment: preflight exposed three consequential omitted contracts
+(artifact identity, visibility/power state and achieved workload). Implementation
+review also exposed stale output after a failed audit, missing work-unit checks
+and unknown workload acceptance; regressions now cover these. Selection is
+sampled throughout the phase. This is evidence that the consistency step found
+work; it does not demonstrate human review usefulness. The one mapping and one
+outcome note were sufficient. No per-function paperwork or duplicated status
+backlog was added.
+
+Owner review usefulness, links actually used and unnecessary paperwork remain
+pending owner feedback on the concrete diff/evidence. Keep #54 open until that
+feedback exists; an implementer's assessment is not a substitute.
+
+## Running the audit
+
+```sh
+swift run quality-gate performance --report /path/to/raw.json --output test-results/performance
+swift run quality-gate performance --report /path/to/candidate.json --baseline /path/to/baseline.json --output test-results/performance
+```
+
+The default policy is `Tools/performance-budgets.json`; an explicit `--policy`
+selects a different policy without changing repository acceptance. Exit 1 means
+invalid evidence/arguments; exit 2 means inconclusive or incomparable evidence.
+An exceeded warning is advisory (exit 0, `investigate`), never a CPU CI gate.
+The JSON retains every listed phase and exclusion reason. Eligibility applies
+only to listed workloads: a partial report cannot certify all of #47. Inputs
+are bounded at 8 MiB; output cannot overwrite an input, and a failed run cannot
+leave an earlier successful output in place.

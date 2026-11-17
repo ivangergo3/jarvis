@@ -1,0 +1,187 @@
+{
+  "comparison" : "not-requested",
+  "comparisonIssues" : [
+
+  ],
+  "conclusion" : "inconclusive",
+  "identityIssues" : [
+
+  ],
+  "limitations" : [
+    "CPU warnings are owner-scoped investigation thresholds, not CI CPU gates.",
+    "Main-entry\/body and cadence metrics do not certify OS launch or input-to-photon latency.",
+    "Source stamps and executable digests identify artifacts; they are not cryptographic attestations.",
+    "OS caches and competing system load remain uncontrolled; raw inputs are retained by the caller.",
+    "Eligibility applies only to the listed workloads; a partial report cannot establish full feature coverage."
+  ],
+  "observations" : [
+    {
+      "deliveredHz" : 18.99202433897036,
+      "eligible" : false,
+      "measuredCPU" : 2.9466375656969714,
+      "nodes" : 20,
+      "reasons" : [
+        "Background, occluded or unknown visibility"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -245760,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.30820543301084,
+      "eligible" : false,
+      "measuredCPU" : 8.02607859217294,
+      "nodes" : 4,
+      "reasons" : [
+        "Background, occluded or unknown visibility"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -98304,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.48233495183353,
+      "eligible" : false,
+      "measuredCPU" : 9.461274970432402,
+      "nodes" : 20,
+      "reasons" : [
+        "Background, occluded or unknown visibility"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : 0,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 50.73385289445483,
+      "eligible" : false,
+      "measuredCPU" : 15.114177098287703,
+      "nodes" : 100,
+      "reasons" : [
+        "Background, occluded or unknown visibility"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -65536,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 19.007376188688053,
+      "eligible" : false,
+      "measuredCPU" : 2.514379650913717,
+      "nodes" : 20,
+      "reasons" : [
+        "Background, occluded or unknown visibility"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -81920,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.111409017695046,
+      "eligible" : false,
+      "measuredCPU" : 8.537355700814896,
+      "nodes" : 4,
+      "reasons" : [
+        "Background, occluded or unknown visibility"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -131072,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 41.77524502900726,
+      "eligible" : false,
+      "measuredCPU" : 8.382667773138136,
+      "nodes" : 20,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -32768,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 10.661182301029074,
+      "eligible" : false,
+      "measuredCPU" : 11.584291927614924,
+      "nodes" : 100,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload",
+        "Unexpected or missing broad-work counters"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : 81920,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 7.640754796110225,
+      "eligible" : false,
+      "measuredCPU" : 6.570383639559675,
+      "nodes" : 20,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -81920,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 10.08220832475377,
+      "eligible" : false,
+      "measuredCPU" : 4.542619867327832,
+      "nodes" : 4,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -114688,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 10.66983811750269,
+      "eligible" : false,
+      "measuredCPU" : 7.0902439037541605,
+      "nodes" : 20,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -81920,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 10.882221153648455,
+      "eligible" : false,
+      "measuredCPU" : 11.943645799422441,
+      "nodes" : 100,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload",
+        "Unexpected or missing broad-work counters"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : 65536,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 10.444245308980017,
+      "eligible" : false,
+      "measuredCPU" : 8.919076157940985,
+      "nodes" : 100,
+      "reasons" : [
+        "Background, occluded or unknown visibility",
+        "Delivered cadence below 80% of requested workload"
+      ],
+      "repetition" : 0,
+      "residentGrowthBytes" : 0,
+      "workload" : "bounded-soak"
+    }
+  ],
+  "policy" : "mac15-13-hover-2026-11-17",
+  "revision" : "bbc38db1c3920c456ab0ebb3acd7bd5dd418be81",
+  "schema" : 1
+}

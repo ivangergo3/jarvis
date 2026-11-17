@@ -1,0 +1,196 @@
+{
+  "comparison" : "not-requested",
+  "comparisonIssues" : [
+
+  ],
+  "conclusion" : "within-warning-budgets",
+  "identityIssues" : [
+
+  ],
+  "limitations" : [
+    "CPU warnings are owner-scoped investigation thresholds, not CI CPU gates.",
+    "Main-entry\/body and cadence metrics do not certify OS launch or input-to-photon latency.",
+    "Source stamps and executable digests identify artifacts; they are not cryptographic attestations.",
+    "OS caches and competing system load remain uncontrolled; raw inputs are retained by the caller.",
+    "Eligibility applies only to the listed workloads; a partial report cannot establish full feature coverage."
+  ],
+  "observations" : [
+    {
+      "deliveredHz" : 19.080671758603426,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 2.554852388290626,
+      "nodes" : 20,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -81920,
+      "warningCPU" : 5,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.173321331788806,
+      "eligible" : true,
+      "measuredCPU" : 7.514488749988519,
+      "nodes" : 4,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -81920,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.57737919754983,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 8.888449742174775,
+      "nodes" : 20,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -32768,
+      "warningCPU" : 12,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.53914249952936,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 12.597451785644628,
+      "nodes" : 100,
+      "reasons" : [
+
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -49152,
+      "warningCPU" : 20,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 19.08516757058502,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 2.3555062531207946,
+      "nodes" : 20,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -114688,
+      "warningCPU" : 5,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.66627802572269,
+      "eligible" : true,
+      "measuredCPU" : 6.703945337877324,
+      "nodes" : 4,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -32473088,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.73653983635012,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 8.556581709969583,
+      "nodes" : 20,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -98304,
+      "warningCPU" : 12,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.34942878674127,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 12.641479740598088,
+      "nodes" : 100,
+      "reasons" : [
+
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -98304,
+      "warningCPU" : 20,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 19.136495861622986,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 2.327569506390002,
+      "nodes" : 20,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -114688,
+      "warningCPU" : 5,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.39346105752203,
+      "eligible" : true,
+      "measuredCPU" : 7.203004178284515,
+      "nodes" : 4,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -114688,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.486540334977086,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 8.938425682419108,
+      "nodes" : 20,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -65536,
+      "warningCPU" : 12,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.40473390909383,
+      "eligible" : true,
+      "exceedsWarning" : false,
+      "measuredCPU" : 12.620810417346872,
+      "nodes" : 100,
+      "reasons" : [
+
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -98304,
+      "warningCPU" : 20,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.41166488750703,
+      "eligible" : true,
+      "measuredCPU" : 12.51388911144457,
+      "nodes" : 100,
+      "reasons" : [
+
+      ],
+      "repetition" : 0,
+      "residentGrowthBytes" : 65536,
+      "workload" : "bounded-soak"
+    }
+  ],
+  "policy" : "mac15-13-hover-2026-11-17",
+  "revision" : "bbc38db1c3920c456ab0ebb3acd7bd5dd418be81",
+  "schema" : 1
+}

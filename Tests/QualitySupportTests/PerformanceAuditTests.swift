@@ -134,6 +134,17 @@ struct PerformanceAuditTests {
         #expect(
             try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy()).conclusion
                 == "inconclusive")
+        value = report()
+        value["windowWidth"] = 0
+        #expect(throws: (any Error).self) {
+            try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy())
+        }
+        value = report()
+        let repeated = value["phases"] as? [[String: Any]] ?? []
+        value["phases"] = repeated + repeated
+        #expect(throws: (any Error).self) {
+            try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy())
+        }
         for (key, invalid) in [
             ("elapsedSeconds", 0), ("cpuPercentOfOneCore", -1), ("loopIterations", -1),
         ] {

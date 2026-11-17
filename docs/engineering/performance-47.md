@@ -8,6 +8,22 @@ CPU, memory and timing results remain informational until repeatability and
 owner-agreed budgets support a gate. Profiling and any optimization are separate
 reviewable changes; no broad optimization is presumed necessary.
 
+## Evidence audit and accepted warning policy
+
+The owner accepted scoped investigation warnings on 17 November 2026: idle CPU
+≤5%, continuous hover ≤12% at 20 chats and ≤20% at 100 chats, on the measured
+Mac15,13 configuration. CPU 100% means one logical core. These are not universal
+numeric CI gates. See the [prospective criteria, implementation and command](performance-evidence-47-54.md)
+and [retained execution evidence](../../evaluations/performance-evidence-2026-11-17/REPORT.md).
+
+Schema v2 records build-time identity and the actual executable digest instead
+of assigning the preparation checkout's revision to an older binary. It also
+records delivered iterations, visibility and power stability. The offline Swift
+auditor preserves excluded phases and refuses comparisons across incompatible
+environments, work units or input rates. Legacy evidence remains useful for
+investigation but is not promoted to a verified v2 baseline. Missing or failed
+measurements are inconclusive; an exceeded accepted warning requests investigation.
+
 ## Workloads and measurement boundaries
 
 - Release builds only, same compiler/settings/fixture before comparison.

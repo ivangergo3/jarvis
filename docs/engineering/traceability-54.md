@@ -38,4 +38,11 @@ For a typo or similarly small edit, the existing criterion and an observed diff 
 
 The [focused evaluation](../../evaluations/traceability-2026-11-17/REPORT.md) retains exact versions, prompts, actual self-check outputs and limits. It includes a read-only retrospective on the already authorized authority-verification change. That retrospective cannot show that this workflow catches problems before coding or makes human review easier.
 
-The live pilot required by #54 is still pending. After this guidance is reviewed, apply it to the next separately authorized small feature: record the baseline and mapping before editing, preserve discrepancies found and their resolutions, then record observed checks and the owner's review feedback. Report missed work exposed, links the reviewer actually used and unnecessary paperwork; reduce the process if it adds no value. Do not start another app feature merely to fill this row. Keep #54 open until the pilot is completed or its scope is explicitly revised; merging the guidance alone does not satisfy it.
+The separately authorized [performance-evidence audit pilot](performance-evidence-47-54.md)
+now records the baseline and mapping before implementation, discrepancies found,
+their resolutions and observed checks. Owner review usefulness, links actually
+used and unnecessary paperwork remain pending feedback on that concrete result;
+an author assessment cannot replace it. Reduce the process if it adds no value.
+Do not start another app feature merely to fill this row. Keep #54 open until
+the pilot is completed or its scope is explicitly revised; merging guidance or
+pilot code alone does not satisfy the owner-feedback criterion.

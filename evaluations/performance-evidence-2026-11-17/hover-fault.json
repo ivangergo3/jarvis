@@ -1,0 +1,56 @@
+[
+  {
+    "assertionFailed" : false,
+    "defective" : false,
+    "exit" : 0,
+    "fault" : "dashboard-forwarding"
+  },
+  {
+    "assertionFailed" : true,
+    "defective" : true,
+    "exit" : 1,
+    "fault" : "dashboard-forwarding"
+  },
+  {
+    "assertionFailed" : false,
+    "defective" : false,
+    "exit" : 0,
+    "fault" : "dashboard-forwarding"
+  },
+  {
+    "assertionFailed" : false,
+    "defective" : false,
+    "exit" : 0,
+    "fault" : "all-card-fanout"
+  },
+  {
+    "assertionFailed" : true,
+    "defective" : true,
+    "exit" : 1,
+    "fault" : "all-card-fanout"
+  },
+  {
+    "assertionFailed" : false,
+    "defective" : false,
+    "exit" : 0,
+    "fault" : "all-card-fanout"
+  },
+  {
+    "assertionFailed" : false,
+    "defective" : false,
+    "exit" : 0,
+    "fault" : "all-line-styles"
+  },
+  {
+    "assertionFailed" : true,
+    "defective" : true,
+    "exit" : 1,
+    "fault" : "all-line-styles"
+  },
+  {
+    "assertionFailed" : false,
+    "defective" : false,
+    "exit" : 0,
+    "fault" : "all-line-styles"
+  }
+]

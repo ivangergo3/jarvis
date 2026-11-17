@@ -150,8 +150,19 @@ public enum PerformanceAudit {
             raw.fixture["eventsPerChat"] == 1_002, raw.fixture["logBytes", default: 0] > 0
         else { throw QualityFailure("Missing or ambiguous synthetic performance workload") }
         if let phases = raw.phases {
+            if raw.schema == 2 {
+                guard let width = raw.windowWidth, let height = raw.windowHeight,
+                    let scale = raw.backingScale, let refresh = raw.displayMaximumHz,
+                    [width, height, scale].allSatisfy({ $0.isFinite && $0 > 0 }), refresh > 0
+                else { throw QualityFailure("Missing or invalid UI measurement geometry") }
+            }
             guard !phases.isEmpty, phases.count <= 1_000 else {
                 throw QualityFailure("Missing or excessive phases")
+            }
+            guard
+                Set(phases.map { "\($0.name):\($0.nodes):\($0.repetition)" }).count == phases.count
+            else {
+                throw QualityFailure("Duplicate measurement phase")
             }
             for phase in phases {
                 guard phase.nodes >= 0, phase.repetition >= 0, phase.elapsedSeconds > 0,
