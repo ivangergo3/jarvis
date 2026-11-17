@@ -1,0 +1,110 @@
+{
+  "comparison" : "not-requested",
+  "comparisonIssues" : [
+
+  ],
+  "conclusion" : "reported-without-applicable-budget",
+  "identityIssues" : [
+
+  ],
+  "limitations" : [
+    "CPU warnings are owner-scoped investigation thresholds, not CI CPU gates.",
+    "Main-entry\/body and cadence metrics do not certify OS launch or input-to-photon latency.",
+    "Source stamps and executable digests identify artifacts; they are not cryptographic attestations.",
+    "OS caches and competing system load remain uncontrolled; raw inputs are retained by the caller.",
+    "Eligibility applies only to the listed workloads; a partial report cannot establish full feature coverage."
+  ],
+  "observations" : [
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 0.01904167584143579,
+      "medianMilliseconds" : 0.0075833231676369905,
+      "minimumMilliseconds" : 0.006666668923571706,
+      "p95Milliseconds" : 0.01904167584143579,
+      "reasons" : [
+
+      ],
+      "workload" : "graph-0"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 0.039333332097157836,
+      "medianMilliseconds" : 0.0360416597686708,
+      "minimumMilliseconds" : 0.03200001083314419,
+      "p95Milliseconds" : 0.039333332097157836,
+      "reasons" : [
+
+      ],
+      "workload" : "graph-1"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 0.10712500079534948,
+      "medianMilliseconds" : 0.09433331433683634,
+      "minimumMilliseconds" : 0.09337501251138747,
+      "p95Milliseconds" : 0.10712500079534948,
+      "reasons" : [
+
+      ],
+      "workload" : "graph-4"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 0.8584583410993218,
+      "medianMilliseconds" : 0.8490416803397238,
+      "minimumMilliseconds" : 0.8431666647084057,
+      "p95Milliseconds" : 0.8584583410993218,
+      "reasons" : [
+
+      ],
+      "workload" : "graph-20"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 7.789750001393259,
+      "medianMilliseconds" : 7.7748750045429915,
+      "minimumMilliseconds" : 7.374416658421978,
+      "p95Milliseconds" : 7.789750001393259,
+      "reasons" : [
+
+      ],
+      "workload" : "graph-100"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 77.84600000013597,
+      "medianMilliseconds" : 77.26112499949522,
+      "minimumMilliseconds" : 77.03604164998978,
+      "p95Milliseconds" : 77.84600000013597,
+      "reasons" : [
+
+      ],
+      "workload" : "protocol-2000-records"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 76.20266667800024,
+      "medianMilliseconds" : 72.85908333142288,
+      "minimumMilliseconds" : 72.05245833029039,
+      "p95Milliseconds" : 76.20266667800024,
+      "reasons" : [
+
+      ],
+      "workload" : "workspace-fresh-adapter"
+    },
+    {
+      "eligible" : true,
+      "maximumMilliseconds" : 31.16904167109169,
+      "medianMilliseconds" : 25.5840833124239,
+      "minimumMilliseconds" : 25.18987498478964,
+      "p95Milliseconds" : 31.16904167109169,
+      "reasons" : [
+
+      ],
+      "workload" : "workspace-cached"
+    }
+  ],
+  "policy" : "mac15-13-hover-2026-11-17",
+  "revision" : "bbc38db1c3920c456ab0ebb3acd7bd5dd418be81",
+  "schema" : 1
+}

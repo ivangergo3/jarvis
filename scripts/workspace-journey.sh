@@ -24,11 +24,6 @@ case "${1:-}" in
             /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceOutput string $run_dir/performance-ui.json" "$app/Contents/Info.plist"
             fixture_clock=$(/usr/bin/plutil -extract clockSeconds raw "$run_dir/data/performance-fixture.json")
             /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceClock integer $fixture_clock" "$app/Contents/Info.plist"
-            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceRevision string $(git rev-parse HEAD)" "$app/Contents/Info.plist"
-            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceArchitecture string $(uname -m)" "$app/Contents/Info.plist"
-            toolchain=$(swift --version)
-            toolchain=${toolchain%%$'\n'*}
-            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceToolchain string $toolchain" "$app/Contents/Info.plist"
         fi
         codesign --force --deep --sign - "$app" >&2
         printf '%s\n' "$run_dir"

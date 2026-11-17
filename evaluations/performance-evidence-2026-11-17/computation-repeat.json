@@ -1,0 +1,196 @@
+{
+  "architecture" : "arm64",
+  "buildIdentity" : {
+    "architecture" : "arm64",
+    "binarySHA256" : "da88689e6430a2a907a41ab79f7c0bafefe62c7ca3c7d086b5f740a9c3dbfb7a",
+    "revision" : "bbc38db1c3920c456ab0ebb3acd7bd5dd418be81",
+    "toolchain" : "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)",
+    "trackedTreeDirty" : false,
+    "untrackedAppSources" : false
+  },
+  "buildMode" : "release",
+  "cacheState" : "OS cache uncontrolled; fresh adapter and warmed adapter measured separately",
+  "fixture" : {
+    "chats" : 125,
+    "clockSeconds" : 1794914737,
+    "eventsPerChat" : 1002,
+    "logBytes" : 9521801,
+    "projects" : 5
+  },
+  "hardware" : "Mac15,13",
+  "measurementProtocol" : "computation-v2",
+  "os" : "Version 27.2.1 (Build 26B131)",
+  "revision" : "bbc38db1c3920c456ab0ebb3acd7bd5dd418be81",
+  "schema" : 2,
+  "series" : [
+    {
+      "checksum" : 0,
+      "iterationsPerSample" : 200,
+      "milliseconds" : {
+        "maximum" : 0.016333331586793065,
+        "median" : 0.007875001756474376,
+        "minimum" : 0.00704167177900672,
+        "p95" : 0.016333331586793065,
+        "samples" : [
+          0.007875001756474376,
+          0.008041650289669633,
+          0.007333321264013648,
+          0.007208320312201977,
+          0.00704167177900672,
+          0.016333331586793065,
+          0.00979166361503303
+        ]
+      },
+      "name" : "graph-0",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 796340.9999999966,
+      "iterationsPerSample" : 200,
+      "milliseconds" : {
+        "maximum" : 0.040000013541430235,
+        "median" : 0.03254166222177446,
+        "minimum" : 0.0323750136885792,
+        "p95" : 0.040000013541430235,
+        "samples" : [
+          0.040000013541430235,
+          0.03637498593889177,
+          0.03254166222177446,
+          0.032708310754969716,
+          0.03245833795517683,
+          0.03245833795517683,
+          0.0323750136885792
+        ]
+      },
+      "name" : "graph-1",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 5601400,
+      "iterationsPerSample" : 200,
+      "milliseconds" : {
+        "maximum" : 0.10558334179222584,
+        "median" : 0.09254165343008935,
+        "minimum" : 0.08850000449456275,
+        "p95" : 0.10558334179222584,
+        "samples" : [
+          0.08850000449456275,
+          0.0917083234526217,
+          0.09162499918602407,
+          0.0925833301153034,
+          0.09291665628552437,
+          0.10558334179222584,
+          0.09254165343008935
+        ]
+      },
+      "name" : "graph-4",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 49567000,
+      "iterationsPerSample" : 200,
+      "milliseconds" : {
+        "maximum" : 0.8686250075697899,
+        "median" : 0.8586666663177311,
+        "minimum" : 0.8555416716262698,
+        "p95" : 0.8686250075697899,
+        "samples" : [
+          0.8555416716262698,
+          0.8586666663177311,
+          0.8597083215136081,
+          0.8682083571329713,
+          0.8564583549741656,
+          0.8686250075697899,
+          0.8561666472814977
+        ]
+      },
+      "name" : "graph-20",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 863835000,
+      "iterationsPerSample" : 200,
+      "milliseconds" : {
+        "maximum" : 7.694083324167877,
+        "median" : 7.330083346460015,
+        "minimum" : 7.079791685100645,
+        "p95" : 7.694083324167877,
+        "samples" : [
+          7.079791685100645,
+          7.104416668880731,
+          7.380916678812355,
+          7.2500416717957705,
+          7.330083346460015,
+          7.668541686143726,
+          7.694083324167877
+        ]
+      },
+      "name" : "graph-100",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 112000,
+      "iterationsPerSample" : 8,
+      "milliseconds" : {
+        "maximum" : 73.01120832562447,
+        "median" : 72.35295831924304,
+        "minimum" : 72.06637499621138,
+        "p95" : 73.01120832562447,
+        "samples" : [
+          72.35295831924304,
+          72.25895833107643,
+          72.30629166588187,
+          72.06637499621138,
+          73.01120832562447,
+          72.9619583580643,
+          72.88533332757652
+        ]
+      },
+      "name" : "protocol-2000-records",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 875,
+      "iterationsPerSample" : 1,
+      "milliseconds" : {
+        "maximum" : 75.87850000709295,
+        "median" : 73.63858332973905,
+        "minimum" : 72.07583333365619,
+        "p95" : 75.87850000709295,
+        "samples" : [
+          73.63858332973905,
+          74.71854166942649,
+          75.87850000709295,
+          72.9822916619014,
+          72.79041668516584,
+          74.58262497675605,
+          72.07583333365619
+        ]
+      },
+      "name" : "workspace-fresh-adapter",
+      "warmupRepetitions" : 1
+    },
+    {
+      "checksum" : 875,
+      "iterationsPerSample" : 1,
+      "milliseconds" : {
+        "maximum" : 31.79808333516121,
+        "median" : 25.117333338130265,
+        "minimum" : 24.923249991843477,
+        "p95" : 31.79808333516121,
+        "samples" : [
+          31.79808333516121,
+          25.106250017415732,
+          24.98033334268257,
+          25.117333338130265,
+          25.72404168313369,
+          25.301999994553626,
+          24.923249991843477
+        ]
+      },
+      "name" : "workspace-cached",
+      "warmupRepetitions" : 1
+    }
+  ],
+  "toolchain" : "Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)"
+}
