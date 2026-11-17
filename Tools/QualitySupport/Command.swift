@@ -5,11 +5,16 @@ public struct Command: Sendable {
     public var executable: String
     public var arguments: [String]
     public var directory: URL
+    public var environment: [String: String]?
 
-    public init(_ executable: String, _ arguments: [String], directory: URL) {
+    public init(
+        _ executable: String, _ arguments: [String], directory: URL,
+        environment: [String: String]? = nil
+    ) {
         self.executable = executable
         self.arguments = arguments
         self.directory = directory
+        self.environment = environment
     }
 
     /// Blocking command execution belongs only in this CLI/test utility, never app UI work.
@@ -26,6 +31,7 @@ public struct Command: Sendable {
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
         process.currentDirectoryURL = directory
+        process.environment = environment
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = output
         process.standardError = output

@@ -5,6 +5,7 @@ let package = Package(
     name: "Jarvis",
     platforms: [.macOS(.v14)],
     targets: [
+        .target(name: "JarvisAuthority"),
         .target(name: "JarvisDomain"),
         .target(
             name: "JarvisWorkspace", dependencies: ["JarvisDomain"],
@@ -15,6 +16,10 @@ let package = Package(
             dependencies: ["Jarvis", "JarvisDomain", "JarvisWorkspace", "QualitySupport"]),
         .executableTarget(
             name: "native-ui-check", dependencies: ["QualitySupport"], path: "Tools/NativeUI"),
+        .executableTarget(
+            name: "authority-harness", dependencies: ["JarvisAuthority"],
+            path: "Tools/AuthorityHarness",
+            exclude: ["verification.sb"]),
         .target(
             name: "QualitySupport", path: "Tools/QualitySupport",
             swiftSettings: [.swiftLanguageMode(.v6)]),
@@ -22,7 +27,7 @@ let package = Package(
             name: "quality-gate", dependencies: ["QualitySupport"],
             path: "Tools/QualityGate", swiftSettings: [.swiftLanguageMode(.v6)]),
         .testTarget(
-            name: "QualitySupportTests", dependencies: ["QualitySupport"],
+            name: "QualitySupportTests", dependencies: ["QualitySupport", "JarvisAuthority"],
             swiftSettings: [.swiftLanguageMode(.v6)]),
     ],
     swiftLanguageModes: [.v6]
