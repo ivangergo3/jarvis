@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import QuartzCore
 import SwiftUI
 
@@ -267,18 +268,177 @@ struct CompositorReactor: NSViewRepresentable {
 }
 
 struct CompositorTopology: NSViewRepresentable {
+    let hover: GraphHoverState
+    let nodeIDs: [String]
+    let selectedID: String?
     let active: [Bool]
-    let highlighted: [Bool]
     let running: Bool
     let connections: [GraphConnection]
     func makeNSView(context: Context) -> TopologyLayerView { TopologyLayerView() }
+    func makeCoordinator() -> TopologyHoverBinding { TopologyHoverBinding() }
     func updateNSView(_ view: TopologyLayerView, context: Context) {
-        view.configure(
-            active: active, highlighted: highlighted, running: running, connections: connections)
+        context.coordinator.update(
+            view: view, hover: hover, nodeIDs: nodeIDs, selectedID: selectedID,
+            active: active, running: running, connections: connections)
+    }
+    static func dismantleNSView(_ view: TopologyLayerView, coordinator: TopologyHoverBinding) {
+        coordinator.cancel()
+    }
+}
+
+/// Subscribe at the native decoration boundary: pointer lighting must not invalidate SwiftUI/AX layout.
+@MainActor final class TopologyHoverBinding {
+    private weak var view: TopologyLayerView?
+    private var source: GraphHoverState?
+    private var subscription: AnyCancellable?
+    private var nodeIDs: [String] = []
+    private var selectedID: String?
+    private var active: [Bool] = []
+    private var running = false
+    private var connections: [GraphConnection] = []
+    func update(
+        view: TopologyLayerView, hover: GraphHoverState, nodeIDs: [String], selectedID: String?,
+        active: [Bool], running: Bool, connections: [GraphConnection]
+    ) {
+        self.view = view
+        self.nodeIDs = nodeIDs
+        self.selectedID = selectedID
+        self.active = active
+        self.running = running
+        self.connections = connections
+        if source !== hover {
+            subscription?.cancel()
+            source = hover
+            subscription = hover.$nodeID.sink { [weak self] id in self?.render(id) }
+        } else {
+            render(hover.nodeID)
+        }
+    }
+    private func render(_ hovered: String?) {
+        RenderWorkCounters.count(.nativeTopologyUpdate)
+        view?.configure(
+            active: active, highlighted: nodeIDs.map { $0 == hovered || $0 == selectedID },
+            running: running, connections: connections)
+    }
+    func cancel() {
+        subscription?.cancel()
+        subscription = nil
+        source = nil
+        view = nil
+    }
+}
+
+struct CompositorDestination: NSViewRepresentable {
+    let destination: GraphHoverDestination
+    let selected: Bool
+    let active: Bool
+    let left: Bool
+    func makeNSView(context: Context) -> DestinationLayerView { DestinationLayerView() }
+    func makeCoordinator() -> DestinationHoverBinding { DestinationHoverBinding() }
+    func updateNSView(_ view: DestinationLayerView, context: Context) {
+        context.coordinator.update(
+            view: view, state: destination, selected: selected, active: active, left: left)
+    }
+    static func dismantleNSView(_ view: DestinationLayerView, coordinator: DestinationHoverBinding)
+    {
+        coordinator.cancel()
+    }
+}
+
+@MainActor final class DestinationHoverBinding {
+    private weak var view: DestinationLayerView?
+    private var source: GraphHoverDestination?
+    private var subscription: AnyCancellable?
+    private var selected = false
+    private var active = false
+    private var left = false
+    func update(
+        view: DestinationLayerView, state: GraphHoverDestination, selected: Bool, active: Bool,
+        left: Bool
+    ) {
+        self.view = view
+        self.selected = selected
+        self.active = active
+        self.left = left
+        if source !== state {
+            subscription?.cancel()
+            source = state
+            subscription = state.$highlighted.sink { [weak self] value in self?.render(value) }
+        } else {
+            render(state.highlighted)
+        }
+    }
+    private func render(_ highlighted: Bool) {
+        RenderWorkCounters.count(.nativeDestinationUpdate)
+        view?.configure(active: active, highlighted: selected || highlighted, left: left)
+    }
+    func cancel() {
+        subscription?.cancel()
+        subscription = nil
+        source = nil
+        view = nil
+    }
+}
+
+@MainActor final class DestinationLayerView: DecorationLayerView {
+    private let border = HUDLayers.stroke(HUDLayers.gold, width: 1)
+    private let port = HUDLayers.stroke(HUDLayers.muted, width: 1.4)
+    private let core = CAShapeLayer()
+    private var left = false
+    private var drawnBounds = CGRect.null
+    private var drawnLeft: Bool?
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        clipsToBounds = false  // The connection port straddles the card edge.
+        border.name = "destinationBorder"
+        port.name = "destinationPort"
+        core.name = "destinationCore"
+        port.fillColor = NSColor(red: 0.040, green: 0.070, blue: 0.095, alpha: 1).cgColor
+        layer?.addSublayer(border)
+        layer?.addSublayer(port)
+        layer?.addSublayer(core)
+    }
+    required init?(coder: NSCoder) { nil }
+    func configure(active: Bool, highlighted: Bool, left: Bool) {
+        HUDLayers.change {
+            if self.left != left {
+                self.left = left
+                needsLayout = true
+            }
+            let color = active ? HUDLayers.cyan : highlighted ? HUDLayers.gold : HUDLayers.muted
+            border.opacity = highlighted && !active ? 0.75 : 0
+            port.strokeColor = color.copy(alpha: active || highlighted ? 1 : 0.45)
+            port.opacity = 1
+            core.fillColor = color
+            core.opacity = active || highlighted ? 0.9 : 0.3
+        }
+    }
+    override func layout() {
+        super.layout()
+        guard drawnBounds != bounds || drawnLeft != left else { return }
+        drawnBounds = bounds
+        drawnLeft = left
+        HUDLayers.change {
+            border.path = CGPath(
+                roundedRect: bounds, cornerWidth: 12, cornerHeight: 12, transform: nil)
+            let x = left ? bounds.maxX : bounds.minX
+            port.path = CGPath(
+                ellipseIn: CGRect(x: x - 4.5, y: bounds.midY - 4.5, width: 9, height: 9),
+                transform: nil)
+            core.path = CGPath(
+                ellipseIn: CGRect(x: x - 1.5, y: bounds.midY - 1.5, width: 3, height: 3),
+                transform: nil)
+        }
     }
 }
 
 @MainActor final class TopologyLayerView: DecorationLayerView {
+    private struct Style: Equatable {
+        let active: Bool
+        let focused: Bool
+        let running: Bool
+    }
+    private var appliedStyles: [Style?] = []
     private var routes: [GraphConnection] = []
     private var active: [Bool] = []
     private var highlighted: [Bool] = []
@@ -304,12 +464,15 @@ struct CompositorTopology: NSViewRepresentable {
     }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        appliedStyles = Array(repeating: nil, count: lines.count)
         HUDLayers.change { updateStyles() }
     }
     private func rebuildGeometry() {
+        RenderWorkCounters.count(.connectorRebuild)
         for sublayer in layer?.sublayers ?? [] { sublayer.removeFromSuperlayer() }
         lines = []
         dots = []
+        appliedStyles = Array(repeating: nil, count: routes.count)
         for route in routes {
             let path = CGMutablePath()
             if let first = route.points.first {
@@ -335,6 +498,11 @@ struct CompositorTopology: NSViewRepresentable {
         for index in lines.indices {
             let on = index < active.count && active[index]
             let focused = index < highlighted.count && highlighted[index]
+            // Active styling already wins over hover; don't dirty unchanged CA layers.
+            let style = Style(active: on, focused: !on && focused, running: on && running)
+            guard appliedStyles[index] != style else { continue }
+            appliedStyles[index] = style
+            RenderWorkCounters.count(.connectorStyle)
             let line = lines[index]
             let dot = dots[index]
             line.strokeColor = on ? HUDLayers.cyan : focused ? HUDLayers.gold : HUDLayers.muted

@@ -7,7 +7,11 @@ case "${1:-}" in
         run_dir=$(mktemp -d "${TMPDIR:-/tmp}/jarvis-workspace-journey.XXXXXX")
         mkdir "$run_dir/data"
         xcrun swiftc -swift-version 6 Tests/Fixtures/WorkspaceJourney.swift -lsqlite3 -o "$run_dir/setup"
-        "$run_dir/setup" "$run_dir/data" > "$run_dir/setup.log"
+        if [[ "${2:-}" == --performance ]]; then
+            "$run_dir/setup" "$run_dir/data" --performance > "$run_dir/setup.log"
+        else
+            "$run_dir/setup" "$run_dir/data" > "$run_dir/setup.log"
+        fi
         app="$run_dir/Jarvis Workspace Fixture.app"
         ditto build/Jarvis.app "$app"
         bundle_id="dev.jarvis.workspacefixture.$(uuidgen | tr '[:upper:]' '[:lower:]')"
@@ -16,6 +20,16 @@ case "${1:-}" in
         /usr/libexec/PlistBuddy -c 'Set :CFBundleName Jarvis Workspace Fixture' "$app/Contents/Info.plist"
         /usr/libexec/PlistBuddy -c 'Set :CFBundleDisplayName Jarvis Workspace Fixture' "$app/Contents/Info.plist"
         /usr/libexec/PlistBuddy -c "Add :JarvisWorkspaceFixtureDirectory string $run_dir/data" "$app/Contents/Info.plist"
+        if [[ "${2:-}" == --performance ]]; then
+            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceOutput string $run_dir/performance-ui.json" "$app/Contents/Info.plist"
+            fixture_clock=$(/usr/bin/plutil -extract clockSeconds raw "$run_dir/data/performance-fixture.json")
+            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceClock integer $fixture_clock" "$app/Contents/Info.plist"
+            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceRevision string $(git rev-parse HEAD)" "$app/Contents/Info.plist"
+            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceArchitecture string $(uname -m)" "$app/Contents/Info.plist"
+            toolchain=$(swift --version)
+            toolchain=${toolchain%%$'\n'*}
+            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceToolchain string $toolchain" "$app/Contents/Info.plist"
+        fi
         codesign --force --deep --sign - "$app" >&2
         printf '%s\n' "$run_dir"
         ;;

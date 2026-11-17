@@ -1,10 +1,12 @@
 import AppKit
+import Combine
 import JarvisDomain
 import JarvisWorkspace
 import SwiftUI
 
 @main enum JarvisMain {
     @MainActor static func main() {
+        let enteredMain = ProcessInfo.processInfo.systemUptime
         let arguments = CommandLine.arguments
         let launch: WorkspaceLaunch
         let verification: UIVerification?
@@ -24,13 +26,37 @@ import SwiftUI
             exit(64)
         }
         let source: any WorkspaceSource
+        let fixtureClock =
+            (Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceClock") as? NSNumber)
+            .map { Date(timeIntervalSince1970: $0.doubleValue) }
         if let verification {
             source = VerificationFleetSource(verification.scenario)
         } else {
             switch launch {
             case .live: source = CodexReader()
-            case .fixture(let home): source = CodexReader(home: home)
+            case .fixture(let home):
+                source = CodexReader(home: home, now: { fixtureClock ?? Date() })
             }
+        }
+        if arguments.contains("--performance-baseline") {
+            guard verification == nil, case .fixture(let home) = launch,
+                let revision = arguments.first(where: { $0.hasPrefix("--revision=") })
+            else { exit(64) }
+            Task {
+                do {
+                    try await PerformanceWorkloads.run(
+                        home: home,
+                        output: home.deletingLastPathComponent().appendingPathComponent(
+                            "performance-workloads.json"),
+                        revision: String(revision.dropFirst("--revision=".count)),
+                        makeSource: { CodexReader(home: home, now: { fixtureClock ?? Date() }) })
+                    exit(0)
+                } catch {
+                    FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
+                    exit(1)
+                }
+            }
+            dispatchMain()
         }
         if CommandLine.arguments.contains("--self-test") {
             fputs("Tests now run separately: use swift test from the project folder.\n", stderr)
@@ -53,8 +79,32 @@ import SwiftUI
             dispatchMain()
         }
         let app = NSApplication.shared
+        let output = Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceOutput") as? String
+        #if DEBUG
+            if output != nil { exit(64) }
+        #endif
+        guard output == nil || (launch.isFixture && verification == nil) else { exit(64) }
+        let performance: PerformanceSession?
+        do {
+            if let output, case .fixture(let home) = launch {
+                let fixture = try JSONDecoder().decode(
+                    [String: Int].self,
+                    from: Data(contentsOf: home.appendingPathComponent("performance-fixture.json")))
+                performance = PerformanceSession(
+                    enteredMain: enteredMain, output: URL(fileURLWithPath: output),
+                    fixture: fixture,
+                    manual: Bundle.main.object(forInfoDictionaryKey: "JarvisPerformanceManual")
+                        as? Bool == true)
+            } else {
+                performance = nil
+            }
+        } catch {
+            FileHandle.standardError.write(Data("Invalid performance fixture metadata.\n".utf8))
+            exit(64)
+        }
         let delegate = AppDelegate(
-            source: source, workspaceFixture: launch.isFixture, verification: verification)
+            source: source, workspaceFixture: launch.isFixture, verification: verification,
+            performance: performance)
         app.delegate = delegate
         app.setActivationPolicy(.regular)
         // AppKit owns the main run loop; do not hold a Swift concurrency job across app.run().
@@ -72,16 +122,22 @@ import SwiftUI
     private let imagePreview: ImagePreviewPresentation
     private let desktopActions: DesktopActions
     private let verification: UIVerification?
+    private let performance: PerformanceSession?
     private let evidence = VerificationEvidence()
     private let windowControls = WindowControls()
     private var verificationLifetime: Task<Void, Never>?
+    private var hoverLoadTask: Task<Void, Never>?
+    private var pointerLoadTask: Task<Void, Never>?
+    private var pointerWork: [RenderWork: Int] = [:]
+    private var pointerSubscriptions: [AnyCancellable] = []
     init(
         source: any WorkspaceSource, workspaceFixture: Bool = false,
-        verification: UIVerification? = nil
+        verification: UIVerification? = nil, performance: PerformanceSession? = nil
     ) {
         store = FleetStore(source: source)
         self.workspaceFixture = workspaceFixture
         self.verification = verification
+        self.performance = performance
         let externalActionsAllowed = verification == nil && !workspaceFixture
         desktopActions = DesktopActions(allowed: externalActionsAllowed)
         let previewLoader = AttachmentPreviewLoader()
@@ -109,7 +165,7 @@ import SwiftUI
                     CodexProcessConnection(executable: CodexExecutable.locate())
                 }
             voice = LocalVoice()
-            ui = DashboardState()
+            ui = performance?.dashboard ?? DashboardState()
         }
         super.init()
     }
@@ -170,22 +226,38 @@ import SwiftUI
         window.backgroundColor = NSColor(red: 0.025, green: 0.045, blue: 0.065, alpha: 1)
         window.minSize = NSSize(width: 1180, height: 760)
         windowControls.attach(to: window)
-        window.contentView = NSHostingView(
-            rootView: VStack(spacing: 0) {
-                if let verification {
-                    VerificationBanner(configuration: verification, evidence: evidence)
+        let content = VStack(spacing: 0) {
+            if let verification {
+                VerificationBanner(
+                    configuration: verification, evidence: evidence,
+                    startHoverLoad: { [weak self] in self?.startHoverLoad() },
+                    startPointerLoad: { [weak self] in self?.startPointerLoad() },
+                    finishPointerLoad: { [weak self] in self?.finishPointerLoad() })
+            }
+            Dashboard(
+                windowControls: windowControls, companion: companion, voice: voice,
+                store: store, ui: ui, imagePreview: imagePreview,
+                workspaceFixture: workspaceFixture)
+        }.environmentObject(desktopActions)
+            .overlay(alignment: .top) {
+                if let performance {
+                    PerformanceStatusView(
+                        progress: performance.progress, manual: performance.manual
+                    ) {
+                        performance.startManual()
+                    }
                 }
-                Dashboard(
-                    windowControls: windowControls, companion: companion, voice: voice,
-                    store: store, ui: ui, imagePreview: imagePreview,
-                    workspaceFixture: workspaceFixture)
-            }.environmentObject(desktopActions))
+            }
+        window.contentView =
+            performance == nil
+            ? NSHostingView(rootView: content) : PerformanceHostingView(rootView: content)
         window.collectionBehavior = [.fullScreenPrimary]
         if verification == nil { window.setFrameAutosaveName("JarvisMissionControl") }
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
+        performance?.attach(window: window, store: store, companion: companion)
         if verification != nil {
             verificationLifetime = Task { @MainActor in
                 do { try await Task.sleep(for: .seconds(120)) } catch { return }
@@ -195,6 +267,11 @@ import SwiftUI
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        hoverLoadTask?.cancel()
+        pointerLoadTask?.cancel()
+        pointerSubscriptions = []
+        if verification != nil { RenderWorkCounters.onCount = nil }
+        performance?.stop()
         voice.cancel()
         voice.stopAudio()
         if verification != nil { return .terminateNow }
@@ -209,6 +286,114 @@ import SwiftUI
     {
         window?.makeKeyAndOrderFront(nil)
         return true
+    }
+
+    private func startPointerLoad() {
+        guard verification?.scenario == .pointerLoad, pointerLoadTask == nil else { return }
+        evidence.pointerLoad = "Starting"
+        pointerLoadTask = Task { @MainActor [self] in
+            do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
+            pointerWork = [:]
+            RenderWorkCounters.onCount = { [weak self] in self?.pointerWork[$0, default: 0] += 1 }
+            pointerSubscriptions = [
+                ui.objectWillChange.sink { [weak self] _ in
+                    self?.pointerWork[.dashboardPublication, default: 0] += 1
+                },
+                companion.objectWillChange.sink { [weak self] _ in
+                    self?.pointerWork[.conversationPublication, default: 0] += 1
+                },
+            ]
+            evidence.pointerLoad = "Recording"
+        }
+    }
+
+    private func finishPointerLoad() {
+        guard verification?.scenario == .pointerLoad, evidence.pointerLoad == "Recording" else {
+            return
+        }
+        RenderWorkCounters.onCount = nil
+        pointerSubscriptions = []
+        let forbidden: [RenderWork] = [
+            .dashboardBody, .dashboardPublication, .conversationBody,
+            .conversationPublication, .graphLayout, .cardFactory, .connectorRebuild,
+            .hoverDestinationBody, .hoverTopologyBody,
+        ]
+        let unrelated = forbidden.reduce(0) { $0 + pointerWork[$1, default: 0] }
+        let callbacks = pointerWork[.physicalHoverCallback, default: 0]
+        let destinations = pointerWork[.nativeDestinationUpdate, default: 0]
+        let topology = pointerWork[.nativeTopologyUpdate, default: 0]
+        let passed =
+            callbacks >= 20 && unrelated == 0 && destinations > 0
+            && destinations <= callbacks * 2 && topology > 0 && topology <= callbacks
+            && ui.projectID == "alpha"
+            && store.snapshot?.missions.filter { $0.projectID == "alpha" }.count == 100
+        evidence.pointerLoad =
+            "\(passed ? "PASS" : "FAIL") callbacks=\(callbacks) unrelated=\(unrelated) destinations=\(destinations) topology=\(topology)"
+    }
+
+    private func startHoverLoad() {
+        guard verification?.scenario == .hoverLoad, hoverLoadTask == nil else { return }
+        evidence.hoverLoad = "Running"
+        hoverLoadTask = Task { @MainActor in
+            var work: [RenderWork: Int] = [:]
+            RenderWorkCounters.onCount = { work[$0, default: 0] += 1 }
+            let root = ui.objectWillChange.sink { work[.dashboardPublication, default: 0] += 1 }
+            let chat = companion.objectWillChange.sink {
+                work[.conversationPublication, default: 0] += 1
+            }
+            defer {
+                RenderWorkCounters.onCount = nil
+                root.cancel()
+                chat.cancel()
+            }
+            do {
+                ui.projectID = "alpha"
+                let deadline = ContinuousClock.now + .seconds(10)
+                while work[.cardFactory, default: 0] < 100 {
+                    guard ContinuousClock.now < deadline else {
+                        throw VerificationFailure(message: "100-card view did not mount")
+                    }
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                let ids =
+                    store.snapshot?.missions.filter { $0.projectID == "alpha" }.map(\.id) ?? []
+                guard ids.count == 100 else {
+                    throw VerificationFailure(message: "Invalid load fixture")
+                }
+                // Warm the real mounted modifiers and settle navigation before measuring.
+                for index in 0..<10 {
+                    ui.graphHover.update(ids[index], inside: true)
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                work = [:]
+                let transitions = 200
+                for index in 0..<transitions {
+                    ui.graphHover.update(ids[index % ids.count], inside: true)
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                ui.graphHover.clear()
+                try await Task.sleep(for: .milliseconds(100))
+                let forbidden: [RenderWork] = [
+                    .dashboardBody, .dashboardPublication,
+                    .conversationBody, .conversationPublication, .graphLayout, .cardFactory,
+                    .connectorRebuild,
+                ]
+                let unrelated = forbidden.reduce(0) { $0 + work[$1, default: 0] }
+                let modifiers = work[.nativeDestinationUpdate, default: 0]
+                let topology = work[.nativeTopologyUpdate, default: 0]
+                let styles = work[.connectorStyle, default: 0]
+                let passed =
+                    unrelated == 0 && modifiers > 0 && modifiers <= transitions * 2 + 1
+                    && topology > 0 && topology <= transitions + 1 && ui.projectID == "alpha"
+                    && styles <= transitions * 2 + 1
+                    && work[.hoverDestinationBody, default: 0] == 0
+                    && work[.hoverTopologyBody, default: 0] == 0
+                evidence.hoverLoad =
+                    "\(passed ? "PASS" : "FAIL") cards=100 transitions=200 unrelated=\(unrelated) nativeDestinations=\(modifiers) nativeTopology=\(topology) styles=\(styles)"
+            } catch {
+                evidence.hoverLoad = "FAIL \(error.localizedDescription)"
+            }
+        }
     }
 }
 

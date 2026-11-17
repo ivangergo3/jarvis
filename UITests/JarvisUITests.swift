@@ -2,6 +2,35 @@ import AppKit
 import XCTest
 
 final class JarvisUITests: XCTestCase {
+    @MainActor func testPhysicalPointerLoadDoesNotInvalidateGraph() throws {
+        let app = try launch("pointerLoad")
+        click(app, "dashboard.toggleConversation")
+        choose(app, "alpha")
+        let card = element(app, "graph.node.alpha-load-0")
+        XCTAssertTrue(card.waitForExistence(timeout: 10))
+        click(app, "verification.startPointerLoad")
+        let result = element(app, "verification.pointerLoad")
+        expect(result, equals: "Recording")
+        let outside = element(app, "dashboard.projectSelector")
+        // Exercise AppKit hit testing and the real .onHover path, not a model-only simulation.
+        for _ in 0..<12 {
+            card.hover()
+            outside.hover()
+        }
+        click(app, "verification.finishPointerLoad")
+        XCTAssertTrue(result.label.hasPrefix("PASS "), result.label)
+    }
+
+    @MainActor func testHoverLoadKeepsRenderedUpdatesLocal() throws {
+        let app = try launch("hoverLoad")
+        click(app, "verification.startHoverLoad")
+        let result = element(app, "verification.hoverLoad")
+        let done = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label BEGINSWITH 'PASS ' OR label BEGINSWITH 'FAIL '"),
+            object: result)
+        XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 25), .completed)
+        XCTAssertTrue(result.label.hasPrefix("PASS "), result.label)
+    }
     @MainActor private func launch(_ scenario: String) throws -> XCUIApplication {
         continueAfterFailure = false
         XCTAssertTrue(

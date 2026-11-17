@@ -1,4 +1,6 @@
 [
+  "testPhysicalPointerLoadDoesNotInvalidateGraph",
+  "testHoverLoadKeepsRenderedUpdatesLocal",
   "testProjectsAndChatSelection",
   "testEmptyProject",
   "testEmptyWorkspace",

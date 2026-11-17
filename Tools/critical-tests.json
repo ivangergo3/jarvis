@@ -1,4 +1,10 @@
 [
+  "JarvisTests.AnimationEfficiencyTests/nativeHoverBindingsRenderLatestStateAndStopAfterCancellation",
+  "JarvisTests.AnimationEfficiencyTests/connectorHoverLoadOnlyWritesChangedLayerStyles",
+  "JarvisTests.PerformanceRegressionTests/hoverLoadOnlyNotifiesChangedCards",
+  "JarvisTests.PerformanceRegressionTests/hoverStateReusesMountedCardsAndReleasesUnmountedCards",
+  "JarvisTests.PerformanceRegressionTests/sustainedHoverDoesNotInvalidateDashboardOrConversation",
+  "JarvisTests.PerformanceRegressionTests/measurementSummaryPreservesSlowSamplesAndRejectsMissingMeasurements",
   "QualitySupportTests.CommandEnvironmentTests/ordinaryCommandsInheritPathButExplicitEnvironmentsReplaceIt",
   "QualitySupportTests.AuthorityTests/eachCapabilityCanExecuteWithinItsOwnExplicitScope",
   "QualitySupportTests.AuthorityTests/preauthorizedActionsDoNotNeedAnotherApprovalAndNeverReplay",

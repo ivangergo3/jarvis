@@ -94,6 +94,8 @@ struct Dashboard: View {
     }
 
     var body: some View {
+        let _ = RenderWorkCounters.dashboardEvaluated(
+            project: ui.projectID, populated: store.snapshot != nil)
         HStack(spacing: 0) {
             sidebar.frame(width: 215)
             Rectangle().fill(HUD.line).frame(width: 1)
@@ -463,6 +465,7 @@ struct Dashboard: View {
 
     private var networkView: some View {
         GeometryReader { geometry in
+            let _ = RenderWorkCounters.count(.graphLayout)
             let layout = TeamGraphLayout(count: nodeCount, viewport: geometry.size)
             ScrollView([.horizontal, .vertical]) {
                 ZStack(alignment: .topLeading) {
@@ -509,14 +512,14 @@ struct Dashboard: View {
 
     private func destination(index: Int, layout: TeamGraphLayout) -> HoverDestination {
         HoverDestination(
-            hover: ui.graphHover,
-            nodeID: isGlobal ? rootProjects[index].id : graphMissions[index].id,
+            destination: ui.graphHover.destination(
+                for: isGlobal ? rootProjects[index].id : graphMissions[index].id),
             selected: !isGlobal && graphMissions[index].id == selected?.id,
             active: graphActive[index],
-            motion: motion && windowControls.decorativeMotion && !reduceMotion,
-            index: index, left: layout.nodes[index].x < layout.center.x)
+            left: layout.nodes[index].x < layout.center.x)
     }
     private func hoverNode(_ id: String, inside: Bool) {
+        RenderWorkCounters.count(.physicalHoverCallback)
         ui.graphHover.update(id, inside: inside)
     }
 
@@ -557,6 +560,7 @@ struct Dashboard: View {
     }
 
     private func projectCard(_ p: WorkspaceProject) -> some View {
+        let _ = RenderWorkCounters.count(.cardFactory)
         let team = allMissions.filter { $0.projectID == p.id }
         let active = team.filter { $0.status == .working }.count
         return Button {
@@ -599,7 +603,8 @@ struct Dashboard: View {
     }
 
     private func missionCard(_ mission: Mission) -> some View {
-        Button {
+        let _ = RenderWorkCounters.count(.cardFactory)
+        return Button {
             chooseMission(mission)
         } label: {
             VStack(alignment: .leading, spacing: 10) {
@@ -628,7 +633,7 @@ struct Dashboard: View {
                 .contentShape(RoundedRectangle(cornerRadius: 12))
         }.buttonStyle(.plain).accessibilityLabel(
             "\(mission.name), \(mission.status.label), \(String(taskPreview(mission.task).prefix(140)))"
-        )
+        ).accessibilityIdentifier("graph.node.\(mission.id)")
     }
 
     private func taskPreview(_ task: String) -> String {
