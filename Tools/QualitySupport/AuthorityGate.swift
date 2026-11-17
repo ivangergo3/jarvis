@@ -49,22 +49,26 @@ public enum AuthorityGate {
             to: denied.appendingPathComponent("credential.txt"))
         let buildLog = directory.appendingPathComponent("build.log")
         guard
-            try Command(
-                "/usr/bin/env",
-                [
-                    "swift", "build", "-Xswiftc", "-warnings-as-errors", "--product",
-                    "authority-harness",
-                ], directory: root
-            )
-            .run(log: buildLog, timeout: 300) == 0
+            try scratch.retainingOnCleanupFailure({
+                try Command(
+                    "/usr/bin/env",
+                    [
+                        "swift", "build", "-Xswiftc", "-warnings-as-errors", "--product",
+                        "authority-harness",
+                    ], directory: root
+                )
+                .run(log: buildLog, timeout: 300)
+            }) == 0
         else {
             throw QualityFailure(
                 "Authority harness build failed: \(try Diagnostics.tail(of: buildLog))")
         }
         let pathLog = directory.appendingPathComponent("bin-path.log")
         guard
-            try Command("/usr/bin/env", ["swift", "build", "--show-bin-path"], directory: root)
-                .run(log: pathLog, timeout: 60) == 0
+            try scratch.retainingOnCleanupFailure({
+                try Command("/usr/bin/env", ["swift", "build", "--show-bin-path"], directory: root)
+                    .run(log: pathLog, timeout: 60)
+            }) == 0
         else { throw QualityFailure("Cannot locate authority harness") }
         let pathOutput = try String(contentsOf: pathLog, encoding: .utf8)
         guard let binPath = pathOutput.split(separator: "\n").last,
@@ -89,7 +93,10 @@ public enum AuthorityGate {
                     "-D", "PRIVATE=\(denied.path)", "-D", "OUTPUT=\(log.path)", "-f", profile.path,
                     worker.path,
                 ] + arguments, directory: work, environment: environment)
-            guard try command.run(log: log, timeout: 30) == 0 else {
+            guard
+                try scratch.retainingOnCleanupFailure({ try command.run(log: log, timeout: 30) })
+                    == 0
+            else {
                 throw QualityFailure(
                     "Isolated authority check failed: \(try Diagnostics.tail(of: log))")
             }
@@ -128,13 +135,17 @@ public enum AuthorityGate {
         else { throw QualityFailure("Missing or ineffective OS isolation checks") }
         let commitLog = directory.appendingPathComponent("commit.log")
         guard
-            try Command("/usr/bin/git", ["rev-parse", "HEAD"], directory: root).run(
-                log: commitLog, timeout: 10) == 0
+            try scratch.retainingOnCleanupFailure({
+                try Command("/usr/bin/git", ["rev-parse", "HEAD"], directory: root).run(
+                    log: commitLog, timeout: 10)
+            }) == 0
         else { throw QualityFailure("Cannot identify authority artifact commit") }
         let commit = try String(contentsOf: commitLog, encoding: .utf8).trimmingCharacters(
             in: .whitespacesAndNewlines)
-        let dirty = try Command("/usr/bin/git", ["status", "--porcelain"], directory: root)
-            .run(log: directory.appendingPathComponent("status.log"), timeout: 10)
+        let dirty = try scratch.retainingOnCleanupFailure {
+            try Command("/usr/bin/git", ["status", "--porcelain"], directory: root)
+                .run(log: directory.appendingPathComponent("status.log"), timeout: 10)
+        }
         guard dirty == 0 else { throw QualityFailure("Cannot identify working-tree state") }
         let changes = try String(
             contentsOf: directory.appendingPathComponent("status.log"), encoding: .utf8)

@@ -42,6 +42,20 @@ public enum Diagnostics {
 
 public final class TemporaryDirectory {
     public let url: URL
+    private var retained = false
+
+    public func retain(reason: String) {
+        retained = true
+        FileHandle.standardError.write(
+            Data("Retained owned workspace: \(url.path) (\(reason))\n".utf8))
+    }
+
+    public func retainingOnCleanupFailure<T>(_ operation: () throws -> T) rethrows -> T {
+        do { return try operation() } catch {
+            if error is CommandCleanupFailure { retain(reason: "command cleanup is uncertain") }
+            throw error
+        }
+    }
 
     public init(prefix: String, parent: URL = FileManager.default.temporaryDirectory) throws {
         url = parent.appendingPathComponent(
@@ -50,6 +64,7 @@ public final class TemporaryDirectory {
     }
 
     deinit {
+        guard !retained else { return }
         do { try FileManager.default.removeItem(at: url) } catch {
             FileHandle.standardError.write(
                 Data("Temporary quality-tool directory could not be removed.\n".utf8))

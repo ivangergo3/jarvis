@@ -1,4 +1,8 @@
 [
+  "QualitySupportTests.QualitySupportTests/ownedProcessIdentityRejectsReusedPIDs",
+  "QualitySupportTests.QualitySupportTests/anExitedTimeoutSupervisorReportsUncertainOwnership",
+  "QualitySupportTests.QualitySupportTests/uncertainCleanupRetainsOwnedWorkspacesAndFailedSummary",
+  "QualitySupportTests.QualitySupportTests/timeoutStopsNestedIsolatedProcessGroups",
   "JarvisTests.PerformanceRegressionTests/phaseConfigurationChangesCannotBeErasedByRestoringSettings",
   "QualitySupportTests.PerformanceAuditTests/phaseConfigurationOverridesFinalSettings",
   "QualitySupportTests.PerformanceAuditTests/configurationChangesRemainIneligible",

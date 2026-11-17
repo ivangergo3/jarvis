@@ -17,8 +17,11 @@ func run(_ executable: String, _ arguments: [String], log: String, timeout: Time
     throws
 {
     let path = output.appendingPathComponent(log)
+    let pending = output.appendingPathComponent("command-incomplete")
+    try Data().write(to: pending)
     let status = try Command(executable, arguments, directory: root).run(
         log: path, timeout: timeout)
+    try FileManager.default.removeItem(at: pending)
     guard status == 0 else {
         throw QualityFailure(
             "\(executable) failed (\(status)); see \(log).\n\(try Diagnostics.tail(of: path))")
@@ -65,7 +68,9 @@ func verifyProjectSources() throws {
 do {
     try files.createDirectory(at: output, withIntermediateDirectories: true)
     defer {
-        if files.fileExists(atPath: derived.path) {
+        if files.fileExists(atPath: derived.path)
+            && !files.fileExists(atPath: output.appendingPathComponent("command-incomplete").path)
+        {
             do { try files.removeItem(at: derived) } catch {
                 FileHandle.standardError.write(
                     Data("Could not remove this run's derived data.\n".utf8))

@@ -18,8 +18,7 @@ public struct Command: Sendable {
     }
 
     /// Blocking command execution belongs only in this CLI/test utility, never app UI work.
-    /// Foundation owns launch/reaping; the Darwin boundary is limited to checking/killing
-    /// the child's isolated process group so timeouts also release descendant test processes.
+    /// Foundation owns launch/reaping. Timeout cleanup includes nested isolated child groups.
     public func run(log: URL, timeout: TimeInterval) throws -> Int32 {
         guard timeout > 0 else { throw QualityFailure("Command timeout must be positive") }
         guard FileManager.default.createFile(atPath: log.path, contents: nil) else {
@@ -49,14 +48,29 @@ public struct Command: Sendable {
             throw QualityFailure("Foundation did not create an isolated child process group")
         }
         if finished.wait(timeout: .now() + timeout) == .timedOut {
-            if process.isRunning {
-                _ = kill(getpgid(pid) == pid ? -pid : pid, SIGKILL)
-            }
-            process.waitUntilExit()
-            throw QualityFailure("Test command exceeded its time limit")
+            try Self.timedOut(process, finished: finished)
         }
         process.waitUntilExit()
         return process.terminationReason == .uncaughtSignal
             ? -process.terminationStatus : process.terminationStatus
+    }
+
+    static func timedOut(_ process: Process, finished: DispatchSemaphore) throws -> Never {
+        do {
+            guard process.isRunning else {
+                throw CommandCleanupFailure(
+                    detail: "Root exited at the timeout boundary; descendant ownership is unknown")
+            }
+            try OwnedProcessTree.terminate(process.processIdentifier)
+        } catch {
+            if process.isRunning { _ = kill(process.processIdentifier, SIGKILL) }
+            _ = finished.wait(timeout: .now() + 2)
+            throw error
+        }
+        guard finished.wait(timeout: .now() + 2) == .success else {
+            throw CommandCleanupFailure(detail: "Owned command root was not reaped")
+        }
+        process.waitUntilExit()
+        throw QualityFailure("Test command exceeded its time limit")
     }
 }
