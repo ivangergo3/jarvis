@@ -7,6 +7,23 @@ import SwiftUI
 /// Instrumentation does not publish. Enabled only by an explicitly prepared fixture bundle.
 @MainActor final class PerformanceSession {
     typealias Work = RenderWork
+    struct Configuration: Codable, Equatable {
+        let windowWidth: Double
+        let windowHeight: Double
+        let backingScale: Double
+        let displayMaximumHz: Int
+        let displayID: UInt32?
+        let animationRequested: Bool
+        let reduceMotion: Bool
+        let thermalState: Int
+    }
+    struct ConfigurationTrace {
+        let initial: Configuration
+        private(set) var stable = true
+        mutating func observe(_ current: Configuration) {
+            stable = stable && current == initial
+        }
+    }
     struct Phase: Codable {
         let name: String
         let nodes: Int
@@ -28,13 +45,14 @@ import SwiftUI
         let unoccludedThroughout: Bool
         let powerStateStable: Bool
         let lowPowerMode: Bool
+        let requestedSeconds: Double
+        let configuration: Configuration
+        let configurationStable: Bool
     }
     struct Report: Encodable {
         let schema = 2
-        let measurementProtocol = "ui-v2"
+        let measurementProtocol = "ui-v3"
         let buildIdentity: PerformanceBuildIdentity?
-        let animationRequested: Bool
-        let reduceMotion: Bool
         let revision: String
         let toolchain: String
         let hardware: String
@@ -47,10 +65,6 @@ import SwiftUI
         let mainToFirstDrawMilliseconds: Double?
         let mainToPopulatedBodyMilliseconds: Double?
         let switchToBodyMilliseconds: PerformanceDistribution?
-        let windowWidth: Double
-        let windowHeight: Double
-        let backingScale: Double
-        let displayMaximumHz: Int
         let phases: [Phase]
         let error: String?
     }
@@ -188,6 +202,7 @@ import SwiftUI
         var selectionPreserved = dashboard.projectID == expectedProject
         let lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
         let thermal = ProcessInfo.processInfo.thermalState
+        var configuration = ConfigurationTrace(initial: captureConfiguration())
         while ProcessInfo.processInfo.systemUptime - start < seconds {
             let interval = hover ? 1.0 / 60 : 0.05
             try await Task.sleep(for: .seconds(interval))
@@ -198,6 +213,7 @@ import SwiftUI
                 dashboard.graphHover.update(ids[index % ids.count], inside: true)
             }
             index += 1
+            configuration.observe(captureConfiguration())
             foreground = foreground && NSApp.isActive && window?.isVisible == true
             selectionPreserved = selectionPreserved && dashboard.projectID == expectedProject
             unoccluded =
@@ -221,6 +237,7 @@ import SwiftUI
         }
         let elapsed = ProcessInfo.processInfo.systemUptime - start
         let after = try PerformanceResources.capture()
+        configuration.observe(captureConfiguration())
         let delta = Dictionary(
             uniqueKeysWithValues: Work.allCases.map {
                 ($0.rawValue, counts[$0, default: 0] - startingCounts[$0, default: 0])
@@ -239,9 +256,23 @@ import SwiftUI
                 selectionPreserved: selectionPreserved,
                 loopIterations: index, targetHz: hover ? 60 : 20,
                 unoccludedThroughout: unoccluded, powerStateStable: stablePower,
-                lowPowerMode: lowPower))
+                lowPowerMode: lowPower, requestedSeconds: seconds,
+                configuration: configuration.initial, configurationStable: configuration.stable))
         dashboard.graphHover.clear()
         try await Task.sleep(for: .milliseconds(200))
+    }
+
+    private func captureConfiguration() -> Configuration {
+        Configuration(
+            windowWidth: Double(window?.frame.width ?? 0),
+            windowHeight: Double(window?.frame.height ?? 0),
+            backingScale: Double(window?.backingScaleFactor ?? 0),
+            displayMaximumHz: window?.screen?.maximumFramesPerSecond ?? 0,
+            displayID: (window?.screen?.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")]
+                as? NSNumber)?.uint32Value,
+            animationRequested: dashboard.motion,
+            reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+            thermalState: ProcessInfo.processInfo.thermalState.rawValue)
     }
 
     private func run() async {
@@ -249,8 +280,12 @@ import SwiftUI
         do {
             try await waitUntil({ self.firstPopulatedBody != nil }, seconds: 15)
             if !manual {
+                try status("Bring the fixture to the front to start", nodes: 0)
                 try await waitUntil(
-                    { NSApp.isActive && self.window?.isVisible == true }, seconds: 300)
+                    {
+                        NSApp.isActive && self.window?.isVisible == true
+                            && self.window?.occlusionState.contains(.visible) == true
+                    }, seconds: 300)
             }
             let expected = Set([0, 1, 4, 20, 100].map { "perf-\($0)" })
             guard Set(store?.snapshot?.projects.map(\.id) ?? []) == expected,
@@ -280,7 +315,7 @@ import SwiftUI
                     )
                 }
             }
-            try await phase("bounded-soak", nodes: 100, seconds: 30, hover: true)
+            try await phase("bounded-soak", nodes: 100, seconds: 120, hover: true)
         } catch {
             failure = error.localizedDescription
         }
@@ -293,8 +328,7 @@ import SwiftUI
             failure = failure ?? "Executable identity unavailable"
         }
         let report = Report(
-            buildIdentity: identity, animationRequested: dashboard.motion,
-            reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+            buildIdentity: identity,
             revision: identity?.revision ?? "unknown",
             toolchain: identity?.toolchain ?? "unknown",
             hardware: PerformanceResources.hardwareModel(),
@@ -306,10 +340,6 @@ import SwiftUI
             mainToFirstDrawMilliseconds: firstDraw.map { ($0 - enteredMain) * 1_000 },
             mainToPopulatedBodyMilliseconds: firstPopulatedBody.map { ($0 - enteredMain) * 1_000 },
             switchToBodyMilliseconds: switches,
-            windowWidth: Double(window?.frame.width ?? 0),
-            windowHeight: Double(window?.frame.height ?? 0),
-            backingScale: Double(window?.backingScaleFactor ?? 0),
-            displayMaximumHz: window?.screen?.maximumFramesPerSecond ?? 0,
             phases: phases, error: failure)
         do {
             let encoder = JSONEncoder()

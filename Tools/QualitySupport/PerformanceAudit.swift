@@ -11,6 +11,16 @@ public enum PerformanceAudit {
         let toolchain: String
     }
     struct Distribution: Decodable { let samples: [Double] }
+    public struct Configuration: Codable, Equatable {
+        public let windowWidth: Double
+        public let windowHeight: Double
+        public let backingScale: Double
+        public let displayMaximumHz: Int
+        public let displayID: UInt32?
+        public let animationRequested: Bool
+        public let reduceMotion: Bool
+        public let thermalState: Int
+    }
     struct Series: Decodable {
         let name: String
         let iterationsPerSample: Int
@@ -36,6 +46,9 @@ public enum PerformanceAudit {
         let unoccludedThroughout: Bool?
         let powerStateStable: Bool?
         let lowPowerMode: Bool?
+        let requestedSeconds: Double?
+        let configuration: Configuration?
+        let configurationStable: Bool?
     }
     struct Raw: Decodable {
         let schema: Int?
@@ -87,9 +100,12 @@ public enum PerformanceAudit {
         public let medianMilliseconds: Double?
         public let p95Milliseconds: Double?
         public let maximumMilliseconds: Double?
+        public let configuration: Configuration?
+        public let requestedSeconds: Double?
+        public let observedSeconds: Double?
     }
     public struct Result: Encodable {
-        public let schema = 1
+        public let schema = 2
         public let revision: String
         public let policy: String
         public let conclusion: String
@@ -120,7 +136,7 @@ public enum PerformanceAudit {
     private static func identityIssues(_ raw: Raw) -> [String] {
         var issues: [String] = []
         if raw.schema != 2 { issues.append("Legacy or unsupported provenance schema") }
-        if raw.measurementProtocol != (raw.phases == nil ? "computation-v2" : "ui-v2") {
+        if raw.measurementProtocol != (raw.phases == nil ? "computation-v2" : "ui-v3") {
             issues.append("Unsupported measurement protocol")
         }
         guard let identity = raw.buildIdentity else { return issues + ["Missing build identity"] }
@@ -150,7 +166,7 @@ public enum PerformanceAudit {
             raw.fixture["eventsPerChat"] == 1_002, raw.fixture["logBytes", default: 0] > 0
         else { throw QualityFailure("Missing or ambiguous synthetic performance workload") }
         if let phases = raw.phases {
-            if raw.schema == 2 {
+            if raw.schema == 2 && raw.measurementProtocol != "ui-v3" {
                 guard let width = raw.windowWidth, let height = raw.windowHeight,
                     let scale = raw.backingScale, let refresh = raw.displayMaximumHz,
                     [width, height, scale].allSatisfy({ $0.isFinite && $0 > 0 }), refresh > 0
@@ -175,7 +191,18 @@ public enum PerformanceAudit {
                     phase.work.values.allSatisfy({ $0 >= 0 && $0 <= 100_000_000 }),
                     phase.loopIterations.map({ $0 >= 0 && $0 <= 10_000_000 }) != false,
                     phase.targetHz.map({ $0 > 0 && $0.isFinite }) != false
+                        && phase.requestedSeconds.map({ $0 > 0 && $0.isFinite }) != false
                 else { throw QualityFailure("Invalid phase measurements or work counters") }
+                if let configuration = phase.configuration {
+                    guard
+                        [
+                            configuration.windowWidth, configuration.windowHeight,
+                            configuration.backingScale,
+                        ].allSatisfy({ $0 > 0 && $0.isFinite }),
+                        configuration.displayMaximumHz > 0,
+                        (0...3).contains(configuration.thermalState)
+                    else { throw QualityFailure("Invalid phase configuration") }
+                }
             }
         }
         if let series = raw.series {
@@ -190,13 +217,15 @@ public enum PerformanceAudit {
             }
         }
     }
-    private static func scope(_ raw: Raw, _ policy: Policy) -> Bool {
+    private static func scope(_ raw: Raw, _ configuration: Configuration, _ policy: Policy) -> Bool
+    {
         raw.hardware == policy.hardware && raw.architecture == policy.architecture
-            && raw.windowWidth == policy.windowWidth && raw.windowHeight == policy.windowHeight
-            && raw.backingScale == policy.backingScale
-            && raw.displayMaximumHz == policy.displayMaximumHz
-            && raw.buildMode == "release-instrumented" && raw.animationRequested == true
-            && raw.reduceMotion == false
+            && configuration.windowWidth == policy.windowWidth
+            && configuration.windowHeight == policy.windowHeight
+            && configuration.backingScale == policy.backingScale
+            && configuration.displayMaximumHz == policy.displayMaximumHz
+            && raw.buildMode == "release-instrumented" && configuration.animationRequested
+            && !configuration.reduceMotion
     }
     private static func observations(_ raw: Raw, _ policy: Policy, issues: [String])
         -> [Observation]
@@ -204,6 +233,18 @@ public enum PerformanceAudit {
         var result: [Observation] = []
         for phase in raw.phases ?? [] {
             var reasons = issues
+            if phase.configuration == nil || phase.configuration?.displayID == nil
+                || phase.configuration?.displayID == 0 || phase.configurationStable != true
+            {
+                reasons.append("Phase configuration changed or is unknown")
+            }
+            if let requested = phase.requestedSeconds {
+                if phase.elapsedSeconds < requested {
+                    reasons.append("Observation did not complete the requested duration")
+                }
+            } else {
+                reasons.append("Requested observation duration is unknown")
+            }
             let scriptedHover = ["hover-state", "bounded-soak"].contains(phase.name)
             if !["idle", "hover-state", "bounded-soak", "manual-pointer"].contains(phase.name)
                 || phase.targetHz != (scriptedHover ? 60 : 20)
@@ -253,7 +294,8 @@ public enum PerformanceAudit {
             }
             let eligible = reasons.isEmpty
             var budget: Double?
-            if eligible && scope(raw, policy) {
+            if eligible, let configuration = phase.configuration, scope(raw, configuration, policy)
+            {
                 if phase.name == "idle" && phase.nodes == 20 { budget = policy.idle20CPU }
                 if phase.name == "hover-state" && phase.nodes == 20 { budget = policy.hover20CPU }
                 if phase.name == "hover-state" && phase.nodes == 100 { budget = policy.hover100CPU }
@@ -266,7 +308,9 @@ public enum PerformanceAudit {
                     exceedsWarning: budget.map { phase.cpuPercentOfOneCore > $0 },
                     deliveredHz: rate, residentGrowthBytes: phase.residentEnd - phase.residentStart,
                     minimumMilliseconds: nil, medianMilliseconds: nil, p95Milliseconds: nil,
-                    maximumMilliseconds: nil))
+                    maximumMilliseconds: nil, configuration: phase.configuration,
+                    requestedSeconds: phase.requestedSeconds, observedSeconds: phase.elapsedSeconds)
+            )
         }
         for series in raw.series ?? [] {
             let sorted = series.milliseconds.samples.sorted()
@@ -282,7 +326,8 @@ public enum PerformanceAudit {
                         ? (sorted[sorted.count / 2 - 1] + sorted[sorted.count / 2]) / 2
                         : sorted[sorted.count / 2],
                     p95Milliseconds: sorted[max(0, Int(ceil(Double(sorted.count) * 0.95)) - 1)],
-                    maximumMilliseconds: sorted.last))
+                    maximumMilliseconds: sorted.last, configuration: nil, requestedSeconds: nil,
+                    observedSeconds: nil))
         }
         return result
     }
@@ -307,16 +352,22 @@ public enum PerformanceAudit {
                 || raw.buildMode != baseline.buildMode
                 || raw.fixture.filter({ $0.key != "clockSeconds" })
                     != baseline.fixture.filter({ $0.key != "clockSeconds" })
-                || raw.windowWidth != baseline.windowWidth
-                || raw.windowHeight != baseline.windowHeight
-                || raw.backingScale != baseline.backingScale
-                || raw.displayMaximumHz != baseline.displayMaximumHz
-                || raw.animationRequested != baseline.animationRequested
-                || raw.reduceMotion != baseline.reduceMotion
             {
                 comparisonIssues.append("Configuration or measurement protocol differs")
             }
             let previous = observations(baseline, policy, issues: identityIssues(baseline))
+            for (current, old) in zip(raw.phases ?? [], baseline.phases ?? []) {
+                if current.configuration != old.configuration {
+                    comparisonIssues.append("Phase configuration differs")
+                }
+                if current.requestedSeconds == nil
+                    || current.requestedSeconds != old.requestedSeconds
+                    || abs(current.elapsedSeconds - old.elapsedSeconds) > max(
+                        current.elapsedSeconds, old.elapsedSeconds) * 0.1
+                {
+                    comparisonIssues.append("Observation windows differ")
+                }
+            }
             for (current, old) in zip(raw.series ?? [], baseline.series ?? []) {
                 if current.iterationsPerSample != old.iterationsPerSample
                     || current.warmupRepetitions != old.warmupRepetitions
@@ -348,6 +399,9 @@ public enum PerformanceAudit {
             ? (warnings
                 ? "investigate"
                 : rows.contains(where: { $0.warningCPU != nil })
+                    && !rows.contains(where: {
+                        budgetWorkload($0.workload, nodes: $0.nodes) && $0.warningCPU == nil
+                    })
                     ? "within-warning-budgets" : "reported-without-applicable-budget")
             : "inconclusive"
         return Result(
@@ -363,7 +417,13 @@ public enum PerformanceAudit {
                 "Source stamps and executable digests identify artifacts; they are not cryptographic attestations.",
                 "OS caches and competing system load remain uncontrolled; raw inputs are retained by the caller.",
                 "Eligibility applies only to the listed workloads; a partial report cannot establish full feature coverage.",
+                "UI evidence requires ui-v3 phase configuration and requested duration; legacy records are descriptive only.",
             ])
+    }
+
+    private static func budgetWorkload(_ name: String, nodes: Int?) -> Bool {
+        (name == "idle" && nodes == 20)
+            || (name == "hover-state" && [20, 100].contains(nodes ?? -1))
     }
 
     public static func run(report: URL, baseline: URL?, policy: URL, output: URL) throws -> Result {
