@@ -105,6 +105,7 @@ struct PushGateTests {
         var checks = 0
         var failure = ""
         var candidate: URL?
+        var sdk = "Synthetic SDK 1"
         func git(_ args: [String]) throws -> String { try PushGate(root: root).git(args) }
         func setup() throws {
             _ = try git(["init", "-q"])
@@ -125,6 +126,12 @@ struct PushGateTests {
         }
         func runner(_ command: Command, _ log: URL, _ timeout: TimeInterval) throws -> Int32 {
             if command.executable == "/usr/bin/xcodebuild" { return 1 }
+            if command.executable == "/usr/bin/xcrun",
+                command.arguments.first?.hasPrefix("--show-sdk-") == true
+            {
+                try sdk.write(to: log, atomically: true, encoding: .utf8)
+                return 0
+            }
             if command.arguments == ["swift", "--version"] {
                 try "Synthetic Swift".write(to: log, atomically: true, encoding: .utf8)
                 return 0
@@ -196,6 +203,16 @@ struct PushGateTests {
         try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
         #expect(fixture.reviews == 1 && fixture.checks == 1)
         _ = try fixture.git(["update-ref", "refs/remotes/origin/main", "HEAD"])
+        #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
+    }
+
+    @Test func cltSDKChangesInvalidateEvidence() throws {
+        let fixture = try Fixture()
+        try fixture.setup()
+        let gate = fixture.gate()
+        try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
+        try gate.run(["verify"])
+        fixture.sdk = "Synthetic SDK 2"
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
     }
 

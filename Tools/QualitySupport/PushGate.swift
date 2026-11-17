@@ -80,9 +80,9 @@ public struct PushGate {
             try ProcessInfo.processInfo.environment["DEVELOPER_DIR"]
             ?? command(["/usr/bin/xcode-select", "-p"])
         let sdk =
-            native
-            ? try command(["/usr/bin/xcrun", "--show-sdk-path"])
-                + "\n" + command(["/usr/bin/xcrun", "--show-sdk-version"]) : "unavailable"
+            try command(["/usr/bin/xcrun", "--show-sdk-path"])
+            + "\n" + command(["/usr/bin/xcrun", "--show-sdk-version"])
+            + "\n" + command(["/usr/bin/xcrun", "--show-sdk-build-version"])
         return try Identity(
             base: commit("origin/main"), head: commit("HEAD"),
             toolchain: command(["/usr/bin/env", "swift", "--version"]),
