@@ -1,54 +1,15 @@
 import AppKit
-import ImageIO
 import SwiftUI
-
-/// File I/O and raster downsampling stay off the UI actor, with bounded input/output.
-actor AttachmentPreviewLoader {
-    static let shared = AttachmentPreviewLoader()
-
-    func load(_ file: ChatAttachment, pixels: Int) -> Data? {
-        guard file.isImage, let url = file.localURL, !Task.isCancelled else { return nil }
-        do {
-            let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
-            guard values.isRegularFile == true, let size = values.fileSize,
-                size > 0, size <= 50 * 1024 * 1024
-            else { return nil }
-        } catch { return nil }  // Missing, removed or inaccessible attachments show a file card.
-        guard
-            let source = CGImageSourceCreateWithURL(
-                url as CFURL,
-                [kCGImageSourceShouldCache: false] as CFDictionary),
-            let image = CGImageSourceCreateThumbnailAtIndex(
-                source, 0,
-                [
-                    kCGImageSourceCreateThumbnailFromImageAlways: true,
-                    kCGImageSourceThumbnailMaxPixelSize: min(3200, max(64, pixels)),
-                    kCGImageSourceCreateThumbnailWithTransform: true,
-                ] as CFDictionary), !Task.isCancelled
-        else { return nil }
-        let data = NSMutableData()
-        guard
-            let destination = CGImageDestinationCreateWithData(
-                data, "public.png" as CFString, 1, nil)
-        else { return nil }
-        CGImageDestinationAddImage(destination, image, nil)
-        guard CGImageDestinationFinalize(destination) else { return nil }
-        return data as Data
-    }
-}
 
 @MainActor private final class AttachmentViewState: ObservableObject {
     @Published var image: NSImage?
     @Published var loaded = false
 }
 
-@MainActor final class ImagePreviewPresentation: ObservableObject {
-    @Published var file: ChatAttachment?
-}
-
 struct AttachmentTile: View {
     let file: ChatAttachment
     @EnvironmentObject private var preview: ImagePreviewPresentation
+    @EnvironmentObject private var desktopActions: DesktopActions
     @StateObject private var state = AttachmentViewState()
 
     var body: some View {
@@ -56,7 +17,7 @@ struct AttachmentTile: View {
             if state.image != nil {
                 preview.file = file
             } else if let url = file.localURL {
-                NSWorkspace.shared.activateFileViewerSelecting([url])
+                desktopActions.reveal(url)
             }
         } label: {
             VStack(spacing: 6) {
@@ -81,7 +42,7 @@ struct AttachmentTile: View {
         .task(id: file.id) {
             state.image = nil
             state.loaded = false
-            let data = await AttachmentPreviewLoader.shared.load(file, pixels: 300)
+            let data = await preview.load(file, pixels: 300)
             guard !Task.isCancelled else { return }
             state.image = data.flatMap(NSImage.init(data:))
             state.loaded = true
@@ -102,6 +63,7 @@ enum ImagePreviewLayout {
 
 struct AttachmentImagePreview: View {
     let file: ChatAttachment
+    @ObservedObject var preview: ImagePreviewPresentation
     let dismiss: () -> Void
     @StateObject private var state = AttachmentViewState()
 
@@ -136,7 +98,7 @@ struct AttachmentImagePreview: View {
         .accessibilityAddTraits(.isModal)
         .help("Press Escape or click anywhere outside the image to close")
         .task(id: file.id) {
-            let data = await AttachmentPreviewLoader.shared.load(file, pixels: 3200)
+            let data = await preview.load(file, pixels: 3200)
             guard !Task.isCancelled else { return }
             state.image = data.flatMap(NSImage.init(data:))
             state.loaded = true

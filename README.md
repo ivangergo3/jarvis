@@ -72,11 +72,15 @@ The original floating Codex pet and the earlier v0.3 standalone Jarvis conversat
 
 ## Source
 
-- `Sources/Jarvis/CodexReader.swift`: local read-only adapter and incremental polling.
-- `Sources/Jarvis/Models.swift`: lifecycle and request extraction.
-- `Sources/Jarvis/Dashboard.swift`: full-screen dashboard and interactions.
-- `Sources/Jarvis/Theme.swift`: animated HUD, reactor and connections.
-- `Sources/Jarvis/Main.swift`: app lifecycle and acceptance checks.
+- `Sources/JarvisDomain/`: workspace contracts and lifecycle rules (independent Swift module).
+- `Sources/JarvisWorkspace/`: read-only local adapter and incremental polling (independent Swift module).
+- `Sources/Jarvis/Presentation/`: screens, reusable visual components and native UI bridges.
+- `Sources/Jarvis/Application/`: observable state, refresh ownership and conversation workflows.
+- `Sources/Jarvis/Integrations/`: process transport, image storage/preview loading, speech and desktop actions.
+- `Sources/Jarvis/Shared/`: pure app contracts, parsing and geometry used across these layers.
+- `Sources/Jarvis/Main.swift` and `Composition/`: lifecycle, capability wiring and synthetic UI fixtures.
+
+The app folders share one executable module; [native boundary checks](docs/engineering/native-boundaries-48.md) enforce source policy alongside the existing compiler-separated workspace modules.
 
 No login item, background service or external infrastructure is installed. Quitting the app stops polling, audio and its owned App Server connection.
 
