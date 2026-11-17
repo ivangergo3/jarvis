@@ -139,6 +139,8 @@ struct VerificationBanner: View {
                     .disabled(evidence.hoverLoad != "Not started")
                     .accessibilityIdentifier("verification.startHoverLoad")
                 Text(evidence.hoverLoad)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(evidence.hoverLoad)
                     .accessibilityIdentifier("verification.hoverLoad")
             }
         }.font(.system(size: 10)).padding(8).foregroundStyle(.white).background(.black)
