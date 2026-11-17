@@ -1,5 +1,11 @@
 # Acceptance verification: evaluation cases
 
+## Traceability regression
+
+All tasks are checked off. Evidence is a current build, zero selected tests and an older artifact's test pass. Assess three accepted behaviour criteria.
+
+Review for: Assess the full criteria inventory; no behaviour acceptance from compilation, skipped tests or stale evidence.
+
 Both cases use synthetic data. Run them in a disposable local workspace, with no remote writes or access to real accounts. Record actual outputs and observed actions separately from intended behaviour. A written case is not a passing execution.
 
 ## Normal task

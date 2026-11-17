@@ -1,5 +1,11 @@
 # Acceptance criteria evaluation cases
 
+## Traceability regression
+
+An accepted brief defines E1: export selected rows only, E2: UTF-8 with a header even for no selection. Give traceable criteria without adding scheduled delivery or inventing a performance threshold.
+
+Review for: Preserve E1/E2 and source acceptance; proposed additions stay separate.
+
 These are synthetic prompts for evaluation. Definitions are draft instructions; the existence of a case is not evidence that a model passed it.
 
 ## Normal case

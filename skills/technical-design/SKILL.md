@@ -14,6 +14,7 @@ Accepted behaviour, relevant source or interface descriptions, compatibility con
 Trace the current path that the change will affect. Name the state owner, inputs, outputs and failure semantics before choosing a pattern. Compare the smallest viable design with a credible alternative; include keeping the current design when viable.
 Describe contracts, data lifetime, cancellation, permissions and compatibility only where they affect the requirement. Make migrations and irreversible transitions explicit. Identify unknown contracts as investigation tasks, not assumed capabilities.
 Give a vertical implementation slice and verification evidence for the risky boundaries. Label proposed schema or acceptance criteria as proposals. Retain technical decisions already made by the user unless evidence warrants a documented alternative.
+Reference the accepted criterion IDs/source version behind consequential design choices. Check contradictions and unsupported assumptions against that baseline before handing off; identify missing decisions and affected work without promoting a design preference into an accepted requirement.
 
 ## Dependency boundaries
 

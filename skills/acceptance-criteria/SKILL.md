@@ -14,6 +14,7 @@ Agreed outcome, user scenarios, constraints, and relevant existing behaviours.
 Translate the outcome into observable behaviours and deliverable checks. Distinguish functional behaviour, relevant quality constraints, and business outcomes that require later measurement.
 Include negative and boundary cases where their consequence matters. Avoid arbitrary coverage, performance, conversion, or revenue targets; agree a threshold or mark it unresolved.
 Make criteria traceable to the brief. Separate acceptance from test procedures and distinguish deliverable completion from a future market result.
+Reuse accepted requirement IDs and name their authoritative source/version. Give new feature criteria stable local IDs only where useful; mark them proposed until accepted. Link to existing constraints instead of copying a second baseline. A small change can keep its criteria in the existing ticket or review description.
 
 ## Output
 

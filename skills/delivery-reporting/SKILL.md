@@ -12,6 +12,7 @@ Original outcome, artifact/version, action receipts, verification evidence and u
 ## Procedure
 
 Compare delivered behaviour with the requested outcome. Separate files written, checks run, remote changes confirmed and user acceptance. Cite the artifact version behind a claim and avoid presenting an executor summary as independent evidence.
+Summarize against accepted in-scope criterion IDs, including missing implementation or evidence and the next action. A completed task list is progress, not acceptance; an accepted scope change needs its decision reference rather than a silently removed criterion.
 State material limits, failures and next actions without drowning the reader in command chronology. If reporting to a board, preserve its actual definitions of review and done; do not invent owners or dates.
 Include external links only appropriate for the audience and only observed receipts. Keep private logs or local personal context out of public tickets.
 
