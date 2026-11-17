@@ -26,7 +26,7 @@ CI merge gates. Existing deterministic hover gates remain enforced.
 | #47 AC5: stable regressions/noise | PR #64 already enforces root/card/style and real-pointer contracts with seeded faults. Add report/comparison regression cases. | Reject debug/release, hardware/fixture/window mismatches; keep dirty, occluded, failed and low-rate phases visible but ineligible. | Six audit tests passed at `f400c26`; all nine existing seeded hover stages passed. Exact-head macOS/native CI remains a separate check. |
 | #47 AC6: synthetic/private-data boundary | Read explicitly selected bounded report files only; no live chat, network or model calls. | Oversized/malformed reports fail with bounded diagnostics; output contains metrics, not paths/transcripts. | Malformed/oversized and input-overwrite tests passed. Retained JSON contains synthetic numeric data/build metadata; scanned for private paths/credential fields before inclusion. |
 | #54 AC1–7 | Accepted guidance/evaluations in PR #66; preserve them. | Inspect scope/source consistency, not install Spec Kit or manufacture another rules system. | Read before coding. |
-| #54 AC8: prospective pilot | This report-audit feature is newly authorized after guidance acceptance. Record this mapping before code, discrepancies now, observed evidence afterward, then owner feedback. | Versioned before/after mapping and honest pilot review; distinguish implementer findings from human review usefulness. | Owner feedback remains pending until a concrete result is reviewed. |
+| #54 AC8: prospective pilot | This report-audit feature is newly authorized after guidance acceptance. Record this mapping before code, discrepancies now, observed evidence afterward, then owner feedback. | Versioned before/after mapping and honest pilot review; distinguish implementer findings from human review usefulness. | Mapping committed before code, findings and execution retained. On 17 November the owner answered “Yes, this level of detail helps” about PR #68's summary. This is workflow feedback, not merge approval. |
 
 ## Pre-implementation consistency findings
 
@@ -90,6 +90,9 @@ Observed checks so far:
   changed workloads, lost visibility/selection/work, dirty/legacy/failed
   provenance, invalid measurements, changed computation units, raw-sample
   statistics, oversized/malformed input and stale-success invalidation.
+- The full local `scripts/check.sh` gate passed again at `9481bd6`: 164 tests,
+  formatter, architecture probes, skill discovery, authority checks and Release
+  build. Final validation also rejects invalid UI geometry and duplicate phases.
 - Fresh eight-series computation capture from the clean `bbc38db` bundle has
   valid identity. The audit reports it without an applicable CPU budget, as
   intended. The older UI recording is inconclusive because its provenance and
@@ -110,9 +113,13 @@ work; it does not demonstrate human review usefulness. The one mapping and one
 outcome note were sufficient. No per-function paperwork or duplicated status
 backlog was added.
 
-Owner review usefulness, links actually used and unnecessary paperwork remain
-pending owner feedback on the concrete diff/evidence. Keep #54 open until that
-feedback exists; an implementer's assessment is not a substitute.
+On 17 November 2026, the owner reviewed the question about the concrete PR #68
+summary linking requirements, problems found, tests and measured results, and
+answered **“Yes, this level of detail helps.”** This is actual feedback that the
+summary aids review; it is not inferred from passing checks or merge approval.
+The owner did not enumerate specific links opened, so no link-use claim is made.
+No reduction in detail was requested. The prospective pilot and its owner
+feedback are now recorded; #54 can be assessed for closure when this work lands.
 
 ## Running the audit
 
