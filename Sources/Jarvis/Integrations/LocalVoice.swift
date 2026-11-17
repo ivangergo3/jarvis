@@ -3,59 +3,20 @@ import AppKit
 import Combine
 import Speech
 
-/// Pure generation gate: a cancelled/old recognition callback cannot edit a new draft.
-struct DictationSession {
-    enum Phase: String { case idle, authorizing, listening, finishing, failed }
-    private(set) var token = UUID()
-    private(set) var phase: Phase = .idle
-    private(set) var transcript = ""
-
-    mutating func begin() -> UUID {
-        token = UUID()
-        phase = .authorizing
-        transcript = ""
-        return token
-    }
-    mutating func listening(_ id: UUID) {
-        if id == token && phase == .authorizing { phase = .listening }
-    }
-    mutating func finishing() { if phase == .listening { phase = .finishing } }
-    mutating func update(_ text: String, token id: UUID) {
-        if id == token && [.listening, .finishing].contains(phase) {
-            transcript = String(text.prefix(16_000))
-        }
-    }
-    mutating func complete(_ id: UUID) -> String? {
-        guard id == token && [.listening, .finishing].contains(phase) else { return nil }
-        let result = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
-        cancel()
-        return result.isEmpty ? nil : result
-    }
-    mutating func cancel() {
-        token = UUID()
-        phase = .idle
-        transcript = ""
-    }
-    mutating func fail() {
-        cancel()
-        phase = .failed
-    }
-}
-
 @MainActor final class LocalVoice: NSObject, ObservableObject {
     @Published private(set) var session = DictationSession()
     @Published private(set) var error: String?
-    @Published var completionChime =
-        UserDefaults.standard.object(forKey: "completionChime") as? Bool ?? true
-    {
-        didSet { UserDefaults.standard.set(completionChime, forKey: "completionChime") }
+    private let preferences: UserDefaults?
+    let allowsAudio: Bool
+    @Published var completionChime: Bool {
+        didSet { preferences?.set(completionChime, forKey: "completionChime") }
     }
-    @Published var readReplies = UserDefaults.standard.bool(forKey: "readReplies") {
+    @Published var readReplies: Bool {
         didSet {
-            UserDefaults.standard.set(readReplies, forKey: "readReplies")
+            preferences?.set(readReplies, forKey: "readReplies")
             if !readReplies {
                 speechTask?.cancel()
-                speaker.stopSpeaking(at: .immediate)
+                speaker?.stopSpeaking(at: .immediate)
             }
         }
     }
@@ -67,18 +28,28 @@ struct DictationSession {
     private var tapInstalled = false
     private var limitTask: Task<Void, Never>?
     private var finishTask: Task<Void, Never>?
-    private let chime: NSSound? = {
-        if let url = Bundle.main.url(forResource: "CompletionChime", withExtension: "wav"),
-            let sound = NSSound(contentsOf: url, byReference: true)
-        {
-            return sound
-        }
-        return NSSound(named: NSSound.Name("Glass"))
-    }()
-    private let speaker = AVSpeechSynthesizer()
+    private let chime: NSSound?
+    private let speaker: AVSpeechSynthesizer?
     private var speechTask: Task<Void, Never>?
 
-    override init() {
+    init(preferences: UserDefaults? = .standard, allowsAudio: Bool = true) {
+        self.preferences = preferences
+        self.allowsAudio = allowsAudio
+        speaker = allowsAudio ? AVSpeechSynthesizer() : nil
+        if allowsAudio {
+            if let url = Bundle.main.url(forResource: "CompletionChime", withExtension: "wav"),
+                let sound = NSSound(contentsOf: url, byReference: true)
+            {
+                chime = sound
+            } else {
+                chime = NSSound(named: NSSound.Name("Glass"))
+            }
+        } else {
+            chime = nil
+        }
+        completionChime =
+            allowsAudio && (preferences?.object(forKey: "completionChime") as? Bool ?? true)
+        readReplies = allowsAudio && (preferences?.bool(forKey: "readReplies") ?? false)
         super.init()
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(workspaceWillSleep),
@@ -102,7 +73,7 @@ struct DictationSession {
     var recording: Bool { [.authorizing, .listening, .finishing].contains(session.phase) }
 
     func start() async {
-        guard !recording else { return }
+        guard allowsAudio, !recording else { return }
         stopAudio()
         error = nil
         let token = session.begin()
@@ -230,11 +201,12 @@ struct DictationSession {
     }
 
     func playCompletionChime() {
-        guard completionChime else { return }
+        guard allowsAudio, completionChime else { return }
         chime?.stop()
         chime?.play()
     }
     func announceCompletion(_ text: String?) {
+        guard allowsAudio else { return }
         stopAudio()
         playCompletionChime()
         guard readReplies, let text, !text.isEmpty else { return }
@@ -251,13 +223,13 @@ struct DictationSession {
             }
             let utterance = AVSpeechUtterance(string: spoken)
             utterance.voice = AVSpeechSynthesisVoice(language: self.language)
-            self.speaker.speak(utterance)
+            self.speaker?.speak(utterance)
         }
     }
     func stopAudio() {
         speechTask?.cancel()
         speechTask = nil
-        speaker.stopSpeaking(at: .immediate)
+        speaker?.stopSpeaking(at: .immediate)
         chime?.stop()
     }
 }

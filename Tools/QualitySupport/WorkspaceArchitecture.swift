@@ -98,7 +98,7 @@ public enum WorkspaceArchitecture {
 
     /// Ignore comments/literals before inspecting import and API tokens. Handles nested
     /// comments, escaped/extended/multiline strings and imports split across lines.
-    private static func codeTokens(_ source: String) -> [String] {
+    static func codeTokens(_ source: String, punctuation: Bool = false) -> [String] {
         let text = Array(source)
         var index = 0
         var tokens: [String] = []
@@ -148,6 +148,9 @@ public enum WorkspaceArchitecture {
                     { index += 1 }
                     tokens.append(String(text[start..<index]))
                 } else {
+                    if punctuation && "{}().".contains(text[index]) {
+                        tokens.append(String(text[index]))
+                    }
                     index += 1
                 }
             }

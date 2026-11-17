@@ -1,6 +1,10 @@
 [
   "JarvisTests.PerformanceRegressionTests/sustainedHoverDoesNotInvalidateDashboardOrConversation",
   "JarvisTests.PerformanceRegressionTests/measurementSummaryPreservesSlowSamplesAndRejectsMissingMeasurements",
+  "QualitySupportTests.AppArchitectureTests/reverseReferencesAreRejectedEvenWithoutImports",
+  "QualitySupportTests.AppArchitectureTests/importsAndPrivilegedEffectsCannotHideBehindFoundation",
+  "QualitySupportTests.AppArchitectureTests/nativeBridgesAreInjectedAndCannotLaunchOtherAppsDirectly",
+  "QualitySupportTests.AppArchitectureTests/newSourceFilesMustHaveAnExplicitLayer",
   "JarvisTests.WorkspaceLaunchTests/reopeningFixtureWithoutArgumentsUsesEmbeddedDataInsteadOfLiveRecords",
   "JarvisTests.WorkspaceLaunchTests/fixtureWithMissingConfigurationFailsClosed",
   "JarvisTests.FleetStoreTests/cancelledLateSuccessCannotPublishAndTheNextRefreshCanRecover",

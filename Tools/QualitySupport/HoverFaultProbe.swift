@@ -9,7 +9,8 @@ public enum HoverFaultProbe {
                 at: root.appendingPathComponent(name),
                 to: fixture.url.appendingPathComponent(name))
         }
-        let file = fixture.url.appendingPathComponent("Sources/Jarvis/Dashboard.swift")
+        let file = fixture.url.appendingPathComponent(
+            "Sources/Jarvis/Application/DashboardState.swift")
         let original = try String(contentsOf: file, encoding: .utf8)
         let classAnchor = "@MainActor final class DashboardState: ObservableObject {"
         let assignment = "        projectID = stored == \"__all__\" ? nil : stored"
@@ -18,7 +19,8 @@ public enum HoverFaultProbe {
         else {
             throw QualityFailure("Hover fault anchors changed; review the disposable mutation")
         }
-        let defective = ("import Combine\n" + original)
+        let defective =
+            original
             .replacingOccurrences(
                 of: classAnchor,
                 with: classAnchor + "\n    private var seededForwarder: AnyCancellable?"

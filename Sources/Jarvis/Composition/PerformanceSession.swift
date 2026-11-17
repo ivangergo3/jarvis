@@ -4,19 +4,9 @@ import Foundation
 import JarvisDomain
 import SwiftUI
 
-@MainActor final class PerformanceProgress: ObservableObject {
-    @Published var stage = "Preparing synthetic performance recording"
-    @Published var cursorFinished = false
-}
-
 /// Instrumentation does not publish. Enabled only by an explicitly prepared fixture bundle.
 @MainActor final class PerformanceSession {
-    enum Work: String, Codable, CaseIterable {
-        case dashboardBody, conversationBody, graphLayout, cardFactory
-        case hoverTopologyBody, hoverDestinationBody, connectorRebuild, nativeDraw
-        case dashboardPublication, conversationPublication, hoverPublication
-        case physicalHoverCallback
-    }
+    typealias Work = RenderWork
     struct Phase: Codable {
         let name: String
         let nodes: Int
@@ -94,6 +84,10 @@ import SwiftUI
         self.fixture = fixture
         self.manual = manual
         Self.current = self
+        RenderWorkCounters.onCount = { [weak self] work in self?.counts[work, default: 0] += 1 }
+        RenderWorkCounters.onDashboard = { project, populated in
+            Self.dashboardEvaluated(project: project, populated: populated)
+        }
     }
 
     func attach(window: NSWindow, store: FleetStore, companion: CompanionModel) {
@@ -117,6 +111,8 @@ import SwiftUI
         task?.cancel()
         task = nil
         subscriptions = []
+        RenderWorkCounters.onCount = nil
+        RenderWorkCounters.onDashboard = nil
     }
 
     func startManual() { manualStarted = true }
@@ -302,26 +298,6 @@ import SwiftUI
             FileHandle.standardError.write(
                 Data("Could not write synthetic performance report.\n".utf8))
         }
-    }
-}
-
-struct PerformanceStatusView: View {
-    @ObservedObject var progress: PerformanceProgress
-    let session: PerformanceSession
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(
-                progress.stage == "manual-pointer"
-                    ? "Recording cursor movement — 60 seconds" : progress.stage
-            ).font(HUD.mono(10))
-            if progress.cursorFinished, !progress.stage.hasPrefix("Performance recording") {
-                Text("Your mouse part is complete — automatic checks are running").font(HUD.mono(9))
-            }
-            if session.manual, progress.stage.hasPrefix("Ready") {
-                Button("Start 60-second cursor recording") { session.startManual() }
-                    .accessibilityIdentifier("performance.startManual")
-            }
-        }.padding(8).foregroundStyle(HUD.gold).background(HUD.background)
     }
 }
 

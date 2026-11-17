@@ -1,18 +1,5 @@
 import SwiftUI
 
-/// Hover is local decoration: it must not republish dashboard or conversation state.
-@MainActor final class GraphHoverState: ObservableObject {
-    @Published private(set) var nodeID: String?
-    func update(_ id: String, inside: Bool) {
-        if inside {
-            if nodeID != id { nodeID = id }
-        } else if nodeID == id {
-            nodeID = nil
-        }
-    }
-    func clear() { if nodeID != nil { nodeID = nil } }
-}
-
 struct HoverTopology: View {
     @ObservedObject var hover: GraphHoverState
     let nodeIDs: [String]
@@ -21,7 +8,7 @@ struct HoverTopology: View {
     let motion: Bool
     let connections: [GraphConnection]
     var body: some View {
-        let _ = PerformanceSession.count(.hoverTopologyBody)
+        let _ = RenderWorkCounters.count(.hoverTopologyBody)
         TopologyLines(
             active: active, highlighted: nodeIDs.map { $0 == hover.nodeID || $0 == selectedID },
             motion: motion, connections: connections)
@@ -37,7 +24,7 @@ struct HoverDestination: ViewModifier {
     let index: Int
     let left: Bool
     func body(content: Content) -> some View {
-        let _ = PerformanceSession.count(.hoverDestinationBody)
+        let _ = RenderWorkCounters.count(.hoverDestinationBody)
         content.modifier(
             GraphDestination(
                 active: active, highlighted: selected || hover.nodeID == nodeID,

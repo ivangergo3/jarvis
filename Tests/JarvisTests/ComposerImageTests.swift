@@ -6,6 +6,44 @@ import Testing
 @testable import Jarvis
 
 @Suite("Composer image paste") @MainActor struct ComposerImageTests {
+    @Test func injectedImageStoragePreservesRoutingAndDisabledFixturesNeverCallIt() async throws {
+        let storage = MemoryImageStore()
+        let connection = LinkedFixtureConnection()
+        let model = CompanionModel(imageStore: storage, makeConnection: { connection })
+        let scope = ConversationScope(
+            projectID: "synthetic", name: "Draft", directory: nil, threadID: "a")
+        await model.follow(scope)
+        await model.pasteImage(.data(Data([1, 2, 3])))?.value
+        #expect(await storage.calls == 1)
+        #expect(model.draftImages == [MemoryImageStore.attachment])
+        await model.send(in: scope)?.value
+        let call = try #require(await connection.calls.last { $0.method == "thread/queue/add" })
+        #expect(call.params["threadId"].text == "a")
+        #expect(
+            call.params["input"].values.first?["path"].text == MemoryImageStore.attachment.location)
+        await model.shutdown()
+
+        let disabled = CompanionModel(
+            allowsExternalActions: false, imageStore: storage,
+            makeConnection: { LinkedFixtureConnection() })
+        await disabled.follow(scope)
+        #expect(disabled.pasteImage(.data(Data([4]))) == nil)
+        #expect(await storage.calls == 1)
+        #expect(disabled.draftImages.isEmpty)
+        await disabled.shutdown()
+    }
+
+    @Test func missingImageCapabilityReportsUnavailableWithoutCreatingAnAttachment() async {
+        let model = CompanionModel(makeConnection: { LinkedFixtureConnection() })
+        await model.follow(
+            ConversationScope(projectID: nil, name: "Draft", directory: nil, threadID: "a"))
+        #expect(model.pasteImage(.data(Data([1]))) == nil)
+        #expect(model.notice == "Image import is unavailable.")
+        #expect(!model.importingImage)
+        #expect(model.draftImages.isEmpty)
+        await model.shutdown()
+    }
+
     private func png() throws -> Data {
         let space = CGColorSpaceCreateDeviceRGB()
         let context = try #require(
@@ -120,5 +158,15 @@ import Testing
             try await store.save(.data(Data("not an image".utf8)))
         }
         #expect(!FileManager.default.fileExists(atPath: folder.path))
+    }
+}
+
+private actor MemoryImageStore: ComposerImageSaving {
+    static let attachment = ChatAttachment(
+        name: "synthetic.png", location: "/synthetic/attachments/image.png")
+    private(set) var calls = 0
+    func save(_ input: ClipboardImage) -> ChatAttachment {
+        calls += 1
+        return Self.attachment
     }
 }

@@ -22,7 +22,8 @@ case "${1:-}" in
         /usr/libexec/PlistBuddy -c "Add :JarvisWorkspaceFixtureDirectory string $run_dir/data" "$app/Contents/Info.plist"
         if [[ "${2:-}" == --performance ]]; then
             /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceOutput string $run_dir/performance-ui.json" "$app/Contents/Info.plist"
-            /usr/libexec/PlistBuddy -c 'Add :JarvisPerformanceClock integer 1700000000' "$app/Contents/Info.plist"
+            fixture_clock=$(/usr/bin/plutil -extract clockSeconds raw "$run_dir/data/performance-fixture.json")
+            /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceClock integer $fixture_clock" "$app/Contents/Info.plist"
             /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceRevision string $(git rev-parse HEAD)" "$app/Contents/Info.plist"
             /usr/libexec/PlistBuddy -c "Add :JarvisPerformanceArchitecture string $(uname -m)" "$app/Contents/Info.plist"
             toolchain=$(swift --version)

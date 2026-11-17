@@ -24,11 +24,11 @@ public enum FaultProbe {
 
     private static let faults = [
         Fault(
-            name: "object-only protocol", path: "Sources/Jarvis/CodexConnection.swift",
+            name: "object-only protocol", path: "Sources/Jarvis/Shared/ConnectionContracts.swift",
             before: "case .object = value", after: "true",
             test: "JarvisTests.ProtocolBoundaryTests/validJSONThatIsNotAnObjectIsRejected"),
         Fault(
-            name: "stale refresh revision", path: "Sources/Jarvis/CompanionModel.swift",
+            name: "stale refresh revision", path: "Sources/Jarvis/Application/CompanionModel.swift",
             before: "revision == historyRevision", after: "revision == revision",
             test:
                 "JarvisTests.ConversationRegressionTests/historyStartedBeforeSendCannotEraseTheQueuedMessage"

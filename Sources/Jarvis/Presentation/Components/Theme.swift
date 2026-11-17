@@ -111,18 +111,23 @@ struct HUDPanel: ViewModifier {
 
 struct GridBackdrop: View {
     var body: some View {
-        Canvas { context, size in
-            var grid = Path()
-            for x in stride(from: CGFloat(0), through: size.width, by: 48) {
-                grid.move(to: CGPoint(x: x, y: 0))
-                grid.addLine(to: CGPoint(x: x, y: size.height))
-            }
-            for y in stride(from: CGFloat(0), through: size.height, by: 48) {
-                grid.move(to: CGPoint(x: 0, y: y))
-                grid.addLine(to: CGPoint(x: size.width, y: y))
-            }
-            context.stroke(grid, with: .color(HUD.cyan.opacity(0.035)), lineWidth: 0.5)
-        }.allowsHitTesting(false)
+        GridLines().stroke(HUD.cyan.opacity(0.035), lineWidth: 0.5)
+            .allowsHitTesting(false)
+    }
+}
+
+private struct GridLines: Shape {
+    func path(in rect: CGRect) -> Path {
+        var grid = Path()
+        for x in stride(from: rect.minX, through: rect.maxX, by: 48) {
+            grid.move(to: CGPoint(x: x, y: rect.minY))
+            grid.addLine(to: CGPoint(x: x, y: rect.maxY))
+        }
+        for y in stride(from: rect.minY, through: rect.maxY, by: 48) {
+            grid.move(to: CGPoint(x: rect.minX, y: y))
+            grid.addLine(to: CGPoint(x: rect.maxX, y: y))
+        }
+        return grid
     }
 }
 

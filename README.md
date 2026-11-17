@@ -34,7 +34,7 @@ Run `./scripts/format.sh bootstrap` once to build the pinned official formatter,
 
 `swift test` runs a separate Swift Testing target. It checks lifecycle/task parsing, project assignments, graph routes and pulse movement, plus the read-only adapter against temporary SQLite databases and JSONL files. Fixtures cover incremental and partial writes, truncation, missing logs/history fallback, stale activity, invalid schemas, and rejected paths. Tests never need your Codex account, live chats, network or credentials. The old `--self-test` option now prints the replacement command and exits; `--diagnose` remains an explicit, local-only diagnostic that reads real records and is not run in CI.
 
-CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. These checks do not yet exercise native UI, VoiceOver or a macOS 14 runtime. A full Xcode app/test scheme remains later foundation work; see [REQUIREMENTS.md](REQUIREMENTS.md).
+CI also builds the release bundle, validates its plist and ad-hoc signature, and checks required bundled artwork. The shared `NativeUI` Xcode scheme adds six synthetic native UI journeys. Run `swift run native-ui-check` with full Xcode 16.4 to build the Release verification app, discover/drive the tests and retain the app, hash, screenshots and result bundle. See [native UI verification](docs/engineering/native-ui.md) for isolation, commands and the feature-to-check map. VoiceOver, macOS 14 runtime, hardware and live Codex acceptance remain manual gaps.
 
 **Merge enforcement:** `main` requires the GitHub Actions **macOS build and tests** check and an up-to-date PR branch, including for administrators. The native test gate rejects failed processes, skipped or missing tests, and missing critical tests; CI retains bounded diagnostics. See [test quality](docs/engineering/test-quality.md) and its [verification record](docs/engineering/verification-44.md) for the policy and failed-merge probe. Repository settings are external to this workflow and must remain enabled.
 
@@ -72,11 +72,15 @@ The original floating Codex pet and the earlier v0.3 standalone Jarvis conversat
 
 ## Source
 
-- `Sources/Jarvis/CodexReader.swift`: local read-only adapter and incremental polling.
-- `Sources/Jarvis/Models.swift`: lifecycle and request extraction.
-- `Sources/Jarvis/Dashboard.swift`: full-screen dashboard and interactions.
-- `Sources/Jarvis/Theme.swift`: animated HUD, reactor and connections.
-- `Sources/Jarvis/Main.swift`: app lifecycle and acceptance checks.
+- `Sources/JarvisDomain/`: workspace contracts and lifecycle rules (independent Swift module).
+- `Sources/JarvisWorkspace/`: read-only local adapter and incremental polling (independent Swift module).
+- `Sources/Jarvis/Presentation/`: screens, reusable visual components and native UI bridges.
+- `Sources/Jarvis/Application/`: observable state, refresh ownership and conversation workflows.
+- `Sources/Jarvis/Integrations/`: process transport, image storage/preview loading, speech and desktop actions.
+- `Sources/Jarvis/Shared/`: pure app contracts, parsing and geometry used across these layers.
+- `Sources/Jarvis/Main.swift` and `Composition/`: lifecycle, capability wiring and synthetic UI fixtures.
+
+The app folders share one executable module; [native boundary checks](docs/engineering/native-boundaries-48.md) enforce source policy alongside the existing compiler-separated workspace modules.
 
 No login item, background service or external infrastructure is installed. Quitting the app stops polling, audio and its owned App Server connection.
 

@@ -10,11 +10,8 @@ import SwiftUI
 @MainActor private final class ApprovalState: ObservableObject {
     @Published var answers: [String: String] = [:]
 }
-@MainActor private final class ConnectionSettingsState: ObservableObject {
-    @Published var executable = CodexExecutable.locate()?.path ?? "Not found"
-}
-
 struct CompanionPanel: View {
+    @EnvironmentObject private var desktopActions: DesktopActions
     @ObservedObject var chat: CompanionModel
     @ObservedObject var voice: LocalVoice
     let proposedScope: ConversationScope
@@ -24,7 +21,7 @@ struct CompanionPanel: View {
     @StateObject private var ui = CompanionPanelState()
 
     var body: some View {
-        let _ = PerformanceSession.count(.conversationBody)
+        let _ = RenderWorkCounters.count(.conversationBody)
         VStack(spacing: 12) {
             channelHeader
             VStack(alignment: .leading, spacing: 4) {
@@ -115,6 +112,9 @@ struct CompanionPanel: View {
                 HStack(spacing: 6) {
                     Circle().fill(HUD.color(status)).frame(width: 4, height: 4)
                     Text(status.label).font(HUD.mono(8)).tracking(1)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(status.label)
+                        .accessibilityIdentifier("companion.activityStatus")
                 }.foregroundStyle(HUD.color(status))
             }
             HStack(spacing: 12) {
@@ -125,6 +125,9 @@ struct CompanionPanel: View {
                     }
                     .foregroundStyle(HUD.cyan.opacity(0.8)).accessibilityHidden(true)
                 Text((chat.scope ?? proposedScope).name)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel((chat.scope ?? proposedScope).name)
+                    .accessibilityIdentifier("companion.destination")
                     .font(.system(size: 21, weight: .light, design: .monospaced))
                     .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -136,7 +139,7 @@ struct CompanionPanel: View {
                     Label("Open in Codex", systemImage: "arrow.up.forward.app")
                         .font(.system(size: 11, weight: .medium))
                 }
-                .disabled(chat.scope?.threadID == nil)
+                .disabled(!chat.allowsExternalActions || chat.scope?.threadID == nil)
                 .accessibilityIdentifier("companion.openLinkedChat")
                 Spacer(minLength: 8)
                 Button {
@@ -156,6 +159,7 @@ struct CompanionPanel: View {
                 .help("Connection, voice and subagents")
                 .accessibilityLabel("Codex connection settings")
                 .accessibilityIdentifier("companion.settings")
+                .disabled(!chat.allowsExternalActions)
             }.buttonStyle(HUDControlStyle())
         }
         .padding(14)
@@ -166,12 +170,8 @@ struct CompanionPanel: View {
     }
 
     private func openLinkedChat() {
-        guard let id = chat.scope?.threadID else { return }
-        var destination = URLComponents()
-        destination.scheme = "codex"
-        destination.host = "threads"
-        destination.path = "/" + id
-        if let url = destination.url { NSWorkspace.shared.open(url) }
+        guard chat.allowsExternalActions, let id = chat.scope?.threadID else { return }
+        desktopActions.openChat(id)
     }
 
     private var conversation: some View {
@@ -301,7 +301,8 @@ struct CompanionPanel: View {
                     Image(systemName: voice.recording ? "stop.circle.fill" : "mic")
                 }
                 .disabled(
-                    chat.phase.busy || chat.phase == .outcomeUnknown || chat.scope?.threadID == nil
+                    !voice.allowsAudio || chat.phase.busy || chat.phase == .outcomeUnknown
+                        || chat.scope?.threadID == nil
                 )
                 .accessibilityLabel(
                     voice.recording
@@ -319,6 +320,7 @@ struct CompanionPanel: View {
                 .toggleStyle(.button)
                 .help(voice.completionChime ? "Mute completion chime" : "Enable completion chime")
                 .accessibilityIdentifier("companion.completionChime")
+                .disabled(!voice.allowsAudio)
                 .onChange(of: voice.completionChime) { _, enabled in
                     if !enabled { voice.stopAudio() }
                 }
@@ -333,6 +335,7 @@ struct CompanionPanel: View {
                 .toggleStyle(.button)
                 .help(voice.readReplies ? "Disable read-aloud" : "Read completed replies aloud")
                 .accessibilityIdentifier("companion.readReplies")
+                .disabled(!voice.allowsAudio)
                 Spacer(minLength: 0)
                 if chat.phase.busy && chat.scope?.threadID == nil {
                     Button("Stop") { Task { await chat.interrupt() } }.accessibilityIdentifier(
@@ -430,7 +433,7 @@ private struct CompanionSettings: View {
     let mission: Mission?
     let sourceUnavailable: Bool
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var ui = ConnectionSettingsState()
+    @EnvironmentObject private var desktopActions: DesktopActions
 
     var body: some View {
         ScrollView {
@@ -459,9 +462,9 @@ private struct CompanionSettings: View {
                         "Uses your installed Codex and its existing sign-in. No API key is copied into Jarvis."
                     )
                     .font(.system(size: 12)).lineSpacing(4)
-                    Text(ui.executable).font(HUD.mono(11)).foregroundStyle(HUD.muted)
+                    Text(desktopActions.executable).font(HUD.mono(11)).foregroundStyle(HUD.muted)
                         .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                    Button("Choose Codex executable…") { chooseExecutable() }
+                    Button("Choose Codex executable…") { desktopActions.chooseExecutable() }
                         .font(.system(size: 11)).buttonStyle(HUDControlStyle())
                     Text(
                         "A different executable applies when you reconnect. Sign in through Codex itself."
@@ -537,16 +540,5 @@ private struct CompanionSettings: View {
         .foregroundStyle(HUD.text).background(HUD.background)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(HUD.cyan.opacity(0.25), lineWidth: 1))
         .preferredColorScheme(.dark)
-    }
-
-    private func chooseExecutable() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK, let url = panel.url, CodexExecutable.isValid(url) {
-            UserDefaults.standard.set(url.path, forKey: "codexExecutable")
-            ui.executable = url.path
-        }
     }
 }

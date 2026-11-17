@@ -7,6 +7,7 @@ guard
         || (CommandLine.arguments.count == 3 && CommandLine.arguments[2] == "--performance")
 else { exit(64) }
 let performance = CommandLine.arguments.count == 3
+let fixtureClock = Int(Date().timeIntervalSince1970)
 let home = URL(fileURLWithPath: CommandLine.arguments[1])
 guard try FileManager.default.contentsOfDirectory(atPath: home.path).isEmpty else {
     FileHandle.standardError.write(Data("Fixture directory must be empty.\n".utf8))
@@ -73,7 +74,8 @@ for (id, project, name, state) in records {
     try contents.write(to: log, atomically: true, encoding: .utf8)
     if performance {
         try FileManager.default.setAttributes(
-            [.modificationDate: Date(timeIntervalSince1970: 1_700_000_000)], ofItemAtPath: log.path)
+            [.modificationDate: Date(timeIntervalSince1970: Double(fixtureClock))],
+            ofItemAtPath: log.path)
     }
     logBytes += contents.utf8.count
     // All interpolated values are our fixed synthetic constants; only the owned path is escaped.
@@ -84,7 +86,7 @@ for (id, project, name, state) in records {
 }
 if performance {
     let metadata = [
-        "clockSeconds": 1_700_000_000,
+        "clockSeconds": fixtureClock,
         "projects": 5, "chats": records.count, "eventsPerChat": 1_002, "logBytes": logBytes,
     ]
     try JSONEncoder().encode(metadata).write(

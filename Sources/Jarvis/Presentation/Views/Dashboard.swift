@@ -2,55 +2,27 @@ import AppKit
 import JarvisDomain
 import SwiftUI
 
-@MainActor final class DashboardState: ObservableObject {
-    @Published var selection: String? {
-        didSet { UserDefaults.standard.set(selection, forKey: "selectedChat") }
-    }
-    @Published var projectID: String? {
-        didSet { UserDefaults.standard.set(projectID ?? "__all__", forKey: "selectedProject") }
-    }
-    @Published var tab = "Overview"
-    @Published var motion = true
-    @Published var board = false
-    let graphHover = GraphHoverState()
-    @Published var conversationVisible = true
-    @Published var globalSettingsVisible = false
-    @Published var projectPickerVisible = false
-    @Published var refreshInterval: RefreshInterval = .normal {
-        didSet {
-            UserDefaults.standard.set(refreshInterval.rawValue, forKey: "refreshIntervalSeconds")
-        }
-    }
-    init() {
-        refreshInterval = RefreshInterval.restoring(
-            UserDefaults.standard.integer(forKey: "refreshIntervalSeconds"))
-        selection = UserDefaults.standard.string(forKey: "selectedChat")
-        let stored = UserDefaults.standard.string(forKey: "selectedProject")
-        projectID = stored == "__all__" ? nil : stored
-    }
-}
-
 struct Dashboard: View {
     @ObservedObject var windowControls: WindowControls
     @ObservedObject var companion: CompanionModel
     @ObservedObject var voice: LocalVoice
     @ObservedObject var store: FleetStore
     var workspaceFixture = false
-    private let performance: PerformanceSession?
-    @StateObject private var ui = DashboardState()
-    @StateObject private var imagePreview = ImagePreviewPresentation()
+    @StateObject private var ui: DashboardState
     init(
         windowControls: WindowControls, companion: CompanionModel, voice: LocalVoice,
-        store: FleetStore, workspaceFixture: Bool = false, performance: PerformanceSession? = nil
+        store: FleetStore, ui: DashboardState, imagePreview: ImagePreviewPresentation,
+        workspaceFixture: Bool = false
     ) {
         self.windowControls = windowControls
         self.companion = companion
         self.voice = voice
         self.store = store
         self.workspaceFixture = workspaceFixture
-        self.performance = performance
-        _ui = StateObject(wrappedValue: performance?.dashboard ?? DashboardState())
+        _ui = StateObject(wrappedValue: ui)
+        _imagePreview = StateObject(wrappedValue: imagePreview)
     }
+    @StateObject private var imagePreview: ImagePreviewPresentation
     private var selection: String? {
         get { ui.selection }
         nonmutating set { ui.selection = newValue }
@@ -85,6 +57,13 @@ struct Dashboard: View {
     }
     private var selected: Mission? { missions.first { $0.id == selection } ?? missions.first }
     private var activeCount: Int { missions.filter { $0.status == .working }.count }
+    private var emptyMessage: String {
+        if store.snapshot == nil {
+            return store.error == nil ? "Connecting to your workspace…" : "Workspace unavailable."
+        }
+        return projects.isEmpty
+            ? "No projects available yet." : "No active chats in this project yet."
+    }
     private var agentCount: Int {
         missions.flatMap(\.agents).filter { $0.status == .working }.count
     }
@@ -115,7 +94,7 @@ struct Dashboard: View {
     }
 
     var body: some View {
-        let _ = PerformanceSession.dashboardEvaluated(
+        let _ = RenderWorkCounters.dashboardEvaluated(
             project: ui.projectID, populated: store.snapshot != nil)
         HStack(spacing: 0) {
             sidebar.frame(width: 215)
@@ -147,12 +126,6 @@ struct Dashboard: View {
         }
         .background(HUD.background).foregroundStyle(HUD.text).preferredColorScheme(.dark)
         .frame(minWidth: 1180, minHeight: 760)
-        .accessibilityIdentifier("workspace.dashboard")
-        .overlay(alignment: .top) {
-            if let performance {
-                PerformanceStatusView(progress: performance.progress, session: performance)
-            }
-        }
         .overlay(alignment: .bottomLeading) {
             if workspaceFixture {
                 Text("WORKSPACE FIXTURE").font(HUD.mono(9)).foregroundStyle(HUD.gold)
@@ -164,8 +137,10 @@ struct Dashboard: View {
         .accessibilityHidden(imagePreview.file != nil)
         .overlay {
             if let file = imagePreview.file {
-                AttachmentImagePreview(file: file) { imagePreview.file = nil }
-                    .id(file.id)
+                AttachmentImagePreview(file: file, preview: imagePreview) {
+                    imagePreview.file = nil
+                }
+                .id(file.id)
             }
         }
         .onChange(of: companion.completionID) { _, id in
@@ -290,6 +265,7 @@ struct Dashboard: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Switch project: \(scopeName)")
         .accessibilityIdentifier("dashboard.projectSelector")
+        .keyboardShortcut("p", modifiers: [.command, .shift])
         .help("Switch between projects or the Jarvis overview")
         .popover(isPresented: $ui.projectPickerVisible, arrowEdge: .trailing) {
             ProjectChooser(projects: projects, selectedID: project?.id) { id in
@@ -311,6 +287,9 @@ struct Dashboard: View {
             Text("/  \(scopeName)").font(HUD.mono(12)).lineLimit(1).foregroundStyle(
                 HUD.text.opacity(0.85)
             ).layoutPriority(1)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("/  \(scopeName)")
+                .accessibilityIdentifier("dashboard.scope")
             Spacer()
             if windowControls.windowVisible {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -427,21 +406,23 @@ struct Dashboard: View {
                     .font(.system(size: 11)).foregroundStyle(HUD.gold).padding(12).background(
                         HUD.gold.opacity(0.06)
                     ).padding(.horizontal, 30)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Connection unavailable · \(error)")
+                    .accessibilityIdentifier("dashboard.error")
             } else if let notices = store.snapshot?.notices, !notices.isEmpty {
                 Label(notices.joined(separator: " "), systemImage: "exclamationmark.triangle").font(
                     .system(size: 11)
                 ).foregroundStyle(HUD.gold).padding(.horizontal, 30).padding(.bottom, 12)
             }
-            if store.snapshot == nil || (!isGlobal && missions.isEmpty) {
+            if store.snapshot == nil || projects.isEmpty || (!isGlobal && missions.isEmpty) {
                 Spacer()
                 VStack(spacing: 15) {
                     Image(systemName: "antenna.radiowaves.left.and.right").font(
                         .system(size: 28, weight: .ultraLight))
-                    Text(
-                        store.snapshot == nil
-                            ? "Connecting to your workspace…"
-                            : "No active chats in this project yet."
-                    ).font(.system(size: 15))
+                    Text(emptyMessage).font(.system(size: 15))
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(emptyMessage)
+                        .accessibilityIdentifier("dashboard.empty")
                 }.foregroundStyle(HUD.muted).frame(maxWidth: .infinity)
                 Spacer()
             } else if tab == "Activity" {
@@ -484,7 +465,7 @@ struct Dashboard: View {
 
     private var networkView: some View {
         GeometryReader { geometry in
-            let _ = PerformanceSession.count(.graphLayout)
+            let _ = RenderWorkCounters.count(.graphLayout)
             let layout = TeamGraphLayout(count: nodeCount, viewport: geometry.size)
             ScrollView([.horizontal, .vertical]) {
                 ZStack(alignment: .topLeading) {
@@ -539,7 +520,7 @@ struct Dashboard: View {
             index: index, left: layout.nodes[index].x < layout.center.x)
     }
     private func hoverNode(_ id: String, inside: Bool) {
-        PerformanceSession.count(.physicalHoverCallback)
+        RenderWorkCounters.count(.physicalHoverCallback)
         ui.graphHover.update(id, inside: inside)
     }
 
@@ -580,7 +561,7 @@ struct Dashboard: View {
     }
 
     private func projectCard(_ p: WorkspaceProject) -> some View {
-        PerformanceSession.count(.cardFactory)
+        let _ = RenderWorkCounters.count(.cardFactory)
         let team = allMissions.filter { $0.projectID == p.id }
         let active = team.filter { $0.status == .working }.count
         return Button {
@@ -623,7 +604,7 @@ struct Dashboard: View {
     }
 
     private func missionCard(_ mission: Mission) -> some View {
-        PerformanceSession.count(.cardFactory)
+        let _ = RenderWorkCounters.count(.cardFactory)
         return Button {
             chooseMission(mission)
         } label: {

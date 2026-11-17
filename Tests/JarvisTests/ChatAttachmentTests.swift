@@ -80,16 +80,17 @@ import Testing
     }
 
     @Test func remoteLocationsNeverBecomeLocalFiles() async {
+        let loader = AttachmentPreviewLoader()
         for path in [
             "https://example.com/photo.png", "file://other-host/private/photo.png",
             "javascript:alert(1)",
         ] {
             let file = ChatAttachment(name: "Image", location: path)
             #expect(file.localURL == nil)
-            #expect(await AttachmentPreviewLoader.shared.load(file, pixels: 300) == nil)
+            #expect(await loader.load(file, pixels: 300) == nil)
         }
         let missing = ChatAttachment(
             name: "Missing", location: "/tmp/jarvis-nonexistent-fixture-attachment.png")
-        #expect(await AttachmentPreviewLoader.shared.load(missing, pixels: 300) == nil)
+        #expect(await loader.load(missing, pixels: 300) == nil)
     }
 }
