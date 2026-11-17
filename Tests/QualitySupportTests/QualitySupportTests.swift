@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import Testing
 
@@ -95,6 +96,157 @@ struct QualitySupportTests {
         let state = try String(contentsOf: stateLog, encoding: .utf8).trimmingCharacters(
             in: .whitespacesAndNewlines)
         #expect(state.isEmpty || state.hasPrefix("Z"))
+    }
+
+    private func supervisor(in workspace: TemporaryDirectory, log: URL) throws -> URL {
+        let directory = workspace.url
+        let source = directory.appendingPathComponent("main.swift")
+        let executable = directory.appendingPathComponent("supervisor")
+        try """
+        import Darwin
+        import Foundation
+        let child = Process()
+        child.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        child.arguments = ["30"]
+        try child.run()
+        var info = proc_bsdinfo()
+        let size = withUnsafeMutableBytes(of: &info) {
+            proc_pidinfo(child.processIdentifier, PROC_PIDTBSDINFO, 0, $0.baseAddress, Int32($0.count))
+        }
+        guard size == MemoryLayout<proc_bsdinfo>.stride else { throw NSError(domain: "SyntheticFixture", code: 1) }
+        let record = [String(child.processIdentifier), String(getpgid(child.processIdentifier)),
+            String(getpgrp()), String(info.pbi_start_tvsec), String(info.pbi_start_tvusec)].joined(separator: ",")
+        try record.write(toFile: CommandLine.arguments[1], atomically: true, encoding: .utf8)
+        if CommandLine.arguments.contains("--exit") { exit(0) }
+        child.waitUntilExit()
+        """.write(to: source, atomically: true, encoding: .utf8)
+        try #require(
+            try workspace.retainingOnCleanupFailure({
+                try Command(
+                    "/usr/bin/xcrun",
+                    ["swiftc", "-swift-version", "6", source.path, "-o", executable.path],
+                    directory: directory
+                ).run(log: log, timeout: 30)
+            }) == 0)
+        return executable
+    }
+
+    private func recordedChild(_ marker: URL) throws -> (OwnedProcessTree.Node, pid_t) {
+        let fields = try String(contentsOf: marker, encoding: .utf8).split(separator: ",")
+        try #require(fields.count == 5)
+        let pid = try #require(Int32(fields[0]))
+        let group = try #require(Int32(fields[1]))
+        let parentGroup = try #require(Int32(fields[2]))
+        #expect(group == pid && group != parentGroup)
+        return (
+            try OwnedProcessTree.Node(
+                pid: pid, seconds: #require(UInt64(fields[3])),
+                microseconds: #require(UInt64(fields[4]))), parentGroup
+        )
+    }
+
+    private func cleanup(_ node: OwnedProcessTree.Node, workspace: TemporaryDirectory) {
+        do {
+            try OwnedProcessTree.killMatching(node)
+            try OwnedProcessTree.confirmExit(
+                node, before: ContinuousClock().now.advanced(by: .seconds(2)))
+        } catch {
+            workspace.retain(reason: "synthetic worker cleanup is uncertain")
+            Issue.record(error)
+        }
+    }
+
+    @Test func timeoutStopsNestedIsolatedProcessGroups() throws {
+        let temporary = try TemporaryDirectory(prefix: "quality-nested-")
+        let marker = temporary.url.appendingPathComponent("child.pid")
+        let log = temporary.url.appendingPathComponent("process.log")
+        let executable = try supervisor(in: temporary, log: log)
+        #expect(throws: QualityFailure.self) {
+            try temporary.retainingOnCleanupFailure {
+                try Command(executable.path, [marker.path], directory: temporary.url).run(
+                    log: log, timeout: 10)
+            }
+        }
+        guard FileManager.default.fileExists(atPath: marker.path) else {
+            temporary.retain(reason: "nested timeout fixture did not become ready")
+            throw QualityFailure(
+                "Nested timeout fixture did not become ready: " + (try Diagnostics.tail(of: log)))
+        }
+        let (node, _) = try recordedChild(marker)
+        defer { cleanup(node, workspace: temporary) }
+        let state = temporary.url.appendingPathComponent("state.log")
+        _ = try Command(
+            "/bin/ps", ["-o", "stat=", "-p", String(node.pid)], directory: temporary.url
+        )
+        .run(log: state, timeout: 5)
+        let observed = try String(contentsOf: state, encoding: .utf8).trimmingCharacters(
+            in: .whitespacesAndNewlines)
+        #expect(observed.isEmpty || observed.hasPrefix("Z"))
+    }
+
+    @Test func anExitedTimeoutSupervisorReportsUncertainOwnership() throws {
+        let fixture = try TemporaryDirectory(prefix: "exited-supervisor-")
+        let marker = fixture.url.appendingPathComponent("child.pid")
+        let executable = try supervisor(
+            in: fixture, log: fixture.url.appendingPathComponent("compile.log"))
+        let root = Process()
+        root.executableURL = executable
+        root.arguments = [marker.path, "--exit"]
+        root.standardInput = FileHandle.nullDevice
+        root.standardOutput = FileHandle.nullDevice
+        root.standardError = FileHandle.nullDevice
+        try root.run()
+        root.waitUntilExit()
+        let (node, parentGroup) = try recordedChild(marker)
+        #expect(parentGroup == root.processIdentifier)
+        defer { cleanup(node, workspace: fixture) }
+        #expect(try OwnedProcessTree.inspect(node.pid).map { node.matches($0) } == true)
+        let finished = DispatchSemaphore(value: 0)
+        finished.signal()
+        #expect(throws: CommandCleanupFailure.self) {
+            try Command.timedOut(root, finished: finished)
+        }
+    }
+
+    @Test func uncertainCleanupRetainsOwnedWorkspacesAndFailedSummary() throws {
+        let fixture = try TemporaryDirectory(prefix: "retention-test-")
+        var retained: URL?
+        do {
+            let owned = try TemporaryDirectory(prefix: "owned-", parent: fixture.url)
+            retained = owned.url
+            #expect(throws: CommandCleanupFailure.self) {
+                try owned.retainingOnCleanupFailure {
+                    throw CommandCleanupFailure(detail: "synthetic uncertainty")
+                }
+            }
+        }
+        #expect(FileManager.default.fileExists(atPath: try #require(retained).path))
+        var diagnostics: URL?
+        let summary = try TestGate.run(
+            root: fixture.url, output: fixture.url.appendingPathComponent("results")
+        ) { command, _, _ in
+            let index = try #require(command.arguments.firstIndex(of: "--xunit-output"))
+            diagnostics = URL(fileURLWithPath: command.arguments[index + 1])
+                .deletingLastPathComponent()
+            throw CommandCleanupFailure(detail: "synthetic uncertainty")
+        }
+        let preserved = try #require(diagnostics)
+        // No process was launched by this fake.
+        defer { try? FileManager.default.removeItem(at: preserved) }
+        #expect(!summary.passed && summary.cleanupUncertain)
+        #expect(FileManager.default.fileExists(atPath: preserved.path))
+        #expect(throws: CommandCleanupFailure.self) { try OwnedProcessTree.terminate(getpid()) }
+    }
+
+    @Test func ownedProcessIdentityRejectsReusedPIDs() {
+        let node = OwnedProcessTree.Node(pid: 123, seconds: 10, microseconds: 20)
+        var info = proc_bsdinfo()
+        info.pbi_pid = 123
+        info.pbi_start_tvsec = 10
+        info.pbi_start_tvusec = 20
+        #expect(node.matches(info))
+        info.pbi_start_tvusec = 21
+        #expect(!node.matches(info))
     }
 
     @Test func diagnosticsAreBoundedAndRedactPathsQuotedCredentialsAndBearerValues() throws {

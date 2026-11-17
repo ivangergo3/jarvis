@@ -84,7 +84,9 @@ public enum HoverFaultProbe {
                         "--filter", test, "--xunit-output",
                         fixture.url.appendingPathComponent("result.xml").path,
                     ], directory: fixture.url)
-                let status = try command.run(log: log, timeout: 600)
+                let status = try fixture.retainingOnCleanupFailure {
+                    try command.run(log: log, timeout: 600)
+                }
                 let cases = try TestReport.read(
                     TestReport.files(in: fixture.url), allowReportedIssues: true)
                 let matches = cases.filter { $0.id == TestReport.id(test) }

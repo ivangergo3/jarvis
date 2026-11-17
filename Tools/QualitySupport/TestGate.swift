@@ -5,9 +5,11 @@ public struct GateSummary: Codable, Sendable {
     public var testCases = 0
     public var processExit: Int32?
     public var error: String?
+    public var cleanupUncertain = false
 
     enum CodingKeys: String, CodingKey {
         case passed, error
+        case cleanupUncertain = "cleanup_uncertain"
         case testCases = "test_cases"
         case processExit = "process_exit"
     }
@@ -53,6 +55,10 @@ public enum TestGate {
                 cases, discovered: discovered, required: Set(required))
             summary.passed = true
         } catch {
+            if error is CommandCleanupFailure {
+                temporary.retain(reason: "test command cleanup is uncertain")
+                summary.cleanupUncertain = true
+            }
             summary.error = Diagnostics.redact(error.localizedDescription)
         }
         try Diagnostics.writeJSON(summary, to: output.appendingPathComponent("summary.json"))

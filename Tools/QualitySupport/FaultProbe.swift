@@ -82,7 +82,9 @@ public enum FaultProbe {
                         "--filter", fault.test, "--xunit-output",
                         copy.appendingPathComponent("result.xml").path,
                     ], directory: copy)
-                let status = try command.run(log: log, timeout: 600)
+                let status = try temporary.retainingOnCleanupFailure {
+                    try command.run(log: log, timeout: 600)
+                }
                 let cases = try TestReport.read(
                     TestReport.files(in: copy), allowReportedIssues: true)
                 let matching = cases.filter { $0.id == fault.test }

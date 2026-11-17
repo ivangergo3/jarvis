@@ -163,10 +163,12 @@ public enum WorkspaceArchitecture {
     public static func check(root: URL, output: URL) throws {
         let temporary = try TemporaryDirectory(prefix: "workspace-architecture-")
         let manifest = temporary.url.appendingPathComponent("package.json")
-        let status = try Command(
-            "/usr/bin/env", ["swift", "package", "dump-package"], directory: root
-        )
-        .run(log: manifest, timeout: 60)
+        let status = try temporary.retainingOnCleanupFailure {
+            try Command(
+                "/usr/bin/env", ["swift", "package", "dump-package"], directory: root
+            )
+            .run(log: manifest, timeout: 60)
+        }
         guard status == 0 else { throw QualityFailure("Cannot inspect SwiftPM dependency graph") }
         var findings = try graphViolations(Data(contentsOf: manifest))
         for module in graph.keys.sorted() {
