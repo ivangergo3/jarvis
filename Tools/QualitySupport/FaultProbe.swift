@@ -24,6 +24,19 @@ public enum FaultProbe {
 
     private static let faults = [
         Fault(
+            name: "authority destination", path: "Sources/JarvisAuthority/AuthoritySession.swift",
+            before: "grant.destination == proposal.destination", after: "true",
+            test:
+                "QualitySupportTests.AuthorityTests/stableDestinationResourcesAndCapabilitiesAreNotInterchangeable"
+        ),
+        Fault(
+            name: "private data export", path: "Sources/JarvisAuthority/AuthoritySession.swift",
+            before: "!proposal.kind.exportsData || resource.classification == .publicData",
+            after: "true",
+            test:
+                "QualitySupportTests.AuthorityTests/privateAndCredentialResourcesCannotBeExportedEvenWithASendGrant"
+        ),
+        Fault(
             name: "object-only protocol", path: "Sources/Jarvis/Shared/ConnectionContracts.swift",
             before: "case .object = value", after: "true",
             test: "JarvisTests.ProtocolBoundaryTests/validJSONThatIsNotAnObjectIsRejected"),

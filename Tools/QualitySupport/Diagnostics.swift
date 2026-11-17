@@ -43,8 +43,8 @@ public enum Diagnostics {
 public final class TemporaryDirectory {
     public let url: URL
 
-    public init(prefix: String) throws {
-        url = FileManager.default.temporaryDirectory.appendingPathComponent(
+    public init(prefix: String, parent: URL = FileManager.default.temporaryDirectory) throws {
+        url = parent.appendingPathComponent(
             prefix + UUID().uuidString)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
     }

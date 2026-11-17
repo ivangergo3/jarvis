@@ -72,7 +72,10 @@ The original floating Codex pet and the earlier v0.3 standalone Jarvis conversat
 
 ## Source
 
+Authority verification for future coordinator actions is available through `swift run quality-gate authority`. It uses scoped grants, no-op tools and OS isolation probes; see [authority boundaries and remaining production gates](docs/engineering/authority-boundaries-49.md). It does not enable autonomous actions in the app.
+
 - `Sources/JarvisDomain/`: workspace contracts and lifecycle rules (independent Swift module).
+- `Sources/JarvisAuthority/`: scoped action grants and outcome tracking, currently used only by verification tooling.
 - `Sources/JarvisWorkspace/`: read-only local adapter and incremental polling (independent Swift module).
 - `Sources/Jarvis/Presentation/`: screens, reusable visual components and native UI bridges.
 - `Sources/Jarvis/Application/`: observable state, refresh ownership and conversation workflows.

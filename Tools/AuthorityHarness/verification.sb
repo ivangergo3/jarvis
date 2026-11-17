@@ -1,0 +1,8 @@
+(version 1)
+(deny default)
+(allow process-exec (literal (param "WORKER")))
+(allow file-read*)
+(deny file-read* (subpath "/Users") (subpath "/Volumes")
+    (subpath (param "REAL_HOME")) (subpath (param "PRIVATE")))
+(allow file-write* (literal (param "OUTPUT")) (literal "/dev/null"))
+(allow sysctl-read)

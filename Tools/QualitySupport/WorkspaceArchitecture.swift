@@ -30,6 +30,7 @@ public enum WorkspaceArchitecture {
         }
     }
     private static let graph: [String: Set<String>] = [
+        "JarvisAuthority": [],
         "JarvisDomain": [], "JarvisWorkspace": ["JarvisDomain"],
         "Jarvis": ["JarvisDomain", "JarvisWorkspace"],
     ]
@@ -61,7 +62,8 @@ public enum WorkspaceArchitecture {
 
     public static func sourceViolations(_ source: String, path: String) -> [String] {
         let tokens = codeTokens(source)
-        let domain = path.hasPrefix("Sources/JarvisDomain/")
+        let domain =
+            path.hasPrefix("Sources/JarvisDomain/") || path.hasPrefix("Sources/JarvisAuthority/")
         let adapter = path.hasPrefix("Sources/JarvisWorkspace/")
         let presentation = path.hasPrefix("Sources/Jarvis/") && path != "Sources/Jarvis/Main.swift"
         guard domain || adapter || presentation else { return [] }
