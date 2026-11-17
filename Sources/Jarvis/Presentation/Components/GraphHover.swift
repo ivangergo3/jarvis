@@ -16,8 +16,7 @@ struct HoverTopology: View {
 }
 
 struct HoverDestination: ViewModifier {
-    @ObservedObject var hover: GraphHoverState
-    let nodeID: String
+    @ObservedObject var destination: GraphHoverDestination
     let selected: Bool
     let active: Bool
     let motion: Bool
@@ -27,7 +26,7 @@ struct HoverDestination: ViewModifier {
         let _ = RenderWorkCounters.count(.hoverDestinationBody)
         content.modifier(
             GraphDestination(
-                active: active, highlighted: selected || hover.nodeID == nodeID,
+                active: active, highlighted: selected || destination.highlighted,
                 motion: motion, index: index, left: left))
     }
 }

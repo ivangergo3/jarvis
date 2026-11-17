@@ -6,6 +6,55 @@ import Testing
 
 @Suite("Deterministic performance contracts")
 @MainActor struct PerformanceRegressionTests {
+    @Test(arguments: [1, 4, 20, 100, 1_000])
+    func hoverLoadOnlyNotifiesChangedCards(cardCount: Int) {
+        let dashboard = DashboardState(preferences: nil)
+        let hover = dashboard.graphHover
+        let cards = (0..<cardCount).map { hover.destination(for: "synthetic-\($0)") }
+        var notifications = Array(repeating: 0, count: cardCount)
+        var rootUpdates = 0
+        let root = dashboard.objectWillChange.sink { rootUpdates += 1 }
+        let observers = cards.enumerated().map { index, card in
+            card.objectWillChange.sink { notifications[index] += 1 }
+        }
+        let iterations = 10_000
+        for index in 0..<iterations {
+            let next = index % cardCount
+            hover.update("synthetic-\(next)", inside: true)
+            hover.update("synthetic-\(next)", inside: true)
+            // A late exit for another card must not clear the current highlight.
+            hover.update("not-mounted", inside: false)
+        }
+        hover.clear()
+        hover.clear()
+        #expect(notifications.reduce(0, +) == (cardCount == 1 ? 2 : iterations * 2))
+        #expect(cards.allSatisfy { !$0.highlighted })
+        #expect(rootUpdates == 0)
+        withExtendedLifetime(observers) {}
+        root.cancel()
+    }
+
+    @Test func hoverStateReusesMountedCardsAndReleasesUnmountedCards() {
+        let hover = GraphHoverState()
+        hover.update("active", inside: true)
+        var card: GraphHoverDestination? = hover.destination(for: "active")
+        final class WeakCard {
+            weak var value: GraphHoverDestination?
+            init(_ value: GraphHoverDestination?) { self.value = value }
+        }
+        let released = WeakCard(card)
+        #expect(card?.highlighted == true)
+        #expect(card === hover.destination(for: "active"))
+        card = nil
+        #expect(released.value == nil)
+        let replacement = hover.destination(for: "active")
+        #expect(replacement.highlighted)
+        hover.update("next", inside: true)
+        hover.update("active", inside: false)
+        #expect(!replacement.highlighted)
+        #expect(hover.nodeID == "next")
+    }
+
     @Test func measurementSummaryPreservesSlowSamplesAndRejectsMissingMeasurements() throws {
         let summary = try PerformanceDistribution([4, 1, 100, 2, 3])
         #expect(summary.samples == [4, 1, 100, 2, 3])

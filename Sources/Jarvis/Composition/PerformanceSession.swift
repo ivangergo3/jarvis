@@ -49,7 +49,6 @@ import SwiftUI
     private(set) static weak var current: PerformanceSession?
     static func count(_ work: Work) { current?.counts[work, default: 0] += 1 }
     static func dashboardEvaluated(project: String?, populated: Bool) {
-        count(.dashboardBody)
         guard let current else { return }
         let now = ProcessInfo.processInfo.systemUptime
         if populated && current.firstPopulatedBody == nil { current.firstPopulatedBody = now }

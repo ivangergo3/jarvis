@@ -17,6 +17,7 @@ enum RenderWork: String, Codable, CaseIterable {
     static var onDashboard: ((String?, Bool) -> Void)?
     static func count(_ work: RenderWork) { onCount?(work) }
     static func dashboardEvaluated(project: String?, populated: Bool) {
+        count(.dashboardBody)
         onDashboard?(project, populated)
     }
 }

@@ -512,8 +512,8 @@ struct Dashboard: View {
 
     private func destination(index: Int, layout: TeamGraphLayout) -> HoverDestination {
         HoverDestination(
-            hover: ui.graphHover,
-            nodeID: isGlobal ? rootProjects[index].id : graphMissions[index].id,
+            destination: ui.graphHover.destination(
+                for: isGlobal ? rootProjects[index].id : graphMissions[index].id),
             selected: !isGlobal && graphMissions[index].id == selected?.id,
             active: graphActive[index],
             motion: motion && windowControls.decorativeMotion && !reduceMotion,

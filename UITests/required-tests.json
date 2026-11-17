@@ -1,4 +1,5 @@
 [
+  "testHoverLoadKeepsRenderedUpdatesLocal",
   "testProjectsAndChatSelection",
   "testEmptyProject",
   "testEmptyWorkspace",

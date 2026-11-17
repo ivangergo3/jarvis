@@ -9,6 +9,7 @@ struct VerificationFailure: LocalizedError {
 
 enum VerificationScenario: String, CaseIterable, Sendable {
     case workspace, empty, unavailable, stale
+    case hoverLoad
 }
 
 struct UIVerification: Sendable {
@@ -51,7 +52,10 @@ actor VerificationFleetSource: WorkspaceSource {
             WorkspaceProject(id: "beta", name: "Beta Workshop", roots: []),
             WorkspaceProject(id: "empty", name: "Empty Workshop", roots: []),
         ]
-        let missions = ["alpha-one", "alpha-two", "beta-one"].map { id in
+        let ids =
+            ["alpha-one", "alpha-two", "beta-one"]
+            + (scenario == .hoverLoad ? (0..<98).map { "alpha-load-\($0)" } : [])
+        let missions = ids.map { id in
             Mission(
                 id: id, projectID: id.hasPrefix("alpha") ? "alpha" : "beta",
                 name: id == "alpha-two" ? "Release checks" : "Planning",
@@ -67,6 +71,7 @@ actor VerificationFleetSource: WorkspaceSource {
 
 @MainActor final class VerificationEvidence: ObservableObject {
     @Published private(set) var submission = "0 submissions"
+    @Published var hoverLoad = "Not started"
     private var count = 0
     func record(thread: String, text: String) {
         count += 1
@@ -117,6 +122,7 @@ actor VerificationConnection: CodexConnection {
 struct VerificationBanner: View {
     let configuration: UIVerification
     @ObservedObject var evidence: VerificationEvidence
+    var startHoverLoad: () -> Void = {}
     var body: some View {
         HStack {
             Text("Synthetic verification · \(configuration.scenario.rawValue)")
@@ -128,6 +134,13 @@ struct VerificationBanner: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(evidence.submission)
                 .accessibilityIdentifier("verification.submissions")
+            if configuration.scenario == .hoverLoad {
+                Button("Run hover load", action: startHoverLoad)
+                    .disabled(evidence.hoverLoad != "Not started")
+                    .accessibilityIdentifier("verification.startHoverLoad")
+                Text(evidence.hoverLoad)
+                    .accessibilityIdentifier("verification.hoverLoad")
+            }
         }.font(.system(size: 10)).padding(8).foregroundStyle(.white).background(.black)
     }
 }

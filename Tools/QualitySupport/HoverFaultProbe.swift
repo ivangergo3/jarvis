@@ -33,41 +33,66 @@ public enum HoverFaultProbe {
         let selected =
             "JarvisTests.PerformanceRegressionTests/sustainedHoverDoesNotInvalidateDashboardOrConversation"
         struct Evidence: Encodable {
+            let fault: String
             let defective: Bool
             let exit: Int32
             let assertionFailed: Bool
         }
         var evidence: [Evidence] = []
-        for fault in [false, true, false] {
-            try (fault ? defective : original).write(to: file, atomically: true, encoding: .utf8)
-            for xml in try TestReport.files(in: fixture.url) {
-                try FileManager.default.removeItem(at: xml)
+        let cardFile = fixture.url.appendingPathComponent(
+            "Sources/Jarvis/Application/GraphHoverState.swift")
+        let cardOriginal = try String(contentsOf: cardFile, encoding: .utf8)
+        let cardAnchor = "        guard next != nodeID else { return }"
+        guard cardOriginal.components(separatedBy: cardAnchor).count == 2 else {
+            throw QualityFailure("Card fanout fault anchor changed")
+        }
+        let cardDefective = cardOriginal.replacingOccurrences(
+            of: cardAnchor,
+            with: cardAnchor
+                + "\n        for state in destinations.values { state.value?.objectWillChange.send() }"
+        )
+        for (name, target, good, bad, test, assertion) in [
+            ("dashboard-forwarding", file, original, defective, selected, "rootUpdates"),
+            (
+                "all-card-fanout", cardFile, cardOriginal, cardDefective,
+                "JarvisTests.PerformanceRegressionTests/hoverLoadOnlyNotifiesChangedCards",
+                "notifications"
+            ),
+        ] {
+            for fault in [false, true, false] {
+                try (fault ? bad : good).write(to: target, atomically: true, encoding: .utf8)
+                for xml in try TestReport.files(in: fixture.url) {
+                    try FileManager.default.removeItem(at: xml)
+                }
+                let log = fixture.url.appendingPathComponent("test.log")
+                let command = Command(
+                    "/usr/bin/env",
+                    ["swift", "test"] + swiftArguments + [
+                        "--filter", test, "--xunit-output",
+                        fixture.url.appendingPathComponent("result.xml").path,
+                    ], directory: fixture.url)
+                let status = try command.run(log: log, timeout: 600)
+                let cases = try TestReport.read(
+                    TestReport.files(in: fixture.url), allowReportedIssues: true)
+                let matches = cases.filter { $0.id == TestReport.id(test) }
+                let failed = matches.contains(where: \.failed)
+                let tail = try Diagnostics.tail(of: log)
+                // Swift Testing reports the five argument sets as one xUnit testcase.
+                guard matches.count == 1,
+                    !cases.contains(where: \.skipped),
+                    fault
+                        ? (status != 0 && failed && tail.contains(assertion))
+                        : (status == 0 && !failed)
+                else {
+                    FileHandle.standardError.write(Data(tail.utf8))
+                    throw QualityFailure("Unexpected hover regression probe outcome")
+                }
+                evidence.append(
+                    Evidence(fault: name, defective: fault, exit: status, assertionFailed: failed))
+                print(
+                    "Hover \(name): defective=\(fault), exit=\(status), assertion_failed=\(failed)"
+                )
             }
-            let log = fixture.url.appendingPathComponent("test.log")
-            let command = Command(
-                "/usr/bin/env",
-                ["swift", "test"] + swiftArguments + [
-                    "--filter", selected, "--xunit-output",
-                    fixture.url.appendingPathComponent("result.xml").path,
-                ], directory: fixture.url)
-            let status = try command.run(log: log, timeout: 600)
-            let cases = try TestReport.read(
-                TestReport.files(in: fixture.url), allowReportedIssues: true)
-            let matches = cases.filter { $0.id == selected }
-            let failed = matches.contains(where: \.failed)
-            let tail = try Diagnostics.tail(of: log)
-            guard matches.count == 1, !cases.contains(where: \.skipped),
-                fault
-                    ? (status != 0 && failed && tail.contains("rootUpdates"))
-                    : (status == 0 && !failed)
-            else {
-                FileHandle.standardError.write(Data(tail.utf8))
-                throw QualityFailure("Unexpected hover regression probe outcome")
-            }
-            evidence.append(Evidence(defective: fault, exit: status, assertionFailed: failed))
-            print(
-                "Hover invalidation fault: defective=\(fault), exit=\(status), assertion_failed=\(failed)"
-            )
         }
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         try Diagnostics.writeJSON(evidence, to: output.appendingPathComponent("hover-fault.json"))

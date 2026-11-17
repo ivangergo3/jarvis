@@ -2,6 +2,16 @@ import AppKit
 import XCTest
 
 final class JarvisUITests: XCTestCase {
+    @MainActor func testHoverLoadKeepsRenderedUpdatesLocal() throws {
+        let app = try launch("hoverLoad")
+        click(app, "verification.startHoverLoad")
+        let result = element(app, "verification.hoverLoad")
+        let done = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label BEGINSWITH 'PASS ' OR label BEGINSWITH 'FAIL '"),
+            object: result)
+        XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 25), .completed)
+        XCTAssertTrue(result.label.hasPrefix("PASS "), result.label)
+    }
     @MainActor private func launch(_ scenario: String) throws -> XCUIApplication {
         continueAfterFailure = false
         XCTAssertTrue(

@@ -66,3 +66,54 @@ run, discard a slow sample without a recorded external cause, or hide a skipped
 measurement as a pass. Agree user-visible resource/latency budgets from the
 baseline before enforcing them. The requirements' initial 1 s/5 s/100 ms targets
 remain proposals, not claims that the measured boundaries establish all three.
+
+## Hover regression gates and fix
+
+The physical foreground recording captured 1,121 hover callbacks in 60 seconds:
+22.82% mean own-process CPU (28.75% maximum one-second sample), stable resident
+memory near 120 MiB, zero root/conversation/layout/card/connector rebuilds, but
+22,420 destination-modifier evaluations. This isolated the remaining fanout:
+every mounted destination observed the same hover object. The report's revision
+field predates uncommitted instrumentation changes; the local evidence retains
+the source patch and binary digest rather than presenting that field as a clean
+revision. The following morning's missing temporary log files are a fixture
+failure, not an app performance result. Fixture clocks now use creation time
+instead of assigning ancient mtimes to temporary files.
+
+The fix keeps the connection overlay's shared hover observation but gives each
+mounted card its own highlight state. A transition publishes only to the old
+and new destination, and duplicate enters/stale exits remain no-ops. The registry
+holds weak references and prunes dead entries when registering another card;
+navigation does not retain old card state. Selected/active highlighting and
+the existing retained Core Animation layers remain separate.
+
+Required ordinary tests run 10,000 transitions for each of 1/4/20/100/1,000
+mounted destination states. They require exactly two destination notifications
+per genuine move (including final clearing), no root publication, correct final
+highlighting, state reuse, and release after unmount. These are work/ownership
+contracts, not timing thresholds. `quality-gate hover-fault` seeds both parent
+publisher forwarding and all-card notification fanout in disposable copies. It
+requires the named assertions to fail and the restored implementation to pass;
+compilation errors, missing cases and skipped tests fail the probe.
+
+The required native UI journey `testHoverLoadKeepsRenderedUpdatesLocal` mounts
+the actual 100-card dashboard using the closed in-memory verification source,
+warms it, then performs 200 paced transitions and clears the highlight. It
+requires zero dashboard/conversation body or publisher updates, graph layout,
+card factory or connector geometry work. Destination modifiers may evaluate at
+most twice per move plus once for clearing; topology must evaluate but at most
+once per move plus clearing. Zero recorded rendering is not accepted as a pass.
+This detects accidentally reconnecting the rendered modifier to shared hover
+state, which publisher-only tests cannot prove. The existing native UI runner
+checks the required journey inventory and captures results/screenshots on PR,
+main push and merge-queue runs. Motion is disabled in this deterministic native
+journey; release animation/CPU measurements remain separate.
+
+Run `./scripts/check.sh`, `swift run quality-gate hover-fault`, and, with full
+Xcode, `swift run native-ui-check`. The local CLT-only machine cannot execute
+XCUITest or Instruments; the native journey must pass on the configured Xcode
+CI runner before merging. The release fixture still supports animation-enabled
+three-repetition measurements with `bash scripts/workspace-journey.sh prepare
+--performance`; launch its generated app, keep it foreground and leave the mouse
+outside the graph during automatic phases. Keep contaminated idle samples and
+label them; do not silently average pointer activity into idle CPU.

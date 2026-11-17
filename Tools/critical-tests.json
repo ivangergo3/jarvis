@@ -1,4 +1,6 @@
 [
+  "JarvisTests.PerformanceRegressionTests/hoverLoadOnlyNotifiesChangedCards",
+  "JarvisTests.PerformanceRegressionTests/hoverStateReusesMountedCardsAndReleasesUnmountedCards",
   "JarvisTests.PerformanceRegressionTests/sustainedHoverDoesNotInvalidateDashboardOrConversation",
   "JarvisTests.PerformanceRegressionTests/measurementSummaryPreservesSlowSamplesAndRejectsMissingMeasurements",
   "QualitySupportTests.AppArchitectureTests/reverseReferencesAreRejectedEvenWithoutImports",

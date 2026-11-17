@@ -125,6 +125,7 @@ import SwiftUI
     private let evidence = VerificationEvidence()
     private let windowControls = WindowControls()
     private var verificationLifetime: Task<Void, Never>?
+    private var hoverLoadTask: Task<Void, Never>?
     init(
         source: any WorkspaceSource, workspaceFixture: Bool = false,
         verification: UIVerification? = nil, performance: PerformanceSession? = nil
@@ -223,7 +224,9 @@ import SwiftUI
         windowControls.attach(to: window)
         let content = VStack(spacing: 0) {
             if let verification {
-                VerificationBanner(configuration: verification, evidence: evidence)
+                VerificationBanner(configuration: verification, evidence: evidence) { [weak self] in
+                    self?.startHoverLoad()
+                }
             }
             Dashboard(
                 windowControls: windowControls, companion: companion, voice: voice,
@@ -258,6 +261,7 @@ import SwiftUI
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        hoverLoadTask?.cancel()
         performance?.stop()
         voice.cancel()
         voice.stopAudio()
@@ -273,6 +277,67 @@ import SwiftUI
     {
         window?.makeKeyAndOrderFront(nil)
         return true
+    }
+
+    private func startHoverLoad() {
+        guard verification?.scenario == .hoverLoad, hoverLoadTask == nil else { return }
+        evidence.hoverLoad = "Running"
+        hoverLoadTask = Task { @MainActor in
+            var work: [RenderWork: Int] = [:]
+            RenderWorkCounters.onCount = { work[$0, default: 0] += 1 }
+            let root = ui.objectWillChange.sink { work[.dashboardPublication, default: 0] += 1 }
+            let chat = companion.objectWillChange.sink {
+                work[.conversationPublication, default: 0] += 1
+            }
+            defer {
+                RenderWorkCounters.onCount = nil
+                root.cancel()
+                chat.cancel()
+            }
+            do {
+                ui.projectID = "alpha"
+                let deadline = ContinuousClock.now + .seconds(10)
+                while work[.cardFactory, default: 0] < 100 {
+                    guard ContinuousClock.now < deadline else {
+                        throw VerificationFailure(message: "100-card view did not mount")
+                    }
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                let ids =
+                    store.snapshot?.missions.filter { $0.projectID == "alpha" }.map(\.id) ?? []
+                guard ids.count == 100 else {
+                    throw VerificationFailure(message: "Invalid load fixture")
+                }
+                // Warm the real mounted modifiers and settle navigation before measuring.
+                for index in 0..<10 {
+                    ui.graphHover.update(ids[index], inside: true)
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                work = [:]
+                let transitions = 200
+                for index in 0..<transitions {
+                    ui.graphHover.update(ids[index % ids.count], inside: true)
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                ui.graphHover.clear()
+                try await Task.sleep(for: .milliseconds(100))
+                let forbidden: [RenderWork] = [
+                    .dashboardBody, .dashboardPublication,
+                    .conversationBody, .conversationPublication, .graphLayout, .cardFactory,
+                    .connectorRebuild,
+                ]
+                let unrelated = forbidden.reduce(0) { $0 + work[$1, default: 0] }
+                let modifiers = work[.hoverDestinationBody, default: 0]
+                let topology = work[.hoverTopologyBody, default: 0]
+                let passed =
+                    unrelated == 0 && modifiers > 0 && modifiers <= transitions * 2 + 1
+                    && topology > 0 && topology <= transitions + 1 && ui.projectID == "alpha"
+                evidence.hoverLoad =
+                    "\(passed ? "PASS" : "FAIL") cards=100 transitions=200 unrelated=\(unrelated) modifiers=\(modifiers) topology=\(topology)"
+            } catch {
+                evidence.hoverLoad = "FAIL \(error.localizedDescription)"
+            }
+        }
     }
 }
 
