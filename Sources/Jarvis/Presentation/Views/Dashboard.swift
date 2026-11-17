@@ -516,8 +516,7 @@ struct Dashboard: View {
                 for: isGlobal ? rootProjects[index].id : graphMissions[index].id),
             selected: !isGlobal && graphMissions[index].id == selected?.id,
             active: graphActive[index],
-            motion: motion && windowControls.decorativeMotion && !reduceMotion,
-            index: index, left: layout.nodes[index].x < layout.center.x)
+            left: layout.nodes[index].x < layout.center.x)
     }
     private func hoverNode(_ id: String, inside: Bool) {
         RenderWorkCounters.count(.physicalHoverCallback)
@@ -634,7 +633,7 @@ struct Dashboard: View {
                 .contentShape(RoundedRectangle(cornerRadius: 12))
         }.buttonStyle(.plain).accessibilityLabel(
             "\(mission.name), \(mission.status.label), \(String(taskPreview(mission.task).prefix(140)))"
-        )
+        ).accessibilityIdentifier("graph.node.\(mission.id)")
     }
 
     private func taskPreview(_ task: String) -> String {

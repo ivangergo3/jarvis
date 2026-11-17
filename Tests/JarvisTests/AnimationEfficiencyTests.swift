@@ -7,6 +7,53 @@ import Testing
 @testable import Jarvis
 
 @Suite("Animation efficiency") @MainActor struct AnimationEfficiencyTests {
+    @Test func nativeHoverBindingsRenderLatestStateAndStopAfterCancellation() throws {
+        let hover = GraphHoverState()
+        let card = hover.destination(for: "a")
+        let destination = DestinationLayerView(frame: CGRect(x: 0, y: 0, width: 200, height: 100))
+        let cardBinding = DestinationHoverBinding()
+        cardBinding.update(
+            view: destination, state: card, selected: false, active: false, left: true)
+        destination.layout()
+        #expect(!destination.clipsToBounds)
+        let border = try #require(
+            destination.layer?.sublayers?.first { $0.name == "destinationBorder" })
+        let port = try #require(
+            destination.layer?.sublayers?.first { $0.name == "destinationPort" } as? CAShapeLayer)
+        let topology = TopologyLayerView(frame: CGRect(x: 0, y: 0, width: 200, height: 100))
+        let topologyBinding = TopologyHoverBinding()
+        let routes = [GraphConnection(points: [.zero, CGPoint(x: 100, y: 50)])]
+        topologyBinding.update(
+            view: topology, hover: hover, nodeIDs: ["a"], selectedID: nil,
+            active: [false], running: false, connections: routes)
+        let line = try #require(topology.layer?.sublayers?.first as? CAShapeLayer)
+        #expect(border.opacity == 0)
+        hover.update("a", inside: true)
+        #expect(border.opacity == 0.75)
+        #expect(port.strokeColor == HUDLayers.gold)
+        #expect(line.strokeColor == HUDLayers.gold)
+        #expect(port.path?.boundingBox.midX == 200)
+        cardBinding.update(
+            view: destination, state: card, selected: false, active: true, left: false)
+        destination.layout()
+        #expect(port.path?.boundingBox.midX == 0)
+        #expect(border.opacity == 0)
+        #expect(port.strokeColor == HUDLayers.cyan)
+        cardBinding.cancel()
+        topologyBinding.cancel()
+        hover.clear()
+        #expect(line.strokeColor == HUDLayers.gold)
+        #expect(port.strokeColor == HUDLayers.cyan)
+        let replacement = GraphHoverState()
+        topologyBinding.update(
+            view: topology, hover: replacement, nodeIDs: ["a"], selectedID: nil,
+            active: [false], running: false, connections: routes)
+        #expect(line.strokeColor == HUDLayers.muted)
+        hover.update("a", inside: true)
+        #expect(line.strokeColor == HUDLayers.muted)
+        topologyBinding.cancel()
+    }
+
     @Test func connectorHoverLoadOnlyWritesChangedLayerStyles() throws {
         for count in [4, 100] {
             let view = TopologyLayerView(frame: CGRect(x: 0, y: 0, width: 300, height: 200))

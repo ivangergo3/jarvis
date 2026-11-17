@@ -10,6 +10,7 @@ struct VerificationFailure: LocalizedError {
 enum VerificationScenario: String, CaseIterable, Sendable {
     case workspace, empty, unavailable, stale
     case hoverLoad
+    case pointerLoad
 }
 
 struct UIVerification: Sendable {
@@ -54,7 +55,8 @@ actor VerificationFleetSource: WorkspaceSource {
         ]
         let ids =
             ["alpha-one", "alpha-two", "beta-one"]
-            + (scenario == .hoverLoad ? (0..<98).map { "alpha-load-\($0)" } : [])
+            + ([.hoverLoad, .pointerLoad].contains(scenario)
+                ? (0..<98).map { "alpha-load-\($0)" } : [])
         let missions = ids.map { id in
             Mission(
                 id: id, projectID: id.hasPrefix("alpha") ? "alpha" : "beta",
@@ -72,6 +74,7 @@ actor VerificationFleetSource: WorkspaceSource {
 @MainActor final class VerificationEvidence: ObservableObject {
     @Published private(set) var submission = "0 submissions"
     @Published var hoverLoad = "Not started"
+    @Published var pointerLoad = "Not started"
     private var count = 0
     func record(thread: String, text: String) {
         count += 1
@@ -123,6 +126,8 @@ struct VerificationBanner: View {
     let configuration: UIVerification
     @ObservedObject var evidence: VerificationEvidence
     var startHoverLoad: () -> Void = {}
+    var startPointerLoad: () -> Void = {}
+    var finishPointerLoad: () -> Void = {}
     var body: some View {
         HStack {
             Text("Synthetic verification · \(configuration.scenario.rawValue)")
@@ -142,6 +147,18 @@ struct VerificationBanner: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(evidence.hoverLoad)
                     .accessibilityIdentifier("verification.hoverLoad")
+            }
+            if configuration.scenario == .pointerLoad {
+                Button("Start pointer load", action: startPointerLoad)
+                    .disabled(evidence.pointerLoad != "Not started")
+                    .accessibilityIdentifier("verification.startPointerLoad")
+                Button("Finish pointer load", action: finishPointerLoad)
+                    .disabled(evidence.pointerLoad != "Recording")
+                    .accessibilityIdentifier("verification.finishPointerLoad")
+                Text(evidence.pointerLoad).frame(width: 370, height: 14, alignment: .leading)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(evidence.pointerLoad)
+                    .accessibilityIdentifier("verification.pointerLoad")
             }
         }.font(.system(size: 10)).padding(8).foregroundStyle(.white).background(.black)
     }

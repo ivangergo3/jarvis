@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import JarvisDomain
 import JarvisWorkspace
 import SwiftUI
@@ -126,6 +127,9 @@ import SwiftUI
     private let windowControls = WindowControls()
     private var verificationLifetime: Task<Void, Never>?
     private var hoverLoadTask: Task<Void, Never>?
+    private var pointerLoadTask: Task<Void, Never>?
+    private var pointerWork: [RenderWork: Int] = [:]
+    private var pointerSubscriptions: [AnyCancellable] = []
     init(
         source: any WorkspaceSource, workspaceFixture: Bool = false,
         verification: UIVerification? = nil, performance: PerformanceSession? = nil
@@ -224,9 +228,11 @@ import SwiftUI
         windowControls.attach(to: window)
         let content = VStack(spacing: 0) {
             if let verification {
-                VerificationBanner(configuration: verification, evidence: evidence) { [weak self] in
-                    self?.startHoverLoad()
-                }
+                VerificationBanner(
+                    configuration: verification, evidence: evidence,
+                    startHoverLoad: { [weak self] in self?.startHoverLoad() },
+                    startPointerLoad: { [weak self] in self?.startPointerLoad() },
+                    finishPointerLoad: { [weak self] in self?.finishPointerLoad() })
             }
             Dashboard(
                 windowControls: windowControls, companion: companion, voice: voice,
@@ -262,6 +268,9 @@ import SwiftUI
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         hoverLoadTask?.cancel()
+        pointerLoadTask?.cancel()
+        pointerSubscriptions = []
+        if verification != nil { RenderWorkCounters.onCount = nil }
         performance?.stop()
         voice.cancel()
         voice.stopAudio()
@@ -277,6 +286,49 @@ import SwiftUI
     {
         window?.makeKeyAndOrderFront(nil)
         return true
+    }
+
+    private func startPointerLoad() {
+        guard verification?.scenario == .pointerLoad, pointerLoadTask == nil else { return }
+        evidence.pointerLoad = "Starting"
+        pointerLoadTask = Task { @MainActor [self] in
+            do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
+            pointerWork = [:]
+            RenderWorkCounters.onCount = { [weak self] in self?.pointerWork[$0, default: 0] += 1 }
+            pointerSubscriptions = [
+                ui.objectWillChange.sink { [weak self] _ in
+                    self?.pointerWork[.dashboardPublication, default: 0] += 1
+                },
+                companion.objectWillChange.sink { [weak self] _ in
+                    self?.pointerWork[.conversationPublication, default: 0] += 1
+                },
+            ]
+            evidence.pointerLoad = "Recording"
+        }
+    }
+
+    private func finishPointerLoad() {
+        guard verification?.scenario == .pointerLoad, evidence.pointerLoad == "Recording" else {
+            return
+        }
+        RenderWorkCounters.onCount = nil
+        pointerSubscriptions = []
+        let forbidden: [RenderWork] = [
+            .dashboardBody, .dashboardPublication, .conversationBody,
+            .conversationPublication, .graphLayout, .cardFactory, .connectorRebuild,
+            .hoverDestinationBody, .hoverTopologyBody,
+        ]
+        let unrelated = forbidden.reduce(0) { $0 + pointerWork[$1, default: 0] }
+        let callbacks = pointerWork[.physicalHoverCallback, default: 0]
+        let destinations = pointerWork[.nativeDestinationUpdate, default: 0]
+        let topology = pointerWork[.nativeTopologyUpdate, default: 0]
+        let passed =
+            callbacks >= 20 && unrelated == 0 && destinations > 0
+            && destinations <= callbacks * 2 && topology > 0 && topology <= callbacks
+            && ui.projectID == "alpha"
+            && store.snapshot?.missions.filter { $0.projectID == "alpha" }.count == 100
+        evidence.pointerLoad =
+            "\(passed ? "PASS" : "FAIL") callbacks=\(callbacks) unrelated=\(unrelated) destinations=\(destinations) topology=\(topology)"
     }
 
     private func startHoverLoad() {
@@ -327,15 +379,17 @@ import SwiftUI
                     .connectorRebuild,
                 ]
                 let unrelated = forbidden.reduce(0) { $0 + work[$1, default: 0] }
-                let modifiers = work[.hoverDestinationBody, default: 0]
-                let topology = work[.hoverTopologyBody, default: 0]
+                let modifiers = work[.nativeDestinationUpdate, default: 0]
+                let topology = work[.nativeTopologyUpdate, default: 0]
                 let styles = work[.connectorStyle, default: 0]
                 let passed =
                     unrelated == 0 && modifiers > 0 && modifiers <= transitions * 2 + 1
                     && topology > 0 && topology <= transitions + 1 && ui.projectID == "alpha"
                     && styles <= transitions * 2 + 1
+                    && work[.hoverDestinationBody, default: 0] == 0
+                    && work[.hoverTopologyBody, default: 0] == 0
                 evidence.hoverLoad =
-                    "\(passed ? "PASS" : "FAIL") cards=100 transitions=200 unrelated=\(unrelated) modifiers=\(modifiers) topology=\(topology) styles=\(styles)"
+                    "\(passed ? "PASS" : "FAIL") cards=100 transitions=200 unrelated=\(unrelated) nativeDestinations=\(modifiers) nativeTopology=\(topology) styles=\(styles)"
             } catch {
                 evidence.hoverLoad = "FAIL \(error.localizedDescription)"
             }

@@ -11,6 +11,7 @@ enum RenderWork: String, Codable, CaseIterable {
     case dashboardPublication, conversationPublication, hoverPublication
     case physicalHoverCallback
     case connectorStyle
+    case nativeDestinationUpdate, nativeTopologyUpdate
 }
 
 @MainActor enum RenderWorkCounters {

@@ -1,4 +1,5 @@
 [
+  "JarvisTests.AnimationEfficiencyTests/nativeHoverBindingsRenderLatestStateAndStopAfterCancellation",
   "JarvisTests.AnimationEfficiencyTests/connectorHoverLoadOnlyWritesChangedLayerStyles",
   "JarvisTests.PerformanceRegressionTests/hoverLoadOnlyNotifiesChangedCards",
   "JarvisTests.PerformanceRegressionTests/hoverStateReusesMountedCardsAndReleasesUnmountedCards",

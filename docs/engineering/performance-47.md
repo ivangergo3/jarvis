@@ -87,6 +87,19 @@ holds weak references and prunes dead entries when registering another card;
 navigation does not retain old card state. Selected/active highlighting and
 the existing retained Core Animation layers remain separate.
 
+Card-local observation alone was insufficient: a foreground release follow-up
+still consumed roughly 45% of one core for the 20-card scripted workload. A
+separate three-second `sample` of the owned synthetic process found main-thread
+SwiftUI layout and `AccessibilityNode.updateFocus`/focus-responder traversal.
+That sampled run is diagnostic, not pooled into unprofiled timing baselines.
+The final decoration boundary therefore subscribes inside native coordinators
+and writes retained layers directly. Hover changes evaluate neither the SwiftUI
+destination modifier nor the topology wrapper. Buttons, labels, keyboard access
+and selected state remain in SwiftUI; no accessibility feature is disabled.
+Tests cover latest-value delivery, colors/geometry, cancellation and rebinding
+to a new source without responding to the old source. Dismantling releases the
+coordinators' subscriptions and state references.
+
 The next measured slice exposed another fanout: the overlay retained geometry
 but reassigned every line's Core Animation properties on every move. Applied
 line styles are now cached; only a changed visible style writes layer properties.
@@ -109,15 +122,23 @@ The required native UI journey `testHoverLoadKeepsRenderedUpdatesLocal` mounts
 the actual 100-card dashboard using the closed in-memory verification source,
 warms it, then performs 200 paced transitions and clears the highlight. It
 requires zero dashboard/conversation body or publisher updates, graph layout,
-card factory or connector geometry work. Destination modifiers may evaluate at
-most twice per move plus once for clearing; topology must evaluate but at most
-once per move plus clearing. Native line-style writes are bounded to the two
+card factory or connector geometry work, and zero SwiftUI hover modifier/topology
+evaluations. Native destination updates are bounded to twice per move plus
+clearing; native topology updates must occur but at most once per move plus
+clearing. Native line-style writes are bounded to the two
 affected connections as well. Zero recorded rendering is not accepted as a pass.
 This detects accidentally reconnecting the rendered modifier to shared hover
 state, which publisher-only tests cannot prove. The existing native UI runner
 checks the required journey inventory and captures results/screenshots on PR,
 main push and merge-queue runs. Motion is disabled in this deterministic native
 journey; release animation/CPU measurements remain separate.
+
+`testPhysicalPointerLoadDoesNotInvalidateGraph` additionally moves XCTest's
+actual pointer between a visible card in a mounted 100-card graph and a control
+outside the graph. It verifies at least twenty real `.onHover` callbacks, zero
+root/layout/SwiftUI decoration updates and bounded nonzero native updates. This
+covers AppKit dispatch/hit testing that scripted model transitions alone omit.
+It uses Apple's documented [hover operation](https://developer.apple.com/documentation/xcuiautomation/xcuielement/hover()).
 
 Run `./scripts/check.sh`, `swift run quality-gate hover-fault`, and, with full
 Xcode, `swift run native-ui-check`. The local CLT-only machine cannot execute

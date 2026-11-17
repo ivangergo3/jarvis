@@ -1,7 +1,7 @@
 # Native UI verification
 
-Ticket #45 adds the shared `NativeUI` Xcode scheme. There are now seven required
-XCTest UI journeys, including the 100-card hover load gate added for #47.
+Ticket #45 adds the shared `NativeUI` Xcode scheme. There are now eight required
+XCTest UI journeys, including the 100-card hover and real-pointer load gates added for #47.
 The scheme builds a Release macOS application from the same owned Swift sources
 and bundled artwork as `build.sh`, plus a native UI-test target. The verification
 build preserves the `JarvisDomain` and `JarvisWorkspace` modules as separate
