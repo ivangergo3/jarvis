@@ -12,7 +12,7 @@ The [capability map](docs/planning/CAPABILITY_MAP.md) and [68-skill catalogue](d
 
 The skill definitions have merged. Use the [review guide](docs/planning/SKILL_REVIEW_GUIDE.md), [local-use safety](docs/planning/SKILL_SAFETY.md), [research notes](docs/planning/SKILL_RESEARCH.md) and [evaluation index](docs/planning/SKILL_EVALUATION.md) to inspect their evidence and limitations. Historical results apply only to their tested versions.
 
-The [project discovery manifest](Tools/project-skills.json) exposes 14 existing engineering/workflow skills to Codex and Claude Code through relative links to `skills/`; the other library skills remain available for explicit task-relevant use. Nothing is installed globally. See [skill discovery and operating workflow](docs/engineering/agent-workflow-51.md) for the observed Codex result, pending Claude runtime check, focused task handoffs and future fresh-review pilot. Skill availability is not proof of model compliance or permission to perform live actions.
+The [project discovery manifest](Tools/project-skills.json) exposes 14 existing engineering/workflow skills to Codex and Claude Code through relative links to `skills/`; the other library skills remain available for explicit task-relevant use. Nothing is installed globally. See [skill discovery and operating workflow](docs/engineering/agent-workflow-51.md) for the observed Codex result, deferred Claude runtime check, focused task handoffs and completed fresh-review pilot. Skill availability is not proof of model compliance or permission to perform live actions.
 
 ## Open
 

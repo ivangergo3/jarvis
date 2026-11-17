@@ -32,6 +32,19 @@ Use focused tests while developing and the existing full gate before review for 
 
 The owner selected the **next meaningful change** for the fresh-reviewer pilot. Supply accepted criteria, exact base/head diff, necessary surrounding code and raw verification evidence in a fresh context; omit the implementer's rationale and expected findings. Default to read-only review and require actionable trigger/consequence/location for correctness findings. A reviewer need not be another provider and cannot replace tests or owner acceptance. Record findings, dispositions and remaining gaps; do not invent style defects or treat model agreement as proof. This setup change has no independent reviewer result.
 
+The subsequent performance-evidence feature from PR #68 supplied the meaningful
+change for this pilot. On 17 November 2026, after the owner's requested merge,
+a fresh Codex reviewer received the accepted criteria, immutable base/head,
+surrounding code and raw verification evidence without the implementer's chat
+history, PR rationale or explanatory reports. It reported two P2 evidence-
+qualification gaps; one was reproduced with a source-compiled offline harness
+and then independently confirmed through the ordinary quality CLI. The
+[retained pilot record](../../evaluations/fresh-review-51-2026-11-17/REPORT.md)
+contains the supplied context boundary, actual review output, reproduction and
+dispositions. The gaps remain work under #47, not silently marked fixed by a
+successful review. This was a post-merge review, not a pre-merge gate, and does
+not replace the owner's acceptance.
+
 ## Minimal delivery observations
 
 Keep these in the existing PR/evidence record when useful; no separate metrics dashboard or mandatory new file is required:
@@ -51,4 +64,10 @@ For #51, discovery found a concrete missing setup: zero repository skills before
 
 Rechecked official [Codex best practices](https://learn.chatgpt.com/guides/best-practices), [Codex skill discovery](https://learn.chatgpt.com/docs/build-skills), [Claude best practices](https://code.claude.com/docs/en/best-practices), [Claude skills](https://code.claude.com/docs/en/skills) and [Claude project instructions](https://code.claude.com/docs/en/memory). External text informed original repository guidance; no upstream script or hook was imported or executed. Skill metadata bodies remain unchanged.
 
-Ticket #51 remains open for the Claude runtime check and fresh-reviewer pilot. Acceptance of this setup PR is not evidence that either has run, nor that a prospective task-context workflow has improved outcomes. Ticket #54's real-feature traceability pilot can share the next authorized feature and its evidence instead of requiring a duplicate exercise.
+The accepted #51 setup scope (AC1–7) and fresh-reviewer pilot (AC8) now have
+recorded evidence. The conditional Claude runtime exercise remains deferred
+until that client is available, as already accepted for AC3; no runtime pass is
+claimed and no client was installed. #47 tracks the two review findings.
+Ticket #54 shared this real-feature exercise for its traceability pilot, avoiding
+a duplicate project. One pilot does not establish lower costs, faster delivery,
+general model compliance or a production coordination capability.
