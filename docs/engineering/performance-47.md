@@ -10,19 +10,52 @@ reviewable changes; no broad optimization is presumed necessary.
 
 ## Evidence audit and accepted warning policy
 
+### R1/R2 completion plan, 17 November 2026
+
+Source baseline: `9ae566d48f18b6304a30b80bfbdb2af2f28a67ee`. The owner authorized
+finishing #47 after the #51 fresh review. Before implementation: reproduce R1
+with phase settings that disagree with final settings and a changed-then-restored
+configuration; reproduce R2 with shorter observation windows at unchanged input
+rate. Then require UI protocol v3 per-phase configuration and requested seconds,
+with sticky configuration-change detection. Missing legacy fields stay unknown.
+Paired requested windows must match; completed elapsed exposure must reach the
+requested window and paired elapsed windows must remain within 10%, alongside
+the existing rate/configuration qualification. These are evidence-matching
+rules, not new CPU performance thresholds. The 5/12/20% warnings stay unchanged.
+
+Planned evidence: red/green audit regressions, producer/decoder wire check,
+configuration round-trip/sticky-change checks, existing retained counterexample,
+full local gate and required CI. Collect a fresh synthetic v3 baseline after a
+clean build, keeping all prior reports and exclusions. Observed results will be
+recorded separately; this plan is not a passing result.
+
+The new v3 capture extends the final bounded soak to 120 seconds, with the same
+100-card hover workload and one-second resident samples. It is a new baseline,
+not a speed comparison with the prior 30-second soak. No absolute RAM ceiling is
+invented from it. The existing weak-reference/lifecycle and stale/cancellation
+tests remain the deterministic retention/correctness gates.
+
 The owner accepted scoped investigation warnings on 17 November 2026: idle CPU
 ≤5%, continuous hover ≤12% at 20 chats and ≤20% at 100 chats, on the measured
 Mac15,13 configuration. CPU 100% means one logical core. These are not universal
 numeric CI gates. See the [prospective criteria, implementation and command](performance-evidence-47-54.md)
 and [retained execution evidence](../../evaluations/performance-evidence-2026-11-17/REPORT.md).
 
-Schema v2 records build-time identity and the actual executable digest instead
-of assigning the preparation checkout's revision to an older binary. It also
-records delivered iterations, visibility and power stability. The offline Swift
-auditor preserves excluded phases and refuses comparisons across incompatible
-environments, work units or input rates. Legacy evidence remains useful for
-investigation but is not promoted to a verified v2 baseline. Missing or failed
-measurements are inconclusive; an exceeded accepted warning requests investigation.
+The provenance envelope remains schema v2, with build-time source identity and
+an executable digest. UI measurement protocol `ui-v3` adds each phase's initial
+window geometry, backing scale, maximum refresh, numeric display ID, motion and
+Reduce Motion settings, thermal state, requested seconds and a sticky change
+flag. The collector samples those conditions throughout the phase and at its
+end; the auditor uses the phase's configuration rather than end-of-run settings.
+It also preserves delivered iterations, visibility and power stability.
+
+The auditor preserves excluded phases and refuses comparisons across incompatible
+environments, configurations, observation windows, work units or input rates.
+Legacy `ui-v2` evidence and its historical classifications remain retained, but
+missing per-phase configuration/duration is unknown under the current auditor.
+It cannot acquire a v3 pass simply by relabelling the protocol. Computation
+protocol `computation-v2` is unchanged. Missing or failed measurements are
+inconclusive; an exceeded accepted warning requests investigation.
 
 ## Workloads and measurement boundaries
 
@@ -164,3 +197,18 @@ three-repetition measurements with `bash scripts/workspace-journey.sh prepare
 --performance`; launch its generated app, keep it foreground and leave the mouse
 outside the graph during automatic phases. Keep contaminated idle samples and
 label them; do not silently average pointer activity into idle CPU.
+
+## Observed v3 completion
+
+[The retained v3 report](../../evaluations/performance-v3-2026-11-17/REPORT.md)
+records the clean Release revision, thirteen qualified phases, all three accepted
+CPU warning scopes within budget, a 120-second soak and repeated computation
+captures. R1/R2 have red/green regressions, producer/decoder coverage and a
+retained v3 shortened-window CLI rejection. Historical v2 reports remain intact
+and are descriptive under the current auditor. Required CI is tracked in
+[PR #71](https://github.com/ivangergo3/jarvis/pull/71).
+
+The direct presentation-latency and longer-session memory gaps remain explicit
+in [release qualification #72](https://github.com/ivangergo3/jarvis/issues/72).
+This completes the bounded baseline/regression evidence scope; it does not
+certify the separate release latency targets or an absolute RAM ceiling.

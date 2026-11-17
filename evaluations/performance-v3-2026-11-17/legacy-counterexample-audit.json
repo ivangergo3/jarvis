@@ -1,0 +1,220 @@
+{
+  "comparison" : "incomparable",
+  "comparisonIssues" : [
+    "Missing, ineligible or different workload",
+    "Observation windows differ",
+    "Unsupported measurement protocol"
+  ],
+  "conclusion" : "inconclusive",
+  "identityIssues" : [
+    "Unsupported measurement protocol"
+  ],
+  "limitations" : [
+    "CPU warnings are owner-scoped investigation thresholds, not CI CPU gates.",
+    "Main-entry\/body and cadence metrics do not certify OS launch or input-to-photon latency.",
+    "Source stamps and executable digests identify artifacts; they are not cryptographic attestations.",
+    "OS caches and competing system load remain uncontrolled; raw inputs are retained by the caller.",
+    "Eligibility applies only to the listed workloads; a partial report cannot establish full feature coverage.",
+    "UI evidence requires ui-v3 phase configuration and requested duration; legacy records are descriptive only."
+  ],
+  "observations" : [
+    {
+      "deliveredHz" : 19.824074554393167,
+      "eligible" : false,
+      "measuredCPU" : 2.554852388290626,
+      "nodes" : 20,
+      "observedSeconds" : 1.008874333332642,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -81920,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.42296797387078,
+      "eligible" : false,
+      "measuredCPU" : 7.514488749988519,
+      "nodes" : 4,
+      "observedSeconds" : 2.002830864577845,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -81920,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.95204618494529,
+      "eligible" : false,
+      "measuredCPU" : 8.888449742174775,
+      "nodes" : 20,
+      "observedSeconds" : 2.0017776458334993,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -32768,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.91351883729834,
+      "eligible" : false,
+      "measuredCPU" : 12.597451785644628,
+      "nodes" : 100,
+      "observedSeconds" : 2.003331739579153,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 1,
+      "residentGrowthBytes" : -49152,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 19.828745527880542,
+      "eligible" : false,
+      "measuredCPU" : 2.3555062531207946,
+      "nodes" : 20,
+      "observedSeconds" : 1.0086366770847235,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -114688,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.9158957336027,
+      "eligible" : false,
+      "measuredCPU" : 6.703945337877324,
+      "nodes" : 4,
+      "observedSeconds" : 2.0030630208348157,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -32473088,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.986477230937794,
+      "eligible" : false,
+      "measuredCPU" : 8.556581709969583,
+      "nodes" : 20,
+      "observedSeconds" : 2.0005009687520214,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -98304,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.47436656967738,
+      "eligible" : false,
+      "measuredCPU" : 12.641479740598088,
+      "nodes" : 100,
+      "observedSeconds" : 2.0009959687522496,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 2,
+      "residentGrowthBytes" : -98304,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 19.88207362246544,
+      "eligible" : false,
+      "measuredCPU" : 2.327569506390002,
+      "nodes" : 20,
+      "observedSeconds" : 1.0059312916637282,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -114688,
+      "workload" : "idle"
+    },
+    {
+      "deliveredHz" : 54.39346105752203,
+      "eligible" : false,
+      "measuredCPU" : 7.203004178284515,
+      "nodes" : 4,
+      "observedSeconds" : 2.0039173437544378,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -114688,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 53.486540334977086,
+      "eligible" : false,
+      "measuredCPU" : 8.938425682419108,
+      "nodes" : 20,
+      "observedSeconds" : 2.0005032916669734,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -65536,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.40473390909383,
+      "eligible" : false,
+      "measuredCPU" : 12.620810417346872,
+      "nodes" : 100,
+      "observedSeconds" : 2.0037065104188514,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 3,
+      "residentGrowthBytes" : -98304,
+      "workload" : "hover-state"
+    },
+    {
+      "deliveredHz" : 51.44498417777761,
+      "eligible" : false,
+      "measuredCPU" : 12.51388911144457,
+      "nodes" : 100,
+      "observedSeconds" : 7.503161020831612,
+      "reasons" : [
+        "Unsupported measurement protocol",
+        "Phase configuration changed or is unknown",
+        "Requested observation duration is unknown"
+      ],
+      "repetition" : 0,
+      "residentGrowthBytes" : 65536,
+      "workload" : "bounded-soak"
+    }
+  ],
+  "policy" : "mac15-13-hover-2026-11-17",
+  "revision" : "bbc38db1c3920c456ab0ebb3acd7bd5dd418be81",
+  "schema" : 2
+}

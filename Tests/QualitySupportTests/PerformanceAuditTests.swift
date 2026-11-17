@@ -17,7 +17,7 @@ struct PerformanceAuditTests {
             "hoverPublication": 600, "nativeTopologyUpdate": 600, "nativeDestinationUpdate": 1199,
         ]) { _, new in new }
         return [
-            "schema": 2, "measurementProtocol": "ui-v2", "revision": revision,
+            "schema": 2, "measurementProtocol": "ui-v3", "revision": revision,
             "hardware": "Mac15,13", "architecture": "arm64", "toolchain": "Swift fixture",
             "os": "Fixture OS",
             "buildMode": "release-instrumented", "animationRequested": true, "reduceMotion": false,
@@ -36,6 +36,12 @@ struct PerformanceAuditTests {
                     "work": work, "foregroundThroughout": true, "selectionPreserved": true,
                     "loopIterations": 600, "targetHz": 60, "unoccludedThroughout": true,
                     "powerStateStable": true, "lowPowerMode": false,
+                    "requestedSeconds": 10, "configurationStable": true,
+                    "configuration": [
+                        "windowWidth": 1500, "windowHeight": 940, "backingScale": 2,
+                        "displayMaximumHz": 60, "displayID": 1, "animationRequested": true,
+                        "reduceMotion": false, "thermalState": 0,
+                    ],
                 ]
             ],
         ]
@@ -44,6 +50,98 @@ struct PerformanceAuditTests {
     private func decode(_ value: [String: Any]) throws -> PerformanceAudit.Raw {
         try JSONDecoder().decode(
             PerformanceAudit.Raw.self, from: JSONSerialization.data(withJSONObject: value))
+    }
+
+    @Test func phaseConfigurationOverridesFinalSettings() throws {
+        var value = report()
+        var phases = value["phases"] as? [[String: Any]] ?? []
+        var configuration = phases[0]["configuration"] as? [String: Any] ?? [:]
+        configuration["reduceMotion"] = true
+        phases[0]["configuration"] = configuration
+        value["phases"] = phases
+        let result = try PerformanceAudit.evaluate(
+            decode(value), baseline: decode(report()), policy: policy())
+        #expect(result.observations.first?.warningCPU == nil)
+        #expect(result.comparison == "incomparable")
+    }
+
+    @Test func configurationChangesRemainIneligible() throws {
+        var value = report()
+        var phases = value["phases"] as? [[String: Any]] ?? []
+        phases[0]["configurationStable"] = false
+        value["phases"] = phases
+        let result = try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy())
+        #expect(result.conclusion == "inconclusive")
+        #expect(result.observations.first?.warningCPU == nil)
+    }
+
+    @Test func observationWindowsMustMatch() throws {
+        let original = try decode(report())
+        var value = report()
+        var phases = value["phases"] as? [[String: Any]] ?? []
+        phases[0]["elapsedSeconds"] = 2.5
+        var work = phases[0]["work"] as? [String: Int] ?? [:]
+        work["hoverPublication"] = 150
+        work["nativeTopologyUpdate"] = 150
+        work["nativeDestinationUpdate"] = 299
+        phases[0]["loopIterations"] = 150
+        phases[0]["work"] = work
+        value["phases"] = phases
+        #expect(
+            try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy())
+                .comparison == "incomparable")
+        // A shorter declared window is valid alone, but still a different paired workload.
+        phases[0]["requestedSeconds"] = 2.5
+        value["phases"] = phases
+        #expect(
+            try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy())
+                .comparison == "incomparable")
+        phases[0]["requestedSeconds"] = 10
+        phases[0]["elapsedSeconds"] = 12
+        phases[0]["loopIterations"] = 720
+        work["hoverPublication"] = 720
+        work["nativeTopologyUpdate"] = 720
+        work["nativeDestinationUpdate"] = 1439
+        phases[0]["work"] = work
+        value["phases"] = phases
+        #expect(
+            try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy())
+                .comparison == "incomparable")
+    }
+
+    @Test func missingAndLegacyPhaseMetadataStayUnknown() throws {
+        for key in ["configuration", "configurationStable", "requestedSeconds"] {
+            var value = report()
+            var phases = value["phases"] as? [[String: Any]] ?? []
+            phases[0].removeValue(forKey: key)
+            value["phases"] = phases
+            let result = try PerformanceAudit.evaluate(
+                decode(value), baseline: nil, policy: policy())
+            #expect(result.conclusion == "inconclusive")
+            #expect(result.observations.count == 1)
+        }
+        var legacy = report()
+        legacy["measurementProtocol"] = "ui-v2"
+        #expect(
+            try PerformanceAudit.evaluate(
+                decode(legacy), baseline: decode(report()), policy: policy()
+            ).comparison == "incomparable")
+    }
+
+    @Test func eachPhaseUsesItsOwnBudgetScope() throws {
+        var value = report()
+        var phases = value["phases"] as? [[String: Any]] ?? []
+        phases[0]["cpuPercentOfOneCore"] = 1
+        var second = phases[0]
+        second["repetition"] = 2
+        var configuration = second["configuration"] as? [String: Any] ?? [:]
+        configuration["windowWidth"] = 1180
+        second["configuration"] = configuration
+        value["phases"] = [phases[0], second]
+        let result = try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy())
+        #expect(result.observations[0].warningCPU == 12)
+        #expect(result.observations[1].warningCPU == nil)
+        #expect(result.conclusion == "reported-without-applicable-budget")
     }
 
     private func policy() throws -> PerformanceAudit.Policy {
@@ -144,7 +242,11 @@ struct PerformanceAuditTests {
             try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy()).conclusion
                 == "inconclusive")
         value = report()
-        value["windowWidth"] = 0
+        var invalidPhases = value["phases"] as? [[String: Any]] ?? []
+        var invalidConfiguration = invalidPhases[0]["configuration"] as? [String: Any] ?? [:]
+        invalidConfiguration["windowWidth"] = 0
+        invalidPhases[0]["configuration"] = invalidConfiguration
+        value["phases"] = invalidPhases
         #expect(throws: (any Error).self) {
             try PerformanceAudit.evaluate(decode(value), baseline: nil, policy: policy())
         }

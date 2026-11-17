@@ -90,3 +90,12 @@ findings, validation and dispositions. Claude remains unavailable on PATH;
 runtime verification stays deferred under the already accepted conditional AC3,
 without installation or a claimed Claude pass. The accepted #51 pilot scope is
 complete; remaining performance work is tracked by #47.
+
+## Subsequent correction
+
+The findings above describe the reviewed candidate and remain unchanged as
+historical evidence. [PR #71](https://github.com/ivangergo3/jarvis/pull/71)
+implements R1/R2 with separate red/green and actual CLI evidence; see the
+[v3 completion report](../performance-v3-2026-11-17/REPORT.md).
+Direct latency and longer memory qualification remain tracked in
+[#72](https://github.com/ivangergo3/jarvis/issues/72).

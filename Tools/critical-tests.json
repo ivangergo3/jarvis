@@ -1,4 +1,8 @@
 [
+  "JarvisTests.PerformanceRegressionTests/phaseConfigurationChangesCannotBeErasedByRestoringSettings",
+  "QualitySupportTests.PerformanceAuditTests/phaseConfigurationOverridesFinalSettings",
+  "QualitySupportTests.PerformanceAuditTests/configurationChangesRemainIneligible",
+  "QualitySupportTests.PerformanceAuditTests/observationWindowsMustMatch",
   "QualitySupportTests.PerformanceAuditTests/invalidConditionsRemainVisibleAndCannotPass",
   "QualitySupportTests.PerformanceAuditTests/changedConfigurationAndWorkCannotBeCompared",
   "QualitySupportTests.PerformanceAuditTests/failureInvalidatesOldSuccessWithoutTouchingInputs",

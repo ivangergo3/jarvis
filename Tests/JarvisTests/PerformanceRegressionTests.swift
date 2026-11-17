@@ -1,11 +1,46 @@
 import Combine
 import Foundation
+import QualitySupport
 import Testing
 
 @testable import Jarvis
 
 @Suite("Deterministic performance contracts")
 @MainActor struct PerformanceRegressionTests {
+    @Test func phaseConfigurationChangesCannotBeErasedByRestoringSettings() throws {
+        func configuration(
+            width: Double = 1500, height: Double = 940, scale: Double = 2,
+            hz: Int = 60, display: UInt32? = 1, motion: Bool = true,
+            reduce: Bool = false, thermal: Int = 0
+        ) -> PerformanceSession.Configuration {
+            .init(
+                windowWidth: width, windowHeight: height, backingScale: scale,
+                displayMaximumHz: hz, displayID: display, animationRequested: motion,
+                reduceMotion: reduce, thermalState: thermal)
+        }
+        let original = configuration()
+        for changed in [
+            configuration(width: 1180), configuration(height: 760),
+            configuration(scale: 1), configuration(hz: 120), configuration(display: 2),
+            configuration(display: nil), configuration(motion: false),
+            configuration(reduce: true), configuration(thermal: 1),
+        ] {
+            var trace = PerformanceSession.ConfigurationTrace(initial: original)
+            trace.observe(original)
+            #expect(trace.stable)
+            trace.observe(changed)
+            trace.observe(original)
+            #expect(!trace.stable)
+            #expect(trace.initial == original)
+        }
+        // Exercise the real producer/consumer wire contract without changing OS settings.
+        let encoded = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(PerformanceAudit.Configuration.self, from: encoded)
+        #expect(decoded.windowWidth == 1500 && decoded.windowHeight == 940)
+        #expect(decoded.backingScale == 2 && decoded.displayMaximumHz == 60)
+        #expect(decoded.displayID == 1 && decoded.animationRequested && !decoded.reduceMotion)
+        #expect(decoded.thermalState == 0)
+    }
     @Test(arguments: [1, 4, 20, 100, 1_000])
     func hoverLoadOnlyNotifiesChangedCards(cardCount: Int) {
         let dashboard = DashboardState(preferences: nil)

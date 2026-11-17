@@ -1,0 +1,10 @@
+✘ Test observationWindowsMustMatch() recorded an issue at PerformanceAuditTests.swift:89:9: Expectation failed: try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy()).comparison == "incomparable"
+✘ Test configurationChangesRemainIneligible() recorded an issue at PerformanceAuditTests.swift:73:9: Expectation failed: result.conclusion == "inconclusive"
+✘ Test observationWindowsMustMatch() recorded an issue at PerformanceAuditTests.swift:93:9: Expectation failed: try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy()).comparison == "incomparable"
+✘ Test observationWindowsMustMatch() failed after 0.001 seconds with 2 issues.
+✘ Test phaseConfigurationOverridesFinalSettings() recorded an issue at PerformanceAuditTests.swift:63:9: Expectation failed: result.observations.first?.warningCPU == nil
+✘ Test configurationChangesRemainIneligible() recorded an issue at PerformanceAuditTests.swift:74:9: Expectation failed: result.observations.first?.warningCPU == nil
+✘ Test phaseConfigurationOverridesFinalSettings() recorded an issue at PerformanceAuditTests.swift:64:9: Expectation failed: result.comparison == "incomparable"
+✘ Test configurationChangesRemainIneligible() failed after 0.001 seconds with 2 issues.
+✘ Test phaseConfigurationOverridesFinalSettings() failed after 0.001 seconds with 2 issues.
+✘ Test run with 3 tests in 1 suite failed after 0.001 seconds with 6 issues.
