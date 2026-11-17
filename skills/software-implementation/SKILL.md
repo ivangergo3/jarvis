@@ -12,6 +12,7 @@ Requested change, accepted criteria, applicable repository instructions, source 
 ## Procedure
 
 Inspect the working tree and relevant instructions first; preserve unrelated user changes. Trace the existing implementation and choose the smallest cohesive patch that meets the current criteria.
+Before editing, check that the relevant design/tasks agree with the accepted criterion IDs and source version. Resolve contradictions at their authoritative source; keep proposed requirement changes separate. Continue independent authorized work, but do not implement the disputed behaviour by guessing or treating a completed planning checklist as acceptance.
 Use the project toolchain and interfaces. Inspect unfamiliar scripts and their effects before execution; local test commands can still reach networks or production. Do not interpolate untrusted fixture text into shell commands. Keep secrets and real customer records out of fixtures and logs.
 Add meaningful regression coverage where a failure could recur; avoid tests that merely repeat the implementation. Run the relevant available checks, inspect their outcomes and review the exact diff. Record unrun checks as gaps and investigate failures without weakening requirements or deleting checks to get green.
 

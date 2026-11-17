@@ -1,5 +1,11 @@
 # Task decomposition evaluation cases
 
+## Traceability regression
+
+An offline-only baseline conflicts with the design's cloud-sync task; another accepted criterion has no task or check. Review the plan before implementation.
+
+Review for: Cite contradictions and omitted criterion, repair derived work within scope, pause only dependent work.
+
 These are synthetic prompts for evaluation. Definitions are draft instructions; the existence of a case is not evidence that a model passed it.
 
 ## Normal case

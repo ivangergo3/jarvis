@@ -16,6 +16,14 @@ Derive requirements from the current brief and explicitly linked accepted artifa
 Keep the smallest useful assignments; avoid splitting trivial edits into bureaucracy. Identify shared-file or shared-resource contention and discovery work needed before a reliable implementation estimate.
 Allow one executor to handle multiple tasks or skills. Do not assign an agent per task unless separately requested.
 
+## Consistency before implementation
+
+Link each task to accepted criterion IDs and planned verification; distinguish enabling work from user-visible scope. Check both directions: criteria without tasks/checks, and tasks without an accepted purpose. A task may support several criteria; an existing verified behaviour may need preservation rather than another implementation task.
+
+Compare the accepted baseline, design and tasks for contradictory behaviour, omitted failure paths, incompatible contracts and assumptions without evidence. Cite the conflicting sources and identify the consequence, affected work and smallest resolution. Keep unresolved decisions explicit. Pause only work that depends on a consequential unresolved conflict; independent authorized work may proceed.
+
+Correct derived plans at their source when the baseline is clear and edits are authorized. A proposed baseline change must remain separate until the responsible decision-maker accepts it; task completion cannot silently weaken requirements, tests or thresholds. Recheck affected links after a decision. Use a short note for a small change, not mandatory spec/plan/task documents.
+
 ## Output
 
 A task breakdown with stable task references, inputs, outputs, completion checks, dependencies, and unresolved decisions.

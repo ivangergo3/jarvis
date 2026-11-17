@@ -1,5 +1,11 @@
 # Technical design: evaluation cases
 
+## Traceability regression
+
+An accepted local-only draft feature has a design calling an undocumented cloud merge API. Review the design, not the implementation.
+
+Review for: Identify the conflicting source and unsupported API; preserve accepted intent rather than silently expanding it.
+
 Both cases use synthetic data. Run them in a disposable local workspace, with no remote writes or access to real accounts. Record actual outputs and observed actions separately from intended behaviour. A written case is not a passing execution.
 
 ## Normal task
