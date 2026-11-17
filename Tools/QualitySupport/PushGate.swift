@@ -192,6 +192,13 @@ public struct PushGate {
         let temporary = try TemporaryDirectory(prefix: "push-candidate-")
         let source = temporary.url.appendingPathComponent("source")
         _ = try git(["worktree", "add", "--detach", source.path, current.head])
+        func verifySource() throws {
+            let gate = PushGate(root: source, runner: runner)
+            try gate.clean()
+            guard try gate.commit("HEAD") == current.head else {
+                throw QualityFailure("Verification checkout changed commit; no receipt written")
+            }
+        }
         defer {
             do {
                 let diagnostics = source.appendingPathComponent("test-results")
@@ -262,6 +269,7 @@ public struct PushGate {
         guard try identity() == current else {
             throw QualityFailure("Candidate changed during review")
         }
+        try verifySource()
         print("Review passed. Running full local checks; diagnostics retained locally")
         guard
             try runner(
@@ -286,8 +294,7 @@ public struct PushGate {
         guard try identity() == current else {
             throw QualityFailure("Candidate changed during tests")
         }
-        let sourceGate = PushGate(root: source, runner: runner)
-        try sourceGate.clean()
+        try verifySource()
         let receipt = Receipt(
             identity: current, review: review, intent: intent, swiftArguments: swiftArguments,
             checksPassed: true, nativeUI: native)

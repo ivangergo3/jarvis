@@ -119,6 +119,11 @@ struct PushGateTests {
                 #expect(command.directory != root)
                 if failure == "review-exit" { return 1 }
                 if failure == "review-timeout" { throw QualityFailure("Synthetic timeout") }
+                if failure == "review-head" {
+                    _ = try PushGate(root: command.directory).git([
+                        "checkout", "--detach", git(["rev-parse", "origin/main"]),
+                    ])
+                }
                 let index = try #require(command.arguments.firstIndex(of: "--output-last-message"))
                 let url = URL(fileURLWithPath: command.arguments[index + 1])
                 if failure == "malformed" {
@@ -148,6 +153,11 @@ struct PushGateTests {
                         to: command.directory.appendingPathComponent("base.txt"), atomically: true,
                         encoding: .utf8)
                 }
+                if failure == "snapshot-head" {
+                    _ = try PushGate(root: command.directory).git([
+                        "checkout", "--detach", git(["rev-parse", "origin/main"]),
+                    ])
+                }
                 return failure == "tests" ? 1 : 0
             }
             return try command.run(log: log, timeout: timeout)
@@ -171,7 +181,7 @@ struct PushGateTests {
     @Test func failuresAndMutationsCannotCreateReceipts() throws {
         for failure in [
             "review-exit", "review-timeout", "malformed", "findings", "tests", "mutation",
-            "snapshot-mutation",
+            "snapshot-mutation", "review-head", "snapshot-head",
         ] {
             let fixture = try Fixture()
             try fixture.setup()
@@ -283,6 +293,11 @@ struct PushGateTests {
         #expect(try command.run(log: log, timeout: 30) != 0)
         #expect(try String(contentsOf: hook, encoding: .utf8) == "existing hook")
         try FileManager.default.removeItem(at: hook)
+        let otherHook = root.appendingPathComponent(".git/hooks/commit-msg")
+        try "other existing hook".write(to: otherHook, atomically: true, encoding: .utf8)
+        #expect(try command.run(log: log, timeout: 30) != 0)
+        #expect(try String(contentsOf: otherHook, encoding: .utf8) == "other existing hook")
+        try FileManager.default.removeItem(at: otherHook)
         #expect(try command.run(log: log, timeout: 30) == 0)
         #expect(try fixture.git(["config", "--get", "core.hooksPath"]) == ".githooks")
     }
