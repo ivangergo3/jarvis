@@ -108,7 +108,11 @@ Author assessment: preflight exposed three consequential omitted contracts
 (artifact identity, visibility/power state and achieved workload). Implementation
 review also exposed stale output after a failed audit, missing work-unit checks
 and unknown workload acceptance; regressions now cover these. Selection is
-sampled throughout the phase. This is evidence that the consistency step found
+sampled throughout the phase. Final review found that accepting any positive
+destination-update count could hide dropped card updates. The auditor now
+requires one first-card update plus old/new updates for every subsequent
+scripted transition; the regression supplies a missing-update case, and all
+retained qualifying phases satisfy the exact count. This is evidence that the consistency step found
 work; it does not demonstrate human review usefulness. The one mapping and one
 outcome note were sufficient. No per-function paperwork or duplicated status
 backlog was added.

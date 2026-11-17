@@ -242,11 +242,11 @@ public enum PerformanceAudit {
             if ["hover-state", "bounded-soak"].contains(phase.name),
                 let loops = phase.loopIterations
             {
+                // A cleared phase updates one first card, then the old and new card per transition.
                 if phase.work["physicalHoverCallback"] != 0
                     || phase.work["hoverPublication"] != loops
                     || phase.work["nativeTopologyUpdate"] != loops
-                    || !(1...(loops * 2 + 1)).contains(
-                        phase.work["nativeDestinationUpdate", default: 0])
+                    || phase.work["nativeDestinationUpdate"] != max(0, loops * 2 - 1)
                 {
                     reasons.append("Requested hover work was changed or not delivered")
                 }

@@ -11,7 +11,7 @@ struct PerformanceBuildIdentity: Codable, Sendable {
     let toolchain: String
 }
 
-/// Bounded executable hashing runs after measurement on an actor, never during UI work.
+/// Bounded executable hashing stays off the main actor and outside timed workloads.
 actor PerformanceIdentityCapture {
     func capture() throws -> PerformanceBuildIdentity {
         guard let executable = Bundle.main.executableURL else {

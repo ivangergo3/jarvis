@@ -119,6 +119,15 @@ struct PerformanceAuditTests {
         #expect(
             try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy())
                 .conclusion == "inconclusive")
+        value = report()
+        phases = value["phases"] as? [[String: Any]] ?? []
+        var dropped = phases[0]["work"] as? [String: Int] ?? [:]
+        dropped["nativeDestinationUpdate"] = 1
+        phases[0]["work"] = dropped
+        value["phases"] = phases
+        #expect(
+            try PerformanceAudit.evaluate(decode(value), baseline: original, policy: policy())
+                .conclusion == "inconclusive")
     }
 
     @Test func dirtyFailedAndMalformedMeasurementsCannotPass() throws {
