@@ -6,6 +6,11 @@ enum QualityGate {
     static func main() {
         do {
             let arguments = Array(CommandLine.arguments.dropFirst())
+            if arguments.first == "push" {
+                try PushGate(root: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+                    .run(Array(arguments.dropFirst()))
+                return
+            }
             let mode = arguments.first ?? "test"
             var root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             var output: URL?

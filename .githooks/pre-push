@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+[[ "${1:-}" == origin ]] || { echo 'Only the configured origin is supported by the push gate.' >&2; exit 1; }
+git fetch --quiet origin main
+exec swift run quality-gate push hook
