@@ -4,7 +4,7 @@ The library reduces risk through narrow instructions and reviewed examples. It i
 
 ## Packaging
 
-Each folder under `skills/` contains its own `SKILL.md` and synthetic evaluation reference. There are no executable helpers, hooks, auto-updaters, required accounts, tool-grant frontmatter or downloaded assets. Reading a skill does not install it or configure an agent. Copy only the selected reviewed folder when a later installation is requested; do not install an entire unknown catalogue blindly.
+Each folder under `skills/` contains its own `SKILL.md` and synthetic evaluation reference. There are no executable helpers, hooks, auto-updaters, required accounts, tool-grant frontmatter or downloaded assets in the skill library. Reading a skill does not install it or grant tool access. This repository now exposes the reviewed subset in [the project manifest](../../Tools/project-skills.json) through `.agents/skills/` and `.claude/skills/` symlinks to those canonical folders. The separate native quality tooling checks that wiring; it is not bundled into portable skills. Global installation and private skills remain separate; do not install an unknown catalogue blindly.
 
 ## Authority and data
 

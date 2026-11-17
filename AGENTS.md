@@ -18,6 +18,7 @@ Read [REQUIREMENTS.md](REQUIREMENTS.md) before implementing or reviewing a chang
 
 ## Reusable skills and private context
 
+- Use the [agent workflow](docs/engineering/agent-workflow-51.md) for project skill discovery, focused handoffs, bounded unattended work and delivery observations. Read only task-relevant skill bodies/references. Keep one maintained source under `skills/`; verify discovery links with `swift run quality-gate skills` after changing the manifest or wiring.
 - Keep `skills/` generic and independently portable. One agent can use multiple skills; folders do not establish roles or a team.
 - Keep project-specific workflow instructions in the applicable `AGENTS.md`. Keep personal preferences, voice examples and private business context in local or private skills outside this public repository.
 - Do not include personal skill names, private repository links, home-directory paths, customer data or credentials in new public skill artifacts. Synthetic examples must not be derived from identifiable private records.

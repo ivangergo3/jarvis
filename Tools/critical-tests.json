@@ -5,6 +5,8 @@
   "JarvisTests.PerformanceRegressionTests/hoverStateReusesMountedCardsAndReleasesUnmountedCards",
   "JarvisTests.PerformanceRegressionTests/sustainedHoverDoesNotInvalidateDashboardOrConversation",
   "JarvisTests.PerformanceRegressionTests/measurementSummaryPreservesSlowSamplesAndRejectsMissingMeasurements",
+  "QualitySupportTests.SkillLayoutTests/wrongExternalAndBrokenLinksAreRejected",
+  "QualitySupportTests.SkillLayoutTests/missingUnexpectedAndCopiedEntriesAreRejected",
   "QualitySupportTests.CommandEnvironmentTests/ordinaryCommandsInheritPathButExplicitEnvironmentsReplaceIt",
   "QualitySupportTests.AuthorityTests/eachCapabilityCanExecuteWithinItsOwnExplicitScope",
   "QualitySupportTests.AuthorityTests/preauthorizedActionsDoNotNeedAnotherApprovalAndNeverReplay",
