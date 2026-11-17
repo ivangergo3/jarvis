@@ -11,3 +11,5 @@ swift run -Xswiftc -warnings-as-errors quality-gate test \
     --swift-arg=-Xswiftc --swift-arg=-warnings-as-errors "$@"
 swift run -Xswiftc -warnings-as-errors quality-gate authority
 ./build.sh
+bash scripts/verify-bundle.sh
+swift run -Xswiftc -warnings-as-errors quality-gate hover-fault "$@"

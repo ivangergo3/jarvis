@@ -25,12 +25,22 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Record toolchain
         run: |
           xcodebuild -version
           swift --version
       - name: Check whitespace
         run: git show --format= --check HEAD
+      - name: Check complete PR size and added credentials
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_TARGET: ${{ github.event.pull_request.base.ref }}
+        run: |
+          test "$PR_TARGET" = main || { echo 'PRs must target main for cumulative size enforcement.' >&2; exit 1; }
+          swift run quality-gate push ci --base="$PR_BASE" --head="$PR_HEAD"
       - name: Cache pinned formatter build
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -40,8 +50,6 @@ jobs:
         run: ./scripts/format.sh bootstrap
       - name: Check formatting, concurrency gates, tests and macOS 14 release build
         run: ./scripts/check.sh
-      - name: Prove hover load gates reject seeded redraw and fanout regressions
-        run: swift run -Xswiftc -warnings-as-errors quality-gate hover-fault
       - name: Retain bounded test diagnostics
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -50,19 +58,6 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: error
-      - name: Verify app bundle
-        run: |
-          plutil -lint build/Jarvis.app/Contents/Info.plist
-          codesign --verify --deep --strict build/Jarvis.app
-          test -x build/Jarvis.app/Contents/MacOS/Jarvis
-          test -s build/Jarvis.app/Contents/Resources/reactor.png
-          test -s build/Jarvis.app/Contents/Resources/AppIcon.icns
-          test -s build/Jarvis.app/Contents/Resources/CompletionChime.wav
-          for frame in 0 1 2 3 4 5; do
-            test -s "build/Jarvis.app/Contents/Resources/CompanionIdle${frame}.png"
-          done
-          /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' build/Jarvis.app/Contents/Info.plist
-          /usr/libexec/PlistBuddy -c 'Print :NSSpeechRecognitionUsageDescription' build/Jarvis.app/Contents/Info.plist
       - name: Verify native UI with synthetic fixtures
         id: nativeui
         run: swift run -Xswiftc -warnings-as-errors native-ui-check
