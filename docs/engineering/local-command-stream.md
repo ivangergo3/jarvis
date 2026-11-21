@@ -76,7 +76,7 @@ A 410 triggers a fresh snapshot and history traversal. History retains Jarvis-su
 | Twenty pending runs are parked or queued across projects when a 21st is submitted | Refuse the new run and preserve all 20. Resume transfers a slot. Proven unsent settlement permits one new admission. |
 | Command C1 creates run R1 at sequence 41, then the desktop loses the local response | An exact C1 retry returns the original R1 receipt. A changed destination conflicts. |
 | A second chat also named Planning is selected while the first chat has an approval | The answer remains bound to its original session, request and worker generation. An expired or competing decision cannot win. |
-| A prompt's event aged out while its original channel remains live | The fresh snapshot contains the still-actionable prompt. A lost channel cannot become actionable merely through replay. After a new login, both history pagination and direct content lookup omit the old private prompt. |
+| A prompt's event aged out while its original channel remains live | The fresh snapshot contains only actionable request metadata. Only the still-active originating session can then fetch the private prompt via the live request-content route. A lost channel cannot become actionable merely through replay. After a new login, both history pagination and direct content lookup omit the old private prompt. |
 | A restored client has an expired event cursor and the provider is offline | Its signed-in owner can retrieve stored history and referenced data page by page. |
 | The DB transaction rolls back, or the service disconnects before confirming its commit | A rollback leaves no partial receipt, run or sequence gap. Ambiguous commit is reconciled at C1 before any new send. |
 
