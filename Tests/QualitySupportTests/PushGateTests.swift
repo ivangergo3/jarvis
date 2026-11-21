@@ -233,7 +233,7 @@ struct PushGateTests {
     @Test func documentationRequiresReviewAndSkipsBothProductSuites() throws {
         let fixture = try Fixture()
         fixture.nativeAvailable = true
-        try fixture.setup(feature: "docs/engineering/fixture.md")
+        try fixture.setup(feature: "docs/engineering/rewrite-verification.md")
         let gate = fixture.gate()
         let identity = try gate.identity()
         #expect(identity.scope == .docs)
@@ -306,6 +306,7 @@ struct PushGateTests {
             "docs/nested/CLAUDE.local.md",
             "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
             "docs/.hidden.md", "docs/example.swift", "docs/engineering/test-quality.md",
+            "docs/engineering/cloud-harness-rewrite-plan.md",
             "docs/planning/SKILL_SAFETY.md",
         ] {
             try fixture.write(path, Data("Proposed change\n".utf8))

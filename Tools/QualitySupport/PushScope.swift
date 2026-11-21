@@ -41,7 +41,7 @@ extension PushGate {
         "agent-workflow-51.md", "authority-boundaries-49.md", "native-boundaries-48.md",
         "native-ui.md", "push-guardrails.md", "swift_quality.md", "traceability-54.md",
         "workspace-boundaries-46.md", "test-quality.md", "command-timeouts.md",
-        "performance-47.md", "verification-44.md", "rewrite-verification.md",
+        "performance-47.md", "verification-44.md", "cloud-harness-rewrite-plan.md",
     ]
 
     private static func isProsePath(_ path: Substring) -> Bool {
