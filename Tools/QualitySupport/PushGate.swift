@@ -7,6 +7,7 @@ public struct PushGate {
         let head: String
         let toolchain: String
         let nativeAvailable: Bool
+        var scope: Scope = .full
         var developerIdentity = ""
     }
     struct Review: Codable {
@@ -83,10 +84,12 @@ public struct PushGate {
             try command(["/usr/bin/xcrun", "--show-sdk-path"])
             + "\n" + command(["/usr/bin/xcrun", "--show-sdk-version"])
             + "\n" + command(["/usr/bin/xcrun", "--show-sdk-build-version"])
+        let base = try commit("origin/main")
+        let head = try commit("HEAD")
         return try Identity(
-            base: commit("origin/main"), head: commit("HEAD"),
+            base: base, head: head,
             toolchain: command(["/usr/bin/env", "swift", "--version"]),
-            nativeAvailable: native,
+            nativeAvailable: native, scope: scope(base: base, head: head),
             developerIdentity: developer + "\n"
                 + (native ? String(contentsOf: log, encoding: .utf8) : "unavailable")
                 + "\nSDK=" + sdk
@@ -144,6 +147,7 @@ public struct PushGate {
             "diff", "--no-ext-diff", "--no-textconv", "--no-renames", "--no-color",
             "--output-indicator-new=+", "--output-indicator-old=-", "--output-indicator-context= ",
         ]
+        _ = try git(safeDiff + ["--check"] + range + ["--"])
         try Self.checkSize(Self.size(git(safeDiff + ["--numstat", "-z"] + range + ["--"])))
         try Self.checkSecrets(git(safeDiff + ["--unified=0"] + range + ["--"]))
         let outgoing = anchor + ".." + (try commit(head ?? "HEAD"))
@@ -162,9 +166,7 @@ public struct PushGate {
             receipt.review.head == identity.head, receipt.review.base == identity.base,
             !receipt.review.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             receipt.review.completed, receipt.review.findings.isEmpty,
-            receipt.nativeUI
-                == (identity.nativeAvailable
-                    ? "passed" : "unavailable: requires full Xcode; CI required")
+            receipt.nativeUI == expectedNativeResult(identity)
         else {
             throw QualityFailure(
                 "Missing, failed or stale review/tests. Run scripts/prepare-push.sh")
@@ -289,6 +291,32 @@ public struct PushGate {
             throw QualityFailure("Candidate changed during review")
         }
         try verifySource()
+        if current.scope == .full {
+            try runAppChecks(
+                current, source: source, output: output, swiftArguments: swiftArguments)
+        } else {
+            print("Documentation-only change: review and diff checks passed; app tests skipped")
+        }
+        guard try identity() == current else {
+            throw QualityFailure("Candidate changed during tests")
+        }
+        try verifySource()
+        let receipt = Receipt(
+            identity: current, review: review, intent: intent, swiftArguments: swiftArguments,
+            checksPassed: true, nativeUI: Self.expectedNativeResult(current))
+        try Self.validate(receipt, identity: current)
+        try Diagnostics.writeJSON(receipt, to: receiptURL)
+        verified = true
+        print("Review and local checks passed for \(current.head)")
+    }
+    static func expectedNativeResult(_ identity: Identity) -> String {
+        if identity.scope == .docs { return "skipped: documentation-only change" }
+        return identity.nativeAvailable ? "passed" : "unavailable: requires full Xcode; CI required"
+    }
+
+    private func runAppChecks(
+        _ current: Identity, source: URL, output: URL, swiftArguments: [String]
+    ) throws {
         print("Review passed. Running full local checks; diagnostics retained locally")
         guard
             try runner(
@@ -298,8 +326,6 @@ public struct PushGate {
             throw QualityFailure(
                 "Local checks failed/timed out; inspect checks.log, no receipt written")
         }
-        let native =
-            current.nativeAvailable ? "passed" : "unavailable: requires full Xcode; CI required"
         if current.nativeAvailable {
             guard
                 try runner(
@@ -308,20 +334,10 @@ public struct PushGate {
                     output.appendingPathComponent("native-ui.log"), 1_800) == 0
             else { throw QualityFailure("Native UI verification failed; no receipt written") }
         } else {
-            print(native)
+            print(Self.expectedNativeResult(current))
         }
-        guard try identity() == current else {
-            throw QualityFailure("Candidate changed during tests")
-        }
-        try verifySource()
-        let receipt = Receipt(
-            identity: current, review: review, intent: intent, swiftArguments: swiftArguments,
-            checksPassed: true, nativeUI: native)
-        try Self.validate(receipt, identity: current)
-        try Diagnostics.writeJSON(receipt, to: receiptURL)
-        verified = true
-        print("Review and local checks passed for \(current.head)")
     }
+
     static func validatePush(_ input: String, head: String) throws {
         let rows = input.split(separator: "\n")
         guard rows.count == 1 else { throw QualityFailure("Push one reviewed branch at a time") }
@@ -340,7 +356,7 @@ public struct PushGate {
         let prefixes =
             mode == "prepare"
             ? ["--intent-file=", "--swift-arg="]
-            : mode == "ci"
+            : ["ci", "scope"].contains(mode)
                 ? ["--base=", "--head="] : mode == "size" ? ["--base=", "--staged"] : []
         guard options.allSatisfy({ option in prefixes.contains { option.hasPrefix($0) } })
         else {
@@ -352,6 +368,8 @@ public struct PushGate {
         let head =
             options.first { $0.hasPrefix("--head=") }.map { String($0.dropFirst(7)) } ?? "HEAD"
         switch mode {
+        case "scope":
+            print(try scope(base: base, head: head).rawValue)
         case "size", "ci":
             try inspect(
                 base: base, head: mode == "ci" ? head : nil, staged: options.contains("--staged"))

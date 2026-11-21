@@ -70,6 +70,9 @@ struct PushGateTests {
             .init(base: "base", head: "head", toolchain: "new", nativeAvailable: false),
             .init(base: "base", head: "head", toolchain: "swift", nativeAvailable: true),
             .init(
+                base: "base", head: "head", toolchain: "swift", nativeAvailable: false, scope: .docs
+            ),
+            .init(
                 base: "base", head: "head", toolchain: "swift", nativeAvailable: false,
                 developerIdentity: "different Xcode/SDK"),
         ] {
@@ -103,11 +106,24 @@ struct PushGateTests {
         init() throws { temporary = try TemporaryDirectory(prefix: "push-fixture-") }
         var reviews = 0
         var checks = 0
+        var nativeAvailable = false
+        var nativeChecks = 0
         var failure = ""
         var candidate: URL?
         var sdk = "Synthetic SDK 1"
         func git(_ args: [String]) throws -> String { try PushGate(root: root).git(args) }
-        func setup() throws {
+        func commitChanges() throws -> String {
+            _ = try git(["add", "-A"])
+            _ = try git(["commit", "-qm", "Synthetic change"])
+            return try git(["rev-parse", "HEAD"])
+        }
+        func write(_ path: String, _ data: Data) throws {
+            let file = root.appendingPathComponent(path)
+            try FileManager.default.createDirectory(
+                at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try data.write(to: file)
+        }
+        func setup(feature: String = "feature.txt", content: String = "feature\n") throws {
             _ = try git(["init", "-q"])
             _ = try git(["config", "user.name", "Synthetic Test"])
             _ = try git(["config", "user.email", "test@example.invalid"])
@@ -119,13 +135,20 @@ struct PushGateTests {
             _ = try git(["add", "."])
             _ = try git(["commit", "-qm", "base"])
             _ = try git(["update-ref", "refs/remotes/origin/main", "HEAD"])
-            try "feature\n".write(
-                to: root.appendingPathComponent("feature.txt"), atomically: true, encoding: .utf8)
-            _ = try git(["add", "."])
-            _ = try git(["commit", "-qm", "feature"])
+            try write(feature, Data(content.utf8))
+            _ = try commitChanges()
         }
         func runner(_ command: Command, _ log: URL, _ timeout: TimeInterval) throws -> Int32 {
-            if command.executable == "/usr/bin/xcodebuild" { return 1 }
+            if command.executable == "/usr/bin/xcodebuild" {
+                guard nativeAvailable else { return 1 }
+                try "Synthetic Xcode".write(to: log, atomically: true, encoding: .utf8)
+                return 0
+            }
+            if command.arguments == ["swift", "run", "native-ui-check"] {
+                nativeChecks += 1
+                #expect(reviews == 1 && checks == 1)
+                return 0
+            }
             if command.executable == "/usr/bin/xcrun",
                 command.arguments.first?.hasPrefix("--show-sdk-") == true
             {
@@ -194,6 +217,7 @@ struct PushGateTests {
 
     @Test func successfulPrepareRunsReviewThenTestsAndReusesExactReceipt() throws {
         let fixture = try Fixture()
+        fixture.nativeAvailable = true
         try fixture.setup()
         let gate = fixture.gate()
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
@@ -201,9 +225,98 @@ struct PushGateTests {
         try gate.run(["verify"])
         #expect(!FileManager.default.fileExists(atPath: try #require(fixture.candidate).path))
         try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
-        #expect(fixture.reviews == 1 && fixture.checks == 1)
+        #expect(fixture.reviews == 1 && fixture.checks == 1 && fixture.nativeChecks == 1)
         _ = try fixture.git(["update-ref", "refs/remotes/origin/main", "HEAD"])
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
+    }
+
+    @Test func documentationRequiresReviewAndSkipsBothProductSuites() throws {
+        let fixture = try Fixture()
+        fixture.nativeAvailable = true
+        try fixture.setup(feature: "docs/engineering/fixture.md")
+        let gate = fixture.gate()
+        let identity = try gate.identity()
+        #expect(identity.scope == .docs)
+        fixture.failure = "findings"
+        #expect(throws: QualityFailure.self) {
+            try gate.prepare(intent: "Document the fixture", swiftArguments: [])
+        }
+        #expect(throws: QualityFailure.self) { try gate.verify(identity) }
+        fixture.failure = ""
+        try gate.prepare(intent: "Document the fixture", swiftArguments: [])
+        try gate.verify(identity)
+        try gate.prepare(intent: "Document the fixture", swiftArguments: [])
+        #expect(fixture.reviews == 2 && fixture.checks == 0 && fixture.nativeChecks == 0)
+    }
+
+    @Test func documentationWhitespaceFailsBeforeIndependentReview() throws {
+        let fixture = try Fixture()
+        try fixture.setup(feature: "README.md", content: "Trailing space \n")
+        let gate = fixture.gate()
+        #expect(throws: QualityFailure.self) { try gate.run(["ci"]) }
+        #expect(throws: QualityFailure.self) {
+            try gate.prepare(intent: "Document the fixture", swiftArguments: [])
+        }
+        #expect(fixture.reviews == 0 && fixture.checks == 0)
+    }
+
+    @Test func scopeUsesBothGitPathsAndTheCompleteCommittedDifference() throws {
+        let fixture = try Fixture()
+        try fixture.setup(feature: "README.md")
+        let gate = fixture.gate()
+        let base = try fixture.git(["rev-parse", "origin/main"])
+        let readme = try fixture.git(["rev-parse", "HEAD"])
+        #expect(try gate.scope(base: base, head: readme) == .docs)
+        #expect(try gate.scope(base: readme, head: readme) == .full)
+
+        try fixture.write("docs/guide with spaces.md", Data("Initial\n".utf8))
+        let added = try fixture.commitChanges()
+        try fixture.write("docs/guide with spaces.md", Data("Revised\n".utf8))
+        let edited = try fixture.commitChanges()
+        #expect(try gate.scope(base: added, head: edited) == .docs)
+        _ = try fixture.git(["mv", "docs/guide with spaces.md", "docs/renamed.md"])
+        let renamed = try fixture.commitChanges()
+        #expect(try gate.scope(base: edited, head: renamed) == .docs)
+        _ = try fixture.git(["mv", "docs/renamed.md", "source.swift"])
+        let mixed = try fixture.commitChanges()
+        #expect(try gate.scope(base: base, head: mixed) == .full)
+        #expect(try gate.scope(base: renamed, head: mixed) == .full)
+        _ = try fixture.git(["mv", "source.swift", "docs/renamed.md"])
+        let restored = try fixture.commitChanges()
+        #expect(try gate.scope(base: mixed, head: restored) == .full)
+        _ = try fixture.git(["rm", "docs/renamed.md"])
+        let deleted = try fixture.commitChanges()
+        #expect(try gate.scope(base: restored, head: deleted) == .docs)
+    }
+
+    @Test func executableBinarySymlinkAndPolicyChangesRequireFullVerification() throws {
+        let fixture = try Fixture()
+        try fixture.setup(feature: "docs/guide.md")
+        let gate = fixture.gate()
+        var base = try fixture.git(["rev-parse", "HEAD"])
+        func requireFull() throws {
+            let head = try fixture.commitChanges()
+            #expect(try gate.scope(base: base, head: head) == .full)
+            base = head
+        }
+        for path in [
+            "planning.md", "docs/engineering/push-guardrails.md", "docs/nested/AGENTS.md",
+            "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
+            "docs/.hidden.md", "docs/example.swift",
+        ] {
+            try fixture.write(path, Data("Proposed change\n".utf8))
+            try requireFull()
+        }
+        try fixture.write("docs/data.md", Data([0, 1, 2]))
+        try requireFull()
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: fixture.root.appendingPathComponent("docs/guide.md").path)
+        try requireFull()
+        try FileManager.default.createSymbolicLink(
+            atPath: fixture.root.appendingPathComponent("docs/link.md").path,
+            withDestinationPath: "guide.md")
+        try requireFull()
     }
 
     @Test func cltSDKChangesInvalidateEvidence() throws {
