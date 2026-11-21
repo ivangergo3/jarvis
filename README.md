@@ -46,8 +46,8 @@ The build compiles the private fixture library with TypeScript 6.0.3. Turborepo
 before compilation or cache restoration so removed modules cannot survive a
 source change. The fixture imports its compiled
 ES module by package name, checks the greeting and prints
-`Hello from the Jarvis workspace.` on success. The Swift app uses the build
-and verification commands above.
+`Hello from the Jarvis workspace.` on success. To build and test the Swift app,
+follow [Build and verify](#build-and-verify) and [Automated quality checks](#automated-quality-checks).
 
 ## Automated quality checks
 
