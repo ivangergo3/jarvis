@@ -1,17 +1,17 @@
 # Local command receipts and event replay
 
-A Jarvis command targets one owner, project and session. The desktop must be able to recover that request after disconnect without creating a second run or answering a different approval. This document specifies the durable wire contract in [issue #108](https://github.com/ivangergo3/jarvis/issues/108). Its caller is a process-authenticated desktop with a current local Supabase session for the configured owner. The separate lifecycle and provider contracts govern execution after admission.
+A Jarvis command belongs to one owner and names the stable IDs its operation requires. Creating a project or session precedes creation of its child IDs. The desktop must be able to recover that request after disconnect without creating a second run or answering a different approval. This document specifies the durable wire contract in [issue #108](https://github.com/ivangergo3/jarvis/issues/108). Its caller is a process-authenticated desktop with a current local Supabase session for the configured owner. The separate lifecycle and provider contracts govern execution after admission.
 
 ## Send a command
 
 1. Electron main durably records a random command UUID, the owner and original Auth session, immutable destination and payload, attachment references and composer revision before sending. A local persistence error leaves the draft editable. Reconcile pending IDs after restart before enabling Send. Showing or restoring an outbox entry requires the active owner session.
 2. Nest takes the owner from verified authentication and resolves the stored ancestry of the project, session, run and request. Display names and the currently visible chat cannot reroute a command.
-3. Serialize competing requests by `(owner, commandId)`. In one database transaction, check for an existing receipt before consulting mutable run state. The same operation, destination and normalized payload return the original receipt. Different data with the same ID returns 409. Reserve the key even under concurrent inserts, using the database uniqueness constraint and retrying the lookup after a conflict.
+3. Serialize competing requests by `(owner, commandId)`. In one database transaction, check for an existing receipt before consulting mutable run state. Fingerprint the operation, destination, expected revision and canonical payload including ordered immutable content references. Exclude refreshed credentials and delivery metadata. An identical fingerprint returns the original receipt. Different data with the same ID returns 409. Reserve the key even under concurrent inserts, using the database uniqueness constraint and retrying the lookup after a conflict.
 4. For a new command, validate the payload, destination, expected revision, permissions and admission state. Commit the new IDs, domain change, owner-sequenced event and receipt together. If the transaction fails, no run or successful receipt is visible. Preserve deduplication records when compacting event replay. A committed receipt acknowledges the local operation. Provider handoff, acceptance, terminal outcome and cleanup each require their own evidence.
 
 Only the acknowledged composer revision can clear. Retain its exact text and image bytes until the input is safely delivered or the owner can restore or discard it after definitive refusal or provably unsent cancellation. Restoring an older input creates a separately saved draft if newer edits exist. It does not send.
 
-A receipt lookup can return 404 while an original send remains uncommitted, or when Electron died before sending. Keep that command pending. After an explicit owner retry, submit the exact same local request and ID under current authorization, destination and admission checks. A transient failure or ambiguous commit stays pending. Retries on the separate provider channel require that channel's own delivery evidence.
+A receipt lookup can return 404 while an original send remains uncommitted, or when Electron died before sending. Keep that command pending. After an explicit owner retry, submit the exact same local request and ID under current authorization, destination and admission checks. A transient failure or ambiguous commit stays pending. This local retry never reissues an ambiguous provider frame. Reconcile any prior handoff on its original thread.
 
 ## Operations
 
@@ -31,7 +31,7 @@ Requests use versioned `/v1` routes on the authenticated local service. All prod
 | GET /sessions/{session}/history?after={cursor}&limit={n} | Page durable entries by their stable sequence and a fixed high-water mark. |
 | GET /sessions/{session}/history/{entry}/content/{content}?offset={n} | Read retained text or a normalized image in chunks of up to 64 KiB. Recheck owner, session, entry and immutable content reference on every request. |
 
-Every mutation uses a command UUID. Return 201/202 for committed creation or accepted work, 400 for malformed input, 401 for an invalid session, 403 for disallowed operations and 404 for absent or inaccessible targets. Use 409 for conflicts, 410 for expired cursors, 413 for input size, 429 for full admission and 503 for unavailable dependencies. Responses carry safe reason codes, never credentials.
+Every product mutation in this table uses a command UUID. Return 201/202 for committed creation or accepted work, 400 for malformed input, 401 for an invalid session, 403 for disallowed operations and 404 for absent or inaccessible targets. Use 409 for conflicts, 410 for expired cursors, 413 for input size, 429 for full admission and 503 for unavailable dependencies. Responses carry safe reason codes, never credentials.
 
 ## Replay and recover
 
