@@ -300,7 +300,9 @@ struct PushGateTests {
             base = head
         }
         for path in [
-            "planning.md", "docs/engineering/push-guardrails.md", "docs/nested/AGENTS.md",
+            "planning.md", "docs/engineering/push-guardrails.md",
+            "docs/engineering/agent-workflow-51.md",
+            "docs/nested/AGENTS.md",
             "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
             "docs/.hidden.md", "docs/example.swift",
         ] {

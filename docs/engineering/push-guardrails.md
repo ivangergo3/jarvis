@@ -36,7 +36,7 @@ A PR that changes only ordinary Markdown under `docs/` or the root `README.md`
 gets the same independent local review and basic diff checks. App tests, builds,
 formatter setup and native UI runs are skipped locally and in CI. The required
 GitHub job still reports its result. Agent instructions (AGENTS, CLAUDE and SKILL
-Markdown files), the reviewer's `docs/engineering/push-guardrails.md`, hidden
+Markdown files), the engineering policies linked from `AGENTS.md`, hidden
 paths, binary assets, executable files and symlinks take the full route. A
 mixed PR takes the full route even if its last commit only changes prose.
 

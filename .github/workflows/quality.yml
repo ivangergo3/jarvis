@@ -55,7 +55,9 @@ jobs:
                  { [[ "$GITHUB_EVENT_NAME" == pull_request ]] || git merge-base --is-ancestor "$BASE" "$HEAD"; } &&
                  result=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD") &&
                  [[ "$result" == docs ]]; then
-                git diff --check "$BASE...$HEAD" --
+                if [[ "$GITHUB_EVENT_NAME" != pull_request ]]; then
+                  swift run quality-gate push ci --base="$BASE" --head="$HEAD"
+                fi
                 scope=docs
               fi
               ;;

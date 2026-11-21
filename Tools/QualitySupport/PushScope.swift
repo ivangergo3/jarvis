@@ -24,6 +24,13 @@ extension PushGate {
         return stats.binaries == 0 ? .docs : .full
     }
 
+    // These documents supply working instructions to agents through AGENTS.md or the review prompt.
+    private static let engineeringPolicies: Set<String> = [
+        "agent-workflow-51.md", "authority-boundaries-49.md", "native-boundaries-48.md",
+        "native-ui.md", "push-guardrails.md", "swift_quality.md", "traceability-54.md",
+        "workspace-boundaries-46.md",
+    ]
+
     private static func isProsePath(_ path: Substring) -> Bool {
         if path == "README.md" { return true }
         let parts = path.split(separator: "/")
@@ -31,8 +38,11 @@ extension PushGate {
             !parts.contains(where: { $0.hasPrefix(".") }),
             path.rangeOfCharacter(from: .controlCharacters) == nil
         else { return false }
-        // These are workflow inputs, including the policy loaded by the independent reviewer.
+        if parts.count == 3, parts[1].lowercased() == "engineering",
+            engineeringPolicies.contains(name.lowercased())
+        {
+            return false
+        }
         return !["agents.md", "claude.md", "skill.md"].contains(name.lowercased())
-            && path.lowercased() != "docs/engineering/push-guardrails.md"
     }
 }
