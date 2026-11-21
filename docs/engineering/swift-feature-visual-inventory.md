@@ -148,7 +148,7 @@ These are agreed future changes, **not observations of today's Swift app**:
 | Storage/login | Existing desktop records plus local app preferences | Local Docker-based Supabase and Supabase Auth; define migration only for accepted new-app data. |
 | Close window | Last window terminates the Swift app | Latest decision: confirm before stopping the service and active tasks. Cancel leaves work intact; supersedes keep-running-on-close. |
 | Command-Q | Swift termination cleanup; no general keep-running service contract | Confirm before stopping the service and active tasks. Canceling the confirmation leaves work intact. |
-| Service start | Swift app starts its own integration on launch | Start local service only when Jarvis opens initially; no automatic login service selected. |
+| Service start | Swift follows the selected chat. With no chat selected it does not connect. The Codex child starts on the connection’s first request. | Start the local Nest service when Jarvis opens. No automatic login service. |
 | Approvals | Linked desktop runtime owns its approvals | New CLI-owned runtime needs correctly correlated approval UI and permission enforcement. |
 | Visuals | Current cyan/gold reactor dashboard | Preserve appearance/interaction; no redesign mixed into the port. |
 
