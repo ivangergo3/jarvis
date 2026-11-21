@@ -486,7 +486,7 @@ Exit: the owner can follow tasks, communicate and use accepted controls from the
 
 ### P4 — later expansion and cleanup
 
-Later tickets cover Claude Code, Linux/Windows/Android, historical-chat import, optional live voice, broader unattended permissions and new skill/trigger/orchestration features. Each gets its own scope and verification before integration. Ordering among these later features is not fixed by this plan.
+Later tickets cover Claude Code, Linux/Windows/Android, historical-chat import, optional live voice and broader unattended permissions. Each gets its own scope and verification before integration. The Jarvis coordinator, skills and triggers are scheduled separately after local parity. Their timing relative to web, cloud and iPhone remains open.
 
 Update requirements, instructions, README, skills and doc indexes as support changes. Reassess Swift-only guidance if the support policy changes. Preserve source, existing gates, history, backups and failure evidence under the applicable decisions.
 

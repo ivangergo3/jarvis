@@ -74,6 +74,12 @@ private actor ParityWorkspace: WorkspaceSource {
             #expect(layout.nodes.count == count)
             #expect(layout.connections.count == count)
             for (node, route) in zip(layout.nodes, layout.connections) {
+                guard let start = route.points.first, let end = route.points.last else {
+                    Issue.record("Missing connector geometry")
+                    continue
+                }
+                #expect(start.x == layout.center.x)
+                #expect(start != end)
                 let endpoint = route.point(at: 1)
                 #expect(endpoint.y == node.y)
                 let inwardOffset =
