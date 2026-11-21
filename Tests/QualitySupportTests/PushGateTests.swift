@@ -270,8 +270,10 @@ struct PushGateTests {
         #expect(try gate.scope(base: base, head: readme) == .docs)
         #expect(try gate.scope(base: readme, head: readme) == .full)
 
+        try fixture.write("docs/planning/GITHUB_TICKETS.md", Data("Status\n".utf8))
         try fixture.write("docs/guide with spaces.md", Data("Initial\n".utf8))
         let added = try fixture.commitChanges()
+        #expect(try gate.scope(base: readme, head: added) == .docs)
         try fixture.write("docs/guide with spaces.md", Data("Revised\n".utf8))
         let edited = try fixture.commitChanges()
         #expect(try gate.scope(base: added, head: edited) == .docs)

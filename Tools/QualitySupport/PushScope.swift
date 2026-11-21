@@ -29,8 +29,15 @@ extension PushGate {
             // Git samples the beginning of each blob to detect binaries. Check the rest too.
             let id = String(blob)
             guard let length = try Int(git(["cat-file", "-s", id])), length <= 1_048_576,
-                let text = try? command(
-                    ["/usr/bin/git", "cat-file", "blob", id], trimNewlines: false),
+                length >= 0
+            else { return .full }
+            let text: String
+            do {
+                text = try command(["/usr/bin/git", "cat-file", "blob", id], trimNewlines: false)
+            } catch CocoaError.fileReadInapplicableStringEncoding {
+                return .full
+            }
+            guard
                 text.utf8.allSatisfy({ $0 == 9 || $0 == 10 || $0 == 13 || ($0 >= 32 && $0 != 127) })
             else { return .full }
         }
@@ -52,7 +59,12 @@ extension PushGate {
             !parts.contains(where: { $0.hasPrefix(".") }),
             path.rangeOfCharacter(from: .controlCharacters) == nil
         else { return false }
-        if parts.count >= 3, parts[1].lowercased() == "planning" { return false }
+        if parts.count == 3, parts[1].lowercased() == "planning",
+            ["board_guide.md", "skill_boundaries.md", "skill_safety.md", "skill_review_guide.md"]
+                .contains(name.lowercased())
+        {
+            return false
+        }
         if parts.count == 3, parts[1].lowercased() == "engineering",
             engineeringPolicies.contains(name.lowercased())
         {

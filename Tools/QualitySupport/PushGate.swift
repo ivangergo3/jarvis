@@ -50,6 +50,19 @@ public struct PushGate {
                 Command(executable, Array(arguments.dropFirst()), directory: root), log, timeout)
                 == 0
         else {
+            if arguments.first == "/usr/bin/git", arguments.dropFirst().first == "diff",
+                arguments.contains("--check")
+            {
+                // Git may echo the rejected source line. Report only the location, never its contents.
+                let output = try String(contentsOf: log, encoding: .utf8)
+                let location = output.split(separator: "\n").first.flatMap { line in
+                    line.range(of: #"^.+?:[0-9]+:"#, options: .regularExpression)
+                        .map { String(line[$0].dropLast()) }
+                }
+                throw QualityFailure(
+                    "Whitespace check failed at " + (location ?? "the candidate diff")
+                        + ". Run git diff --check locally for details.")
+            }
             throw QualityFailure(
                 "Push prerequisite failed: \(arguments.prefix(3).joined(separator: " "))")
         }
