@@ -261,6 +261,18 @@ struct PushGateTests {
         #expect(fixture.reviews == 0 && fixture.checks == 0)
     }
 
+    @Test func whitespaceDiagnosticsDoNotPrintCredentialFilenames() throws {
+        let fixture = try Fixture()
+        let secret = "ghp_" + String(repeating: "x", count: 40)
+        try fixture.setup(feature: "docs/" + secret + ".md", content: "Trailing space \n")
+        do {
+            try fixture.gate().run(["ci"])
+            Issue.record("Whitespace check should reject the candidate")
+        } catch let error as QualityFailure {
+            #expect(!error.message.contains(secret))
+        }
+    }
+
     @Test func scopeUsesBothGitPathsAndTheCompleteCommittedDifference() throws {
         let fixture = try Fixture()
         try fixture.setup(feature: "README.md")

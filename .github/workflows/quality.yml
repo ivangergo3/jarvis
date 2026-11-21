@@ -54,8 +54,7 @@ jobs:
               if [[ "$BASE" =~ $sha_pattern && "$HEAD" =~ $sha_pattern ]] &&
                  git merge-base --is-ancestor "$BASE" HEAD; then
                 scope=$(swift run quality-gate push scope --base="$BASE" --head=HEAD)
-                if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]] &&
-                   ! git diff --quiet "$HEAD" HEAD --; then
+                if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]]; then
                   scope=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD")
                 fi
                 if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" != pull_request ]]; then

@@ -59,8 +59,10 @@ public struct PushGate {
                     line.range(of: #"^.+?:[0-9]+:"#, options: .regularExpression)
                         .map { String(line[$0].dropLast()) }
                 }
+                if let location { try Self.checkSecrets("+" + location) }
                 throw QualityFailure(
-                    "Whitespace check failed at " + (location ?? "the candidate diff")
+                    "Whitespace check failed at "
+                        + Diagnostics.redact(location ?? "the candidate diff")
                         + ". Run git diff --check locally for details.")
             }
             throw QualityFailure(
