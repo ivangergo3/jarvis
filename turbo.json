@@ -2,9 +2,8 @@
   "$schema": "https://turborepo.dev/schema.json",
   "globalDependencies": ["tsconfig.base.json", ".nvmrc", ".npmrc", "pnpm-workspace.yaml"],
   "tasks": {
-    "clean-output": { "cache": false, "outputs": [] },
     "build": {
-      "dependsOn": ["^build", "clean-output"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["dist/**"]
     },

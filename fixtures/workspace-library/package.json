@@ -9,8 +9,7 @@
     }
   },
   "scripts": {
-    "clean-output": "node clean-output.mjs",
-    "build": "node clean-output.mjs && tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }
