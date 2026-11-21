@@ -414,17 +414,17 @@ No document is deleted in this planning step. Classify scope, status, incoming l
 
 | Document at the [audited Swift revision](https://github.com/ivangergo3/jarvis/tree/d61f5915a5bf85efe4272f1317c3c8f56ed49b9d/docs/engineering) | Rewrite considerations |
 | --- | --- |
-| `REQUIREMENTS.md` | Retain authority during planning; create an accepted successor baseline with explicit scope/supersession before new-stack implementation. Preserve native requirements still applicable during coexistence. |
+| `REQUIREMENTS.md` | Keep the existing requirements and Swift gates during coexistence. The [workspace bootstrap](https://github.com/ivangergo3/jarvis/issues/109) can proceed after its listed dependency. Any successor requirements baseline needs its own explicit scope and approval. |
 | `AGENTS.md`, `CLAUDE.md` | Retain current checks; later reconcile accepted ticket/auto-merge authority and polyglot coexistence. Keep one canonical instruction source. |
 | `README.md` | Later describe current runnable versions, cloud architecture, setup and migration status truthfully. |
 | `docs/planning/CAPABILITY_MAP.md` | Audit against actual planned server/client capabilities; do not present future capabilities as implemented. |
 | `docs/planning/SKILL_CATALOG.md`, `SKILL_BOUNDARIES.md` | Retain generic catalog/boundaries; update only relevant language/provider support. |
 | Other skill research, safety, review and evaluation notes in `docs/planning/` | Preserve provenance/evaluation evidence; index current guidance versus historical research. |
-| `docs/engineering/SWIFT_QUALITY.md` | Active for Swift until retirement; new TS check specification alongside it, historical archive only after cutover. |
+| `docs/engineering/SWIFT_QUALITY.md` | Keep the Swift checks alongside the new TS checks. Replacing an existing gate requires separately approved migration. |
 | `docs/engineering/agent-workflow-51.md` | Retain principles; extend execution location, durable tasks and skill-version references. |
 | `docs/engineering/authority-boundaries-49.md` | Preserve trust rules; specify server enforcement, worker capabilities and remote grants. |
 | `docs/engineering/traceability-54.md` | Retain accepted requirements -> tickets -> observed evidence; adapt identifiers/artifacts without a parallel backlog. |
-| `docs/engineering/native-ui.md` | Active native evidence until retirement; add separate platform matrix for replacement clients. |
+| `docs/engineering/native-ui.md` | Keep required native evidence through the trial and add a separate platform matrix for replacement clients. The installed-app retirement decision does not retire tests. |
 | `docs/engineering/command-timeouts.md` | Preserve cleanup/timeout invariants; qualify their Linux/process-tree implementation independently. |
 | `docs/engineering/verification-44.md` | Keep historical evidence; never use old passing checks to certify new stack behavior. |
 | `docs/engineering/test-quality.md` | Retain meaningful/negative-test principles; add TS examples where justified. |
@@ -447,7 +447,7 @@ The sections below describe the rollout. Use the accepted GitHub issues for impl
 3. Specify the local API/events, Codex CLI protocol/authentication, task/run state, approval routing, cancellation, process ownership and recovery.
 4. Specify local Supabase schema/Auth/migrations, repository boundaries, initial scheduling/resource limits and packaging/lifecycle behavior, including close versus Quit.
 5. Map Google-style/TS quality gates and relevant skill changes; audit documentation and propose an accepted successor requirements baseline.
-6. Create/review small dependency-linked tickets with acceptance, exclusions and evidence. Keep cloud/mobile/future-feature questions in their later phases.
+6. Use the individually approved, dependency-linked [phase-one issues](https://github.com/ivangergo3/jarvis/issues/139). Cloud, mobile and future features have their own phases.
 
 Exit: accepted phase-one feature inventory, contracts/lifecycle design, verification map and bounded ticket set. No implementation starts merely because the stack is selected. No need to choose a cloud provider or complete mobile design first.
 
@@ -463,6 +463,8 @@ Deliver as multiple coherent PRs under the size cap:
 - **Qualification/cutover:** packaged macOS behavior, local DB persistence, service lifetime, new-session continuity, hover/scale/CPU/memory tests, meaningful negative probes and owner-facing app acceptance. Keep Swift available and switch gradually only once the replacement works.
 
 Exit: a usable local replacement matching the agreed parity matrix, with passing applicable checks/review and a repeatable setup/rollback path. Close/Quit confirmation safely stops owned work; cancel preserves it; relaunch recovers state without duplicate effects. This phase does not promise cloud access, phone support or imported historical chats.
+
+After the reversible local cutover and at least one week of daily Electron use, verify access to old chats and ask the owner separately about uninstalling the installed Swift app and migrating the test system. Keep Swift source, data and existing gates through those decisions. This is the final phase-one follow-up. [Retirement criteria](https://github.com/ivangergo3/jarvis/issues/138)
 
 ### P2 — introduce web and migrate backend/execution to cloud
 
@@ -486,7 +488,7 @@ Exit: the owner can follow tasks, communicate and use accepted controls from the
 
 Later tickets cover Claude Code, Linux/Windows/Android, historical-chat import, optional live voice, broader unattended permissions and new skill/trigger/orchestration features. Each gets its own scope and verification before integration. Ordering among these later features is not fixed by this plan.
 
-Update requirements, instructions, README, skills and doc indexes as support changes. Archive obsolete Swift-only guidance only when Swift support actually ends; remove old application code in its own accepted ticket. Preserve old history, backups and failure evidence. After a week of daily Electron use, confirm old-chat access and ask separately about switching test systems and uninstalling the installed Swift app. Its source and data are retained. [Retirement criteria](https://github.com/ivangergo3/jarvis/issues/138)
+Update requirements, instructions, README, skills and doc indexes as support changes. Reassess Swift-only guidance if the support policy changes. Preserve source, existing gates, history, backups and failure evidence under the applicable decisions.
 
 ### Deferred ticket register (not created issues)
 
