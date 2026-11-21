@@ -254,6 +254,7 @@ struct PushGateTests {
         try fixture.setup(feature: "README.md", content: "Trailing space \n")
         let gate = fixture.gate()
         #expect(throws: QualityFailure.self) { try gate.run(["ci"]) }
+        #expect(throws: QualityFailure.self) { try gate.run(["integration"]) }
         #expect(throws: QualityFailure.self) {
             try gate.prepare(intent: "Document the fixture", swiftArguments: [])
         }
@@ -312,6 +313,8 @@ struct PushGateTests {
             try fixture.write(path, Data("Proposed change\n".utf8))
             try requireFull()
         }
+        try fixture.write("docs/control-prefix.md", Data([11]) + Data("Example".utf8))
+        try requireFull()
         try fixture.write("docs/binary-tail.md", Data(repeating: 65, count: 10000) + Data([0]))
         try requireFull()
         try fixture.write("docs/data.md", Data([0, 1, 2]))
@@ -373,6 +376,7 @@ struct PushGateTests {
         #expect(throws: QualityFailure.self) { try gate.run(["size", "--staged"]) }
         _ = try fixture.git(["commit", "-qm", "oversized synthetic fixture"])
         #expect(throws: QualityFailure.self) { try gate.run(["ci"]) }
+        try gate.run(["integration"])
         #expect(throws: QualityFailure.self) { try gate.run(["ci", "--staged"]) }
         #expect(throws: QualityFailure.self) { try gate.run(["prepare"]) }
     }

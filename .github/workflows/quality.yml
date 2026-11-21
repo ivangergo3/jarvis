@@ -52,11 +52,12 @@ jobs:
           case "$GITHUB_EVENT_NAME" in
             pull_request|push|merge_group)
               if [[ "$BASE" =~ $sha_pattern && "$HEAD" =~ $sha_pattern ]] &&
-                 { [[ "$GITHUB_EVENT_NAME" == pull_request ]] || git merge-base --is-ancestor "$BASE" "$HEAD"; } &&
-                 result=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD") &&
+                 git merge-base --is-ancestor "$BASE" HEAD &&
+                 { [[ "$GITHUB_EVENT_NAME" != pull_request ]] || git diff --quiet "$HEAD" HEAD --; } &&
+                 result=$(swift run quality-gate push scope --base="$BASE" --head=HEAD) &&
                  [[ "$result" == docs ]]; then
                 if [[ "$GITHUB_EVENT_NAME" != pull_request ]]; then
-                  swift run quality-gate push ci --base="$BASE" --head="$HEAD"
+                  swift run quality-gate push integration --base="$BASE" --head=HEAD
                 fi
                 scope=docs
               fi

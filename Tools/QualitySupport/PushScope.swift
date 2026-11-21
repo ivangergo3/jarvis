@@ -29,7 +29,8 @@ extension PushGate {
             // Git samples the beginning of each blob to detect binaries. Check the rest too.
             let id = String(blob)
             guard let length = try Int(git(["cat-file", "-s", id])), length <= 1_048_576,
-                let text = try? git(["cat-file", "blob", id]),
+                let text = try? command(
+                    ["/usr/bin/git", "cat-file", "blob", id], trimNewlines: false),
                 text.utf8.allSatisfy({ $0 == 9 || $0 == 10 || $0 == 13 || ($0 >= 32 && $0 != 127) })
             else { return .full }
         }

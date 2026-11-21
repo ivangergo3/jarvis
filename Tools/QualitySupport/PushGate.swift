@@ -40,7 +40,9 @@ public struct PushGate {
         self.runner = runner
     }
 
-    func command(_ arguments: [String], timeout: TimeInterval = 60) throws -> String {
+    func command(_ arguments: [String], timeout: TimeInterval = 60, trimNewlines: Bool = true)
+        throws -> String
+    {
         let temporary = try TemporaryDirectory(prefix: "push-command-")
         let log = temporary.url.appendingPathComponent("output")
         guard let executable = arguments.first,
@@ -51,7 +53,8 @@ public struct PushGate {
             throw QualityFailure(
                 "Push prerequisite failed: \(arguments.prefix(3).joined(separator: " "))")
         }
-        return try String(contentsOf: log, encoding: .utf8).trimmingCharacters(in: .newlines)
+        let output = try String(contentsOf: log, encoding: .utf8)
+        return trimNewlines ? output.trimmingCharacters(in: .newlines) : output
     }
     func git(_ arguments: [String]) throws -> String {
         try command(["/usr/bin/git"] + arguments)
@@ -140,7 +143,9 @@ public struct PushGate {
             }
         }
     }
-    func inspect(base: String, head: String?, staged: Bool = false) throws {
+    func inspect(base: String, head: String?, staged: Bool = false, enforcePRSize: Bool = true)
+        throws
+    {
         let anchor = try git(["merge-base", try commit(base), try commit(head ?? "HEAD")])
         let range = staged ? ["--cached", anchor] : [anchor] + (head.map { [$0] } ?? [])
         let safeDiff = [
@@ -148,7 +153,9 @@ public struct PushGate {
             "--output-indicator-new=+", "--output-indicator-old=-", "--output-indicator-context= ",
         ]
         _ = try git(safeDiff + ["--check"] + range + ["--"])
-        try Self.checkSize(Self.size(git(safeDiff + ["--numstat", "-z"] + range + ["--"])))
+        if enforcePRSize {
+            try Self.checkSize(Self.size(git(safeDiff + ["--numstat", "-z"] + range + ["--"])))
+        }
         try Self.checkSecrets(git(safeDiff + ["--unified=0"] + range + ["--"]))
         let outgoing = anchor + ".." + (try commit(head ?? "HEAD"))
         try Self.checkSecrets(
@@ -356,7 +363,7 @@ public struct PushGate {
         let prefixes =
             mode == "prepare"
             ? ["--intent-file=", "--swift-arg="]
-            : ["ci", "scope"].contains(mode)
+            : ["ci", "integration", "scope"].contains(mode)
                 ? ["--base=", "--head="] : mode == "size" ? ["--base=", "--staged"] : []
         guard options.allSatisfy({ option in prefixes.contains { option.hasPrefix($0) } })
         else {
@@ -370,9 +377,11 @@ public struct PushGate {
         switch mode {
         case "scope":
             print(try scope(base: base, head: head).rawValue)
-        case "size", "ci":
+        case "size", "ci", "integration":
+            // Each PR already has a size check. A queue or main push may combine several PRs.
             try inspect(
-                base: base, head: mode == "ci" ? head : nil, staged: options.contains("--staged"))
+                base: base, head: mode == "size" ? nil : head,
+                staged: options.contains("--staged"), enforcePRSize: mode != "integration")
         case "prepare":
             guard let file = options.first(where: { $0.hasPrefix("--intent-file=") }) else {
                 throw QualityFailure(
