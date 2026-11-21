@@ -24,9 +24,11 @@ Requests use versioned `/v1` routes on the authenticated local service. All prod
 | GET /projects, GET /projects/{project}/sessions | List durable selection metadata with stable IDs and bounded pagination. |
 | POST /projects/{project}/sessions, POST /sessions/{session}/runs | Create one session or queue one run at the immutable destination. |
 | GET /sessions/{session}/runs/{run} | Return this run’s truthful state and revision. |
-| POST /runs/{run}/requests/{request}/answer | Claim the exact live request once, with its expected revision and bound channel. |
+| POST /runs/{run}/requests/{request}/answer | Claim the exact live request once, under its originating active Auth session, expected revision and bound worker channel. |
 | POST /runs/{run}/cancel | Request cancellation of this run. The lifecycle contract governs stop delivery and cleanup. |
-| GET /commands/{command} | Look up the original receipt within the owner namespace. |
+| GET /commands/{command} | Look up the original receipt or retirement tombstone for the verified owner. A 404 leaves admission unsettled. |
+| POST /commands/{command}/retire | The same owner in a fresh active Auth session supplies a separate retirement command UUID, original command fingerprint, original session and destination. Atomically return the existing admission receipt, or persist the retired-unsent original key and this retirement receipt. Working or unprovable state stays pending and cannot authorize a new send. Identical retries of the retirement return its result. |
+| POST /runs/{run}/reconcile | The current verified owner can request a new bounded read-only recovery attempt for this exact run, using its expected revision and frozen provider binding. It carries no original work or decision grant. |
 | GET /snapshot, GET /events?after={cursor} | Obtain a consistent durable state and replay changes from its owner-scoped cursor. |
 | GET /sessions/{session}/history?after={cursor}&limit={n} | Page durable entries by their stable sequence and a fixed high-water mark. |
 | GET /sessions/{session}/history/{entry}/content/{content}?offset={n} | Read retained text or a normalized image in chunks of up to 64 KiB. Recheck owner, session, entry and immutable content reference on every request. |
@@ -37,7 +39,7 @@ Every product mutation in this table uses a command UUID. Return 201/202 for com
 
 Allocate each owner's event sequence under a transactional counter held through commit. Every event records its ID, owner, typed subject ID, schema version, sequence and timestamp. Events for a run or its children require the run ID. A project-created event has a project subject and no run ID.
 
-A consistent snapshot and cursor describe the same committed prefix. Include current pending approval/question data with the original request ID, revision and opaque channel binding. Recheck live binding and permitted scope when answering. Serialize answers with retirement or terminal state so only one decision wins. A lost channel leaves the request retired or unresolved. No decision is forwarded to a replacement channel.
+A consistent snapshot and cursor describe the same committed prefix. Bind each approval/question to its originating Auth session, the run, request ID, revision and opaque worker channel. Include actionable data only while that exact session and channel are current. Another login for the same owner can view permitted history and the retired/unresolved status. Verify the originating session and current answer session match in the transaction claiming the decision, ordered with revocation, before consuming it. Recheck live binding, session and permitted scope at delivery. If authority is lost after a durable claim, record it unsent or uncertain according to actual handoff and never forward it under another login. Serialize answers with retirement or terminal state so only one decision wins. A lost channel leaves the request retired or unresolved. No decision is forwarded to a replacement channel.
 
 Subscribe to wake-up notifications before reading the durable high-water mark. Replay in order from the last accepted cursor, then tail the log. Notifications can be lost: periodically query the log. Deduplicate delivered IDs and reconnect on gaps. Disconnect slow SSE readers with a resumable cursor. Use separate authenticated connections for commands and streaming so an open SSE response cannot block cancellation or approval receipts. Check active owner session before every read, batch and idle heartbeat.
 

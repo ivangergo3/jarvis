@@ -78,7 +78,7 @@ The Swift inventory and verification map accompany this plan. The [local service
 
 Use a **TypeScript modular monolith with supervised provider processes**, not many independently deployed services. Start locally and keep execution outside the renderer. Share contracts, pure logic, feature state and UI components. Separate the local service lifetime from the window lifetime; cloud worker isolation is qualified later.
 
-Phase-one topology: Electron renderer -> authenticated local NestJS service -> supervised Codex CLI, with a local Docker-based Supabase stack. The renderer uses the same typed API boundary intended for remote access later. Commands and credentials stay behind that boundary. Specify the loopback endpoint's access checks; loopback alone is not authentication.
+In phase one the renderer invokes a narrow typed preload bridge. Electron main authenticates the local NestJS service on its private Unix socket and supplies the verified owner session. Nest supervises Codex CLI and uses the local Docker-based Supabase stack. The renderer holds neither service credentials nor a direct network endpoint. Later clients can reuse the typed product operations.
 
 The following diagram is the **later target**, not a requirement to build all surfaces, providers and workers in phase one:
 
