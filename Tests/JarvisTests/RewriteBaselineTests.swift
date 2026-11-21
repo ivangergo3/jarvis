@@ -103,7 +103,10 @@ private actor ParityWorkspace: WorkspaceSource {
         for refresh in 0..<250 {
             if refresh == 125 { await source.changeTask() }
             for move in 0..<40 {
-                dashboard.graphHover.update("chat-\((refresh * 40 + move) % count)", inside: true)
+                let current = (refresh * 40 + move) % count
+                dashboard.graphHover.update("chat-\(current)", inside: true)
+                #expect(cards[current].highlighted)
+                #expect(!cards[(current + count - 1) % count].highlighted)
             }
             await store.refresh()
         }

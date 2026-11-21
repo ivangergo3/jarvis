@@ -5,15 +5,19 @@ final class JarvisUITests: XCTestCase {
     @MainActor func testViewModesSettingsAndPanelVisibilityPreserveDraft() throws {
         let app = try launch("workspace")
         choose(app, "alpha")
-        click(app, "workspace.chat.alpha-one")
+        click(app, "workspace.chat.alpha-two")
         let draft = element(app, "companion.draft")
         XCTAssertTrue(draft.waitForExistence(timeout: 10))
         draft.click()
         draft.typeText("Synthetic unsent parity draft")
         click(app, "dashboard.viewMode.cards")
         expect(element(app, "dashboard.viewMode.cards"), key: "value", equals: "Selected")
+        let allProjectsAction = app.buttons["All projects"]
+        XCTAssertTrue(allProjectsAction.waitForExistence(timeout: 10))
         click(app, "dashboard.viewMode.graph")
         expect(element(app, "dashboard.viewMode.graph"), key: "value", equals: "Selected")
+        XCTAssertTrue(allProjectsAction.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(element(app, "graph.node.alpha-two").waitForExistence(timeout: 10))
         click(app, "dashboard.globalSettings")
         click(app, "settings.refresh.10")
         expect(element(app, "settings.refresh.10"), key: "value", equals: "Selected")
@@ -23,7 +27,7 @@ final class JarvisUITests: XCTestCase {
         XCTAssertTrue(draft.waitForNonExistence(timeout: 10))
         click(app, "dashboard.toggleConversation")
         expect(draft, key: "value", equals: "Synthetic unsent parity draft")
-        expect(element(app, "companion.destination"), equals: "Planning")
+        expect(element(app, "companion.destination"), equals: "Release checks")
         XCTAssertEqual(element(app, "verification.submissions").label, "0 submissions")
     }
 

@@ -32,7 +32,7 @@ The 100-chat fixture demonstrates overflow/scrolling and repeated card geometry,
 
 ![Historical synthetic empty project](visual-baseline/empty-project.png)
 
-Navigation and header remain present, counts fall to zero and an explicit empty-state message replaces the graph. This fixture has the conversation pane hidden.
+Navigation and header remain present, counts fall to zero and an explicit empty-state message replaces the graph. The historical capture still shows the Planning header and composer in the conversation pane.
 
 ### Image record
 
@@ -76,7 +76,7 @@ All rows are source-backed inventory; the final column points to current check d
 | UI-04 | Sidebar chat ordering follows saved positions with deterministic fallback. Graph chat ordering is name then ID; do not assume every surface uses the same sort. | `ReaderTests.swift` saved-order/fallback cases; Dashboard graph sort. |
 | UI-05 | Graph supports more than four chats, with horizontal/vertical overflow. Orthogonal connections lead to cards; signals have no arrowheads. | Layout source and `DomainTests.swift`; 100-card historical image/checks. |
 | UI-06 | Graph/card mode controls change the central presentation. Card view has a reactor summary and two-column grid, vertical scrolling and an All projects action within a project. | Source; mode accessibility IDs. New captured card-view journey pending. |
-| UI-07 | Cards show icon, title, task preview and status. Chat previews omit blank/URL-only lines and are limited to two visible lines. | Source; verify representative long/wrapped content during parity capture. |
+| UI-07 | Cards show icon, title, task preview and status. The two-line preview filters out empty lines and lines starting with `https://` or `[https://`. When the filter removes every line, it falls back to the original text. | Source; verify representative long/wrapped content during parity capture. |
 | UI-08 | Header shows scope and a live clock; counters show projects/chats, in-progress work and active subagents for the selected scope. | Source and historical images. Counts are observations, not evidence of successful task execution. |
 | UI-09 | Status vocabulary: IN PROGRESS (cyan), STANDBY (muted), INTERRUPTED and UNKNOWN (gold). Stale/unavailable activity must not remain falsely active. | Domain source; reader/status tests and stale native journey. |
 | UI-10 | Loading, no projects, empty project and unavailable source have distinct text. A refresh failure retains a usable prior snapshot/navigation while reporting the failure and unknown activity. | Fleet store tests; native empty/unavailable/stale journeys. |

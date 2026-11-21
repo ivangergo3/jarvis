@@ -50,7 +50,7 @@ This document proposes architecture, acceptance criteria, documentation migratio
 
 **Clarification:** “no review needed” means no mandatory *owner code review*. It does not remove independent agent review, automated verification, permission enforcement or issue acceptance criteria. The owner's follow-up explicitly retains those guardrails.
 
-Automatic merge authority applies to agreed tickets after their gates pass. It is not blanket authority to expand scope, change guardrails, deploy production, purchase services or send external communications. Existing concrete grants still apply; further standing grants can be specified during planning.
+During coexistence, follow the [push guardrails](push-guardrails.md) and the owner's explicit grants for the approved tickets. Passing checks alone grants no merge authority. A future standing merge policy must specify eligible tickets, required evidence and owner acceptance points. Deployment, purchases, external communications and changes to guardrails each require their own authority.
 
 ## 2. Settled decisions, deferred decisions and remaining specifications
 
