@@ -23,7 +23,9 @@ The Swift tests are in `Tests/JarvisTests/RewriteBaselineTests.swift`; their ide
 
 These checks exercise production Swift logic/UI through synthetic fixtures. The hover workload is a deterministic invalidation/load check, not an OS mouse simulation, CPU benchmark or proof of Electron performance. The native suite supplies the separate real-pointer path.
 
-## Verification execution record
+## Historical verification on November 17, 2026
+
+These results cover the uncommitted November 17 baseline. It has no recorded commit ID. Subsequent changes strengthened the hover assertions and the native journey. See the reviewed PR checks for results against the published revision.
 
 Focused command: `swift test --filter RewriteBaselineTests`. Result: three test definitions passed (seven parameter cases/scenarios), with both 20/100-chat combined workloads completing. The initial sandboxed attempt could not write compiler caches; the authorized cache-access rerun passed. This is not a hidden failing assertion or a paid integration exercise.
 

@@ -241,7 +241,7 @@ Do not flatten a provider transport error into task failure, or claim cancellati
 
 One run can be observed from all clients. The server arbitrates conflicting commands; more than one UI cannot own the same active provider turn. A draft retains its destination when switching projects/chats. Sending captures that destination explicitly, and optimistic messages reconcile to server IDs.
 
-Reopening a conversation lands at the latest message unless restoring a deliberate reading position. New events do not constantly jump a reader who scrolled up. Offline clients may retain safe drafts and last-known state; starting privileged work requires an authenticated server acknowledgement. Never replay stale offline commands silently.
+For phase-one parity, reopening a conversation scrolls to the latest message. Swift also scrolls to the bottom when the last message changes, including while reading older messages. Preserving a deliberate reading position during incoming updates is a possible later change. Offline clients may retain safe drafts and last-known state; starting privileged work requires an authenticated server acknowledgement. Never replay stale offline commands silently.
 
 Phase one shows new Jarvis-managed Codex CLI sessions, not automatic synchronization with Codex desktop conversations. Preserve the old app/history and record historical import/export as a later ticket. Do not use desktop database scraping as the replacement control protocol.
 

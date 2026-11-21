@@ -6,10 +6,16 @@ final class JarvisUITests: XCTestCase {
         let app = try launch("workspace")
         choose(app, "alpha")
         click(app, "workspace.chat.alpha-two")
+        expect(element(app, "companion.destination"), equals: "Release checks")
+        let ready = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "enabled == true"),
+            object: element(app, "companion.newChat"))
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 10), .completed)
         let draft = element(app, "companion.draft")
         XCTAssertTrue(draft.waitForExistence(timeout: 10))
         draft.click()
         draft.typeText("Synthetic unsent parity draft")
+        expect(draft, key: "value", equals: "Synthetic unsent parity draft")
         click(app, "dashboard.viewMode.cards")
         expect(element(app, "dashboard.viewMode.cards"), key: "value", equals: "Selected")
         let allProjectsAction = app.buttons["All projects"]
