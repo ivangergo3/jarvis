@@ -8,3 +8,9 @@ test-results/
 # Local-only context; never put a private skill checkout under skills/.
 .local-skills/
 .private-context/
+
+# TypeScript workspace dependencies, outputs and local task cache.
+node_modules/
+.pnpm-store/
+.turbo/
+dist/

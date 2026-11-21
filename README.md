@@ -28,6 +28,25 @@ swift test
 
 Building requires the installed Apple command-line tools; there are no third-party Swift packages. The chat feature requires an installed, signed-in Codex CLI/App Server. Jarvis itself has no API-key entry or credential store.
 
+## TypeScript workspace fixture
+
+From a fresh checkout, use Node 24.19.0 (run `nvm use` if you manage Node with
+nvm) and pnpm 10.7.1 on your PATH. Run these commands at the repository root:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+pnpm typecheck
+pnpm fixture
+```
+
+The first install downloads the pinned dependencies into a repository-local store.
+The build compiles the private fixture library with TypeScript 6.0.3. Turborepo
+2.11.13 caches its `dist/` output locally. The fixture imports its compiled
+ES module by package name, checks the greeting and prints
+`Hello from the Jarvis workspace.` on success. The Swift app uses the build
+and verification commands above.
+
 ## Automated quality checks
 
 GitHub Actions runs **macOS build and tests** on every pull request, push/merge to `main`, merge-queue group and manual dispatch. It uses the standard `macos-15-intel` runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
