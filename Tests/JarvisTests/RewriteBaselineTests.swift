@@ -102,6 +102,8 @@ private actor ParityWorkspace: WorkspaceSource {
             rootObserver.cancel()
         }
         await store.refresh()
+        #expect(snapshots == 2)
+        #expect(store.snapshot?.missions.first?.task == "Task 0")
         for refresh in 0..<250 {
             if refresh == 125 { await source.changeTask() }
             for move in 0..<40 {
@@ -111,6 +113,8 @@ private actor ParityWorkspace: WorkspaceSource {
                 #expect(!cards[(current + count - 1) % count].highlighted)
             }
             await store.refresh()
+            #expect(snapshots == (refresh < 125 ? 2 : 3))
+            #expect(store.snapshot?.missions.first?.task == (refresh < 125 ? "Task 0" : "Task 1"))
         }
         dashboard.graphHover.clear()
         #expect(await source.reads == 251)

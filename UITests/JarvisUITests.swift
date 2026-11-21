@@ -20,6 +20,7 @@ final class JarvisUITests: XCTestCase {
         expect(element(app, "dashboard.viewMode.cards"), key: "value", equals: "Selected")
         let allProjectsAction = app.buttons["All projects"]
         XCTAssertTrue(allProjectsAction.waitForExistence(timeout: 10))
+        XCTAssertTrue(element(app, "graph.node.alpha-two").waitForExistence(timeout: 10))
         click(app, "dashboard.viewMode.graph")
         expect(element(app, "dashboard.viewMode.graph"), key: "value", equals: "Selected")
         XCTAssertTrue(allProjectsAction.waitForNonExistence(timeout: 10))

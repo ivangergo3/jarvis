@@ -10,7 +10,7 @@ Evidence labels used below:
 - **Historical image:** retained synthetic native-UI screenshot, not a fresh current-build capture.
 - **Pending:** needs a new synthetic capture, hands-on acceptance or an explicit rewrite mapping.
 
-No live message was sent, microphone used, performance recording started or user conversation captured for this inventory. The original inventory step added no application features. Subsequent baseline tests and step-three results are tracked in [rewrite verification](rewrite-verification.md); issue creation/review remains step four.
+The inventory uses synthetic records. [Rewrite verification](rewrite-verification.md) records the baseline tests and their execution dates. The [owner verification checklist](https://github.com/ivangergo3/jarvis/issues/139) links the approved implementation issues.
 
 ## 1. Visual references and provenance
 
@@ -89,7 +89,7 @@ Source anchors: [Dashboard](../../Sources/Jarvis/Presentation/Views/Dashboard.sw
 
 | ID | User-visible behavior | Current support / evidence |
 | --- | --- | --- |
-| UI-13 | Right panel can be shown/hidden from the top bar and resized using the divider. It contains one conversation, no tab selector. | Source; native/full-screen hands-on matrix not rerun here. |
+| UI-13 | The top bar toggles one conversation panel and the divider resizes it. Hiding the panel cancels active dictation and stops current audio playback. | CompanionPanel disappearance handler; native/full-screen hands-on matrix pending. |
 | UI-14 | Conversation header has role/icon/title/status, Open in Codex, reconnect and settings. Working header has a border signal. Operational phase text appears separately when relevant. | Source; historical graph image. Role label in this header still exists; distinguish it from the removed card role footer. |
 | UI-15 | User messages align right with gold tint; Codex messages left with cyan tint. Both occupy at most 80% of panel width, capped at 760pt. Queued user messages are labelled. | CompanionPanel source. Populated-message screenshot pending. |
 | UI-16 | Opening the panel anchors to the latest message. Current source also scrolls to bottom when the final message text changes. | Source; preserving a reader's scroll position is not established current behavior and must not be described as already implemented. |
@@ -136,7 +136,7 @@ Relevant existing Swift test groups include [reader/navigation](../../Tests/Jarv
 
 Some source views remain defined but are not exposed by the current navigation: `activityView` and `globalBrief` do not establish active Activity/Task details features. Keep source presence distinct from reachable UI. Current preferences persist selected project/chat and refresh interval; do not assume every layout/audio option or draft survives app termination without verifying its storage path.
 
-Pending qualification includes rich rendered conversations/attachments, settings and mode-switch screenshots, current-build full-screen/window matrices, real audio, accessibility/focus, missing files, disconnect/recovery and actual CLI-owned approval behavior. Add tests/performance checks in the separately agreed step three, keeping feature evidence separate from a build merely compiling.
+Pending qualification includes rich rendered conversations/attachments, settings and mode-switch screenshots, current-build full-screen/window matrices, real audio, accessibility/focus, missing files, disconnect/recovery and actual CLI-owned approval behavior. Capture these outcomes in the corresponding implementation and parity issues.
 
 ## 8. Explicit rewrite mappings and lifecycle discussion
 
@@ -160,4 +160,4 @@ The owner subsequently selected confirmation for both window close and Command-Q
 
 Walk through UI-01–UI-34 against synthetic current-build screens, resolve gaps and explicitly accept any integration mappings. Match the Electron implementation to that baseline using the same representative data, window geometry and motion settings. Record justified platform/font differences; do not use historical images as pixel-exact current-build proofs.
 
-Next deliverables stay in the agreed order: finish lifecycle discussion/specification, plan/add meaningful tests and performance checks, then create small implementation tickets for owner review one by one. This file creates neither tickets nor new automated pass claims.
+Follow the approved GitHub issues in dependency order. The owner checks the items in the [phase-one verification checklist](https://github.com/ivangergo3/jarvis/issues/139) after trying the delivered behavior.
