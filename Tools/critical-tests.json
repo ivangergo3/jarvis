@@ -1,4 +1,7 @@
 [
+  "JarvisTests.RewriteBaselineTests/richMessageKeepsTableCodeImageAndFollowingTextDistinct",
+  "JarvisTests.RewriteBaselineTests/routesReachTheirOwnCardEdgesAtNarrowAndWideSizes",
+  "JarvisTests.RewriteBaselineTests/refreshAndHoverLoadPreserveLocalUpdatesAndDeliverChangedTask",
   "QualitySupportTests.PushGateTests/cltSDKChangesInvalidateEvidence",
   "QualitySupportTests.QualitySupportTests/ownedProcessIdentityRejectsReusedPIDs",
   "QualitySupportTests.QualitySupportTests/anExitedTimeoutSupervisorReportsUncertainOwnership",

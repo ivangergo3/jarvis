@@ -2,6 +2,50 @@ import AppKit
 import XCTest
 
 final class JarvisUITests: XCTestCase {
+    @MainActor func testViewModesSettingsAndPanelVisibilityPreserveDraft() throws {
+        let app = try launch("workspace")
+        choose(app, "alpha")
+        click(app, "workspace.chat.alpha-two")
+        expect(element(app, "companion.destination"), equals: "Release checks")
+        let ready = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "enabled == true"),
+            object: element(app, "companion.newChat"))
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 10), .completed)
+        let draft = element(app, "companion.draft")
+        let draftText = "Synthetic unsent parity draft"
+        func expectUnsentDraft() {
+            expect(draft, key: "value", equals: draftText)
+            expect(element(app, "companion.destination"), equals: "Release checks")
+            XCTAssertTrue(element(app, "companion.send").isEnabled)
+            XCTAssertEqual(element(app, "verification.submissions").label, "0 submissions")
+        }
+        XCTAssertTrue(draft.waitForExistence(timeout: 10))
+        draft.click()
+        draft.typeText(draftText)
+        expectUnsentDraft()
+        click(app, "dashboard.viewMode.cards")
+        expect(element(app, "dashboard.viewMode.cards"), key: "value", equals: "Selected")
+        let allProjectsAction = app.buttons["All projects"]
+        XCTAssertTrue(allProjectsAction.waitForExistence(timeout: 10))
+        XCTAssertTrue(element(app, "graph.node.alpha-two").waitForExistence(timeout: 10))
+        expectUnsentDraft()
+        click(app, "dashboard.viewMode.graph")
+        expect(element(app, "dashboard.viewMode.graph"), key: "value", equals: "Selected")
+        XCTAssertTrue(allProjectsAction.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(element(app, "graph.node.alpha-two").waitForExistence(timeout: 10))
+        expectUnsentDraft()
+        click(app, "dashboard.globalSettings")
+        click(app, "settings.refresh.10")
+        expect(element(app, "settings.refresh.10"), key: "value", equals: "Selected")
+        app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
+        XCTAssertTrue(element(app, "settings.refresh.10").waitForNonExistence(timeout: 10))
+        expectUnsentDraft()
+        click(app, "dashboard.toggleConversation")
+        XCTAssertTrue(draft.waitForNonExistence(timeout: 10))
+        click(app, "dashboard.toggleConversation")
+        expectUnsentDraft()
+    }
+
     @MainActor func testPhysicalPointerLoadDoesNotInvalidateGraph() throws {
         let app = try launch("pointerLoad")
         click(app, "dashboard.toggleConversation")

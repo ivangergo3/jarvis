@@ -1,4 +1,5 @@
 [
+  "testViewModesSettingsAndPanelVisibilityPreserveDraft",
   "testPhysicalPointerLoadDoesNotInvalidateGraph",
   "testHoverLoadKeepsRenderedUpdatesLocal",
   "testProjectsAndChatSelection",
