@@ -44,14 +44,6 @@ extension PushGate {
         return .docs
     }
 
-    // Operational policies for review, architecture and verification are themselves gate inputs.
-    private static let engineeringPolicies: Set<String> = [
-        "agent-workflow-51.md", "authority-boundaries-49.md", "native-boundaries-48.md",
-        "native-ui.md", "push-guardrails.md", "swift_quality.md", "traceability-54.md",
-        "workspace-boundaries-46.md", "test-quality.md", "command-timeouts.md",
-        "performance-47.md", "verification-44.md", "cloud-harness-rewrite-plan.md",
-    ]
-
     private static func isProsePath(_ path: Substring) -> Bool {
         if path == "README.md" { return true }
         let parts = path.split(separator: "/")
@@ -59,20 +51,8 @@ extension PushGate {
             !parts.contains(where: { $0.hasPrefix(".") }),
             path.rangeOfCharacter(from: .controlCharacters) == nil
         else { return false }
-        if parts.count == 3, parts[1].lowercased() == "planning",
-            [
-                "board_guide.md", "skill_boundaries.md", "skill_safety.md", "skill_review_guide.md",
-                "skill_evaluation.md", "skill_backlog.md",
-            ]
-            .contains(name.lowercased())
-        {
-            return false
-        }
-        if parts.count == 3, parts[1].lowercased() == "engineering",
-            engineeringPolicies.contains(name.lowercased())
-        {
-            return false
-        }
+        // This document is an explicit input to the independent review command.
+        if path.lowercased() == "docs/engineering/push-guardrails.md" { return false }
         return !["agents.md", "agents.override.md", "claude.md", "claude.local.md", "skill.md"]
             .contains(name.lowercased())
     }
