@@ -305,11 +305,14 @@ struct PushGateTests {
             "docs/nested/AGENTS.md", "docs/nested/AGENTS.override.md",
             "docs/nested/CLAUDE.local.md",
             "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
-            "docs/.hidden.md", "docs/example.swift",
+            "docs/.hidden.md", "docs/example.swift", "docs/engineering/test-quality.md",
+            "docs/planning/SKILL_SAFETY.md",
         ] {
             try fixture.write(path, Data("Proposed change\n".utf8))
             try requireFull()
         }
+        try fixture.write("docs/binary-tail.md", Data(repeating: 65, count: 10000) + Data([0]))
+        try requireFull()
         try fixture.write("docs/data.md", Data([0, 1, 2]))
         try requireFull()
         try FileManager.default.setAttributes(
