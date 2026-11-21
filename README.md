@@ -42,7 +42,7 @@ pnpm fixture
 
 The first install downloads the pinned dependencies into a repository-local store.
 The build compiles the private fixture library with TypeScript 6.0.3. Turborepo
-2.11.13 caches the emitted module and declaration locally. The compiler requires
+2.11.13 caches the complete emitted `dist/` directory locally. The compiler requires
 the fixture's public source entry, `src/index.ts`. The fixture imports its compiled
 ES module by package name, checks the greeting and prints
 `Hello from the Jarvis workspace.` on success. To build and test the Swift app,
