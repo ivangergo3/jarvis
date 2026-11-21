@@ -60,7 +60,7 @@ These are planning dependencies, not reasons to stop drafting. No unanswered ite
 | --- | --- | --- | --- |
 | D01 | Platforms | Settled: macOS then iPhone; Linux/Windows/Android later | Per-phase packaging qualification |
 | D02 | Frontend tooling | Settled: Vite, TanStack Router, TanStack Query + React state. Specify Electron packaging, dependency versions and narrow platform adapters | Foundation tickets |
-| D03 | Provider/authentication | Settled locally: Codex CLI + subscription sign-in. Specify interactive protocol, event mapping and credential boundary; Claude/cloud authentication later | Local provider integration |
+| D03 | Provider/authentication | Settled locally: Codex CLI + subscription sign-in. Qualify the pinned stdio App Server protocol and managed-account boundary in the [local service contract](local-service-contract.md). Claude/cloud authentication comes later | Local provider integration |
 | D04 | Voice | Push-to-talk, no locked-phone session; future live option. Defer implementation/provider/cost details to an explicit decision ticket | New voice implementation |
 | D05 | WhatsApp | Replies, commands and new tasks accepted; defer sender binding, webhooks, replay protection, account setup/templates/costs | Live channel integration |
 | D06 | Cloud provider/region/budget | Explicitly deferred until web/cloud migration; compare providers using measured workloads and operating requirements then | Cloud provisioning |
@@ -72,7 +72,7 @@ These are planning dependencies, not reasons to stop drafting. No unanswered ite
 | D12 | Distribution/licensing | Personal macOS build first; signing/update behavior to specify. Other OS/app-store distribution later | Respective distribution |
 | D13 | First-release scope | Settled: current Swift UI/behavior parity, new CLI sessions and local backend. Produce feature inventory and explicit integration mappings; new orchestration features later | Implementation ticket breakdown |
 
-The Swift inventory and verification map accompany this plan. [The local design ticket](https://github.com/ivangergo3/jarvis/issues/108) resolves the remaining phase-one contract and lifecycle details. Cloud, mobile and external channels remain later decisions.
+The Swift inventory and verification map accompany this plan. The [local service contract](local-service-contract.md) defines phase-one integration, supervision, confirmed shutdown and recovery. Cloud, mobile and external channels remain later decisions.
 
 ## 3. Recommended shape
 
@@ -228,10 +228,10 @@ Do not flatten a provider transport error into task failure, or claim cancellati
 
 ### Initial API and event behavior
 
-- Typed commands/queries plus a resumable event stream; REST + SSE is the initial proposal. Specify an authenticated loopback transport locally and TLS for remote access later. Evaluate WebSocket where bidirectional streaming actually requires it.
+- Use typed REST operations and a resumable SSE stream on separate authenticated local socket connections. Remote access requires separate TLS qualification later. Evaluate WebSocket where bidirectional streaming actually requires it.
 - Starting work records the accepted task/criteria versions, selected project/repository, provider, skill snapshot, policy and idempotency key durably before scheduling.
 - Job leasing has expiry, heartbeats and fencing so a stale worker cannot overwrite the new owner's run. Concurrency is limited per repository and overall.
-- Each durable event has a run ID, event ID, sequence, schema version and timestamp. Clients resume by cursor and deduplicate; snapshots recover expired cursors.
+- Each durable event has an owner, typed subject ID, event ID, sequence, schema version and timestamp. Run and child events include their run ID. Project or session creation can precede a run. See the [local command and replay contract](local-command-stream.md). Clients resume by cursor and deduplicate; snapshots recover expired cursors.
 - State change and notification/job outbox writes are transactional. Delivery may repeat; logical effects must be idempotent where possible.
 - A lost response is uncertain delivery, not permission to create a second run. Reconcile by key/remote state before retrying.
 - Server errors are typed: retryable, permission denied, validation, unavailable capability, conflict, unknown outcome. Private paths/tokens are redacted.
@@ -269,9 +269,9 @@ Each project explicitly selects its repository; each run records that destinatio
 
 The owner's latest decision supersedes keep-running-on-close: both window close and Command-Q ask for confirmation before stopping the local service and its active tasks. Canceling confirmation preserves the window/service/work. Confirming first stops new dispatch, then requests cancellation and verifies owned process cleanup, persists outcomes and closes the app. Do not report success or rollback for an uncertain external effect. No blanket permission to stop another app's Codex processes or all Docker containers is implied.
 
-Initially start the service only when Jarvis opens, not automatically at login. Relaunch must avoid duplicate service/provider owners. After a crash or reboot, restore durable state and reconcile receipts/process ownership before resuming; do not blindly replay uncertain commands. Machine sleep promises no progress. Exact shutdown timeout/escalation, drafts and handling of unfinished cleanup need the local design specification. See the [verification and lifecycle matrix](rewrite-verification.md).
+Initially start the service only when Jarvis opens, not automatically at login. Relaunch must avoid duplicate service/provider owners. After a crash or reboot, restore durable state and reconcile receipts/process ownership before resuming; do not blindly replay uncertain commands. Machine sleep promises no progress. The [local service contract](local-service-contract.md) defines saved drafts, 60 awake seconds for cancellation and five awake seconds per recipient after observed TERM. Unverified cleanup keeps the window open. See the [verification and lifecycle matrix](rewrite-verification.md).
 
-Select the lifecycle mechanism in a bounded design ticket: for example a separately supervised service or a background Electron/service owner. This plan does not install a login item/daemon. Persist state in local Supabase; do not make process survival depend on the renderer retaining a reference.
+Electron main owns one local Nest service. Nest owns the scheduler and its provider workers. Launch is on open. Persist state in local Supabase; do not make process survival depend on the renderer retaining a reference.
 
 ### Later cloud boundary
 
