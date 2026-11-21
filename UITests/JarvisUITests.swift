@@ -2,6 +2,31 @@ import AppKit
 import XCTest
 
 final class JarvisUITests: XCTestCase {
+    @MainActor func testViewModesSettingsAndPanelVisibilityPreserveDraft() throws {
+        let app = try launch("workspace")
+        choose(app, "alpha")
+        click(app, "workspace.chat.alpha-one")
+        let draft = element(app, "companion.draft")
+        XCTAssertTrue(draft.waitForExistence(timeout: 10))
+        draft.click()
+        draft.typeText("Synthetic unsent parity draft")
+        click(app, "dashboard.viewMode.cards")
+        expect(element(app, "dashboard.viewMode.cards"), key: "value", equals: "Selected")
+        click(app, "dashboard.viewMode.graph")
+        expect(element(app, "dashboard.viewMode.graph"), key: "value", equals: "Selected")
+        click(app, "dashboard.globalSettings")
+        click(app, "settings.refresh.10")
+        expect(element(app, "settings.refresh.10"), key: "value", equals: "Selected")
+        app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
+        XCTAssertTrue(element(app, "settings.refresh.10").waitForNonExistence(timeout: 10))
+        click(app, "dashboard.toggleConversation")
+        XCTAssertTrue(draft.waitForNonExistence(timeout: 10))
+        click(app, "dashboard.toggleConversation")
+        expect(draft, key: "value", equals: "Synthetic unsent parity draft")
+        expect(element(app, "companion.destination"), equals: "Planning")
+        XCTAssertEqual(element(app, "verification.submissions").label, "0 submissions")
+    }
+
     @MainActor func testPhysicalPointerLoadDoesNotInvalidateGraph() throws {
         let app = try launch("pointerLoad")
         click(app, "dashboard.toggleConversation")

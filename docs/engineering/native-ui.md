@@ -1,6 +1,6 @@
 # Native UI verification
 
-Ticket #45 adds the shared `NativeUI` Xcode scheme. There are now eight required
+Ticket #45 adds the shared `NativeUI` Xcode scheme. There are now nine required
 XCTest UI journeys, including the 100-card hover and real-pointer load gates added for #47.
 The scheme builds a Release macOS application from the same owned Swift sources
 and bundled artwork as `build.sh`, plus a native UI-test target. The verification
@@ -75,6 +75,7 @@ instance. Scenarios are `workspace`, `empty`, `unavailable` and `stale`.
 | Unavailable source | Error plus unavailable state, no false loading/success and no outbound submission. |
 | Stale source | A successful snapshot survives a later failed refresh; navigation remains usable and activity becomes unknown. |
 | Keyboard and drafts | Command-Shift-P opens the project chooser, Escape closes it; switching between identically named chats preserves each draft; Command-Return submits once to the original ID through the fake transport. |
+| Rewrite baseline controls | Graph/card modes, global refresh settings and hiding/reopening the conversation preserve the unsent draft/destination and submit nothing. |
 
 Every journey starts a fresh app with a unique run UUID and waits for bounded,
 observable conditions. Stable identifiers are attached to existing native
