@@ -302,7 +302,8 @@ struct PushGateTests {
         for path in [
             "planning.md", "docs/engineering/push-guardrails.md",
             "docs/engineering/agent-workflow-51.md",
-            "docs/nested/AGENTS.md",
+            "docs/nested/AGENTS.md", "docs/nested/AGENTS.override.md",
+            "docs/nested/CLAUDE.local.md",
             "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
             "docs/.hidden.md", "docs/example.swift",
         ] {

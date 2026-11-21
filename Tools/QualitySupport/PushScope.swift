@@ -43,6 +43,7 @@ extension PushGate {
         {
             return false
         }
-        return !["agents.md", "claude.md", "skill.md"].contains(name.lowercased())
+        return !["agents.md", "agents.override.md", "claude.md", "claude.local.md", "skill.md"]
+            .contains(name.lowercased())
     }
 }
