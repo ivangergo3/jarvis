@@ -23,8 +23,8 @@ This document proposes architecture, acceptance criteria, documentation migratio
 | R05 | Use Codex CLI first, independently of the Codex desktop UI. Add Claude Code later through its supported harness integration surface. |
 | R06 | System-managed skills, manual/event/scheduled triggers and automated guardrails. |
 | R07 | Two-way voice is required. WhatsApp is the first external communication/notification channel. Reassess its role once mobile app notifications are available. |
-| R08 | Existing automated independent review, local tests and CI remain. The owner does not need to read code or approve each merge. |
-| R09 | Agree a detailed plan and tickets first. Agents implement exactly those tickets; successful in-scope changes may be merged without another owner merge approval. |
+| R08 | Existing automated independent review, local tests and CI remain. The owner may delegate code review and grant merge authority for approved tickets. Honor each ticket’s explicit acceptance points. |
+| R09 | Approve implementation scope separately from merge authority. Agents implement the approved issue. Before merge, verify a concrete owner grant covering the candidate, green gates and any required pre-merge behavior acceptance. |
 | R10 | Keep small, coherent PRs: each rewrite PR stays below 1,000 added plus deleted text lines, with a warning at 800. |
 | R11 | Audit documentation and extend reusable skill support to TypeScript before relying on the new workflow. Preserve useful evidence. |
 | R12 | Plan before rewriting. Preserve the current usable application during the transition. |
@@ -241,7 +241,7 @@ Do not flatten a provider transport error into task failure, or claim cancellati
 
 One run can be observed from all clients. The server arbitrates conflicting commands; more than one UI cannot own the same active provider turn. A draft retains its destination when switching projects/chats. Sending captures that destination explicitly, and optimistic messages reconcile to server IDs.
 
-For phase-one parity, reopening a conversation scrolls to the latest message. Swift also scrolls to the bottom when the last message changes, including while reading older messages. Preserving a deliberate reading position during incoming updates is a possible later change. Offline clients may retain safe drafts and last-known state; starting privileged work requires an authenticated server acknowledgement. Never replay stale offline commands silently.
+For phase-one parity, reopening a conversation scrolls to the latest message. Swift also scrolls to the bottom when the last message’s text changes, including while reading older messages. Preserving a deliberate reading position during incoming updates is a possible later change. Offline clients may retain safe drafts and last-known state; starting privileged work requires an authenticated server acknowledgement. Never replay stale offline commands silently.
 
 Phase one shows new Jarvis-managed Codex CLI sessions, not automatic synchronization with Codex desktop conversations. Preserve the old app/history and record historical import/export as a later ticket. Do not use desktop database scraping as the replacement control protocol.
 
@@ -289,7 +289,7 @@ Stop/cancel owns the complete process tree and descendants, including build tool
 
 ### Git, tickets and delivery
 
-Accepted ticket -> branch/workspace -> implementation -> independent review -> full applicable local checks -> push -> required CI -> merge. No owner code-reading step is required for agreed tickets whose gates pass.
+Accepted ticket -> branch/workspace -> implementation -> independent review -> full applicable local checks -> push -> required CI -> verify merge grant and any required behavior acceptance -> merge. The owner can evaluate the packaged behavior without reading code.
 
 Each ticket states acceptance criteria, permitted files/boundaries, exclusions, dependencies, risk and evidence. Scope discovery may produce a new ticket; it does not authorize implementing that new work immediately. Apply the 800-line warning and 1,000-line stop to the full text diff, including tests/docs. Split by a useful verified outcome, not arbitrary file fragments.
 
@@ -402,7 +402,7 @@ This section plans skill work; it does not edit or replace skills. Keep generic 
 | `verification-planning` | Add web/desktop/mobile/server risk mapping and capability-dependent check selection. | Missing device runner or paid integration remains a gap, not a pass. |
 | `test-design`, `test-automation`, `test-maintenance` | Add TS runners, DB/process fixtures, UI layers, asynchronous failure/cancellation and meaningful negative probes. | Detect zero tests, weak mocks, duplicate effects and time-dependent flakes. |
 | `code-review` | Add TS/React/server examples; preserve fresh context, findings discipline and authority review. | Review only relevant candidate/base/contracts; identify a seeded regression. |
-| `pull-request-preparation` | Support TS evidence/toolchain receipts and the same size/CI gates; remove per-merge owner approval only for accepted ticket scope. | Stale evidence and oversized candidate must fail. |
+| `pull-request-preparation` | Support TS evidence/toolchain receipts and the same size/CI gates; check the explicit merge grant and verify any required pre-merge acceptance for the specific change. | Stale evidence and oversized candidate must fail. |
 | Acceptance/decomposition/handoff/reporting skills | Keep technology-neutral; ensure accepted IDs, exclusions, dependencies and observed evidence remain traceable. | No invented completion, scope expansion or conflation of planned and passed tests. |
 | Project skill manifest / discovery | Preserve canonical content and verify provider adapters/materialization. | Check links, hashes and actual discovery for both providers. |
 

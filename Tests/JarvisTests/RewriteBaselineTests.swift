@@ -76,7 +76,9 @@ private actor ParityWorkspace: WorkspaceSource {
             for (node, route) in zip(layout.nodes, layout.connections) {
                 let endpoint = route.point(at: 1)
                 #expect(endpoint.y == node.y)
-                #expect(abs(abs(endpoint.x - node.x) - layout.cardWidth / 2) < 0.001)
+                let inwardOffset =
+                    node.x < layout.center.x ? layout.cardWidth / 2 : -layout.cardWidth / 2
+                #expect(abs(endpoint.x - (node.x + inwardOffset)) < 0.001)
                 #expect(route.points.allSatisfy { $0.x.isFinite && $0.y.isFinite })
                 for pair in zip(route.points, route.points.dropFirst()) {
                     #expect(pair.0.x == pair.1.x || pair.0.y == pair.1.y)
