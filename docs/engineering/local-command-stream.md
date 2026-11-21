@@ -67,6 +67,9 @@ A 410 triggers a fresh snapshot and history traversal. History retains Jarvis-su
 
 | Sequence | Expected outcome |
 | --- | --- |
+| A full queue definitively refuses C0, capacity opens and a delayed original or exact retry arrives | Return the original refusal. Create zero runs for C0; a different fingerprint conflicts. |
+| Staging receipt N is consumed and replaced by N+1, then N is replayed; separately, an old writer wakes after takeover | Retired N cannot allocate bytes or reopen a revision. The old writer cannot commit, even with the next valid sequence. A confirmed discard releases only its pin. |
+| Twenty pending runs are parked or queued across projects when a 21st is submitted | Refuse the new run and preserve all 20. Resume transfers a slot. Proven unsent settlement permits one new admission. |
 | Command C1 creates run R1 at sequence 41, then the desktop loses the local response | An exact C1 retry returns the original R1 receipt. A changed destination conflicts. |
 | A second chat also named Planning is selected while the first chat has an approval | The answer remains bound to its original session, request and worker generation. An expired or competing decision cannot win. |
 | A prompt's event aged out while its original channel remains live | The fresh snapshot contains the still-actionable prompt. A lost channel cannot become actionable merely through replay. |
