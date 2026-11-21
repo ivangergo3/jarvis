@@ -60,8 +60,11 @@ extension PushGate {
             path.rangeOfCharacter(from: .controlCharacters) == nil
         else { return false }
         if parts.count == 3, parts[1].lowercased() == "planning",
-            ["board_guide.md", "skill_boundaries.md", "skill_safety.md", "skill_review_guide.md"]
-                .contains(name.lowercased())
+            [
+                "board_guide.md", "skill_boundaries.md", "skill_safety.md", "skill_review_guide.md",
+                "skill_evaluation.md", "skill_backlog.md",
+            ]
+            .contains(name.lowercased())
         {
             return false
         }

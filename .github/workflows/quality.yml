@@ -31,7 +31,11 @@ jobs:
           xcodebuild -version
           swift --version
       - name: Check whitespace
-        run: git show --format= --check HEAD
+        run: |
+          git show --format= --check HEAD >/dev/null 2>&1 || {
+            echo "Whitespace check failed. Run git show --format= --check HEAD locally for details." >&2
+            exit 1
+          }
       - name: Check complete PR size and added credentials
         if: github.event_name == 'pull_request'
         env:

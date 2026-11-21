@@ -322,7 +322,7 @@ struct PushGateTests {
             "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
             "docs/.hidden.md", "docs/example.swift", "docs/engineering/test-quality.md",
             "docs/engineering/cloud-harness-rewrite-plan.md",
-            "docs/planning/SKILL_SAFETY.md",
+            "docs/planning/SKILL_SAFETY.md", "docs/planning/SKILL_EVALUATION.md",
         ] {
             try fixture.write(path, Data("Proposed change\n".utf8))
             try requireFull()
