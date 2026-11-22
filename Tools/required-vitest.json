@@ -142,5 +142,41 @@
   {
     "file": "packages/contracts/test/commands.vitest.mjs",
     "name": "staging IDs encode their own nonwrapping sequence separately from general command UUIDs"
+  },
+  {
+    "file": "packages/contracts/test/reads.vitest.mjs",
+    "name": "bind the initial snapshot and each continuation to the same requested identity"
+  },
+  {
+    "file": "packages/contracts/test/reads.vitest.mjs",
+    "name": "history updates reference authorized retained content and command observations never contain private bodies"
+  },
+  {
+    "file": "packages/contracts/test/reads.vitest.mjs",
+    "name": "request-content reads bind every component to the original live channel while history reads use an entry revision"
+  },
+  {
+    "file": "packages/contracts/test/reads.vitest.mjs",
+    "name": "controller recovery fences one epoch and reads bounded receipt ledgers"
+  },
+  {
+    "file": "packages/contracts/test/recovery.vitest.mjs",
+    "name": "recover private prompt descriptors through the original request before fetching content"
+  },
+  {
+    "file": "packages/contracts/test/recovery.vitest.mjs",
+    "name": "recover cancellation outcomes once and reject a conflicting ID as a permanent refusal"
+  },
+  {
+    "file": "packages/contracts/test/recovery.vitest.mjs",
+    "name": "restore open or sealed draft manifests with indexed, bounded chunks"
+  },
+  {
+    "file": "packages/contracts/test/recovery.vitest.mjs",
+    "name": "durable history retains safe categories and rejects wrong sessions or private answer bodies"
+  },
+  {
+    "file": "packages/contracts/test/reads.vitest.mjs",
+    "name": "project and session listings bind bounded selection records to their owner and destination"
   }
 ]
