@@ -13,6 +13,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import {parse, stringify} from 'yaml';
 
 test('public typecheck covers owned standalone tools and keeps package tasks', (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'jarvis-public-typecheck-'));
@@ -135,11 +136,9 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
     "export const count: number = 'wrong';",
   );
   const workspace = path.join(root, 'pnpm-workspace.yaml');
-  writeFileSync(
-    workspace,
-    readFileSync(workspace, 'utf8') +
-      "  - 'fixtures/workspace-library/nested'\n",
-  );
+  const workspaceConfig = parse(readFileSync(workspace, 'utf8'));
+  workspaceConfig.packages.push(nested);
+  writeFileSync(workspace, stringify(workspaceConfig));
   assert.match(
     run().stderr,
     /nested\/tool\.ts: include this standalone source/,
