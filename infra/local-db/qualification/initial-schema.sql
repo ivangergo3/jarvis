@@ -12,8 +12,13 @@ begin
   ) or exists (
     select 1 from unnest(array['anon','authenticated','service_role']) client
     where has_schema_privilege(client, 'jarvis', 'USAGE,CREATE')
-      or has_table_privilege(client, 'jarvis.projects', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-      or has_table_privilege(client, 'jarvis.installation', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+      or exists (
+        select 1 from pg_class t
+        cross join lateral aclexplode(acldefault('r', t.relowner)) p
+        where t.oid in ('jarvis.projects'::regclass, 'jarvis.installation'::regclass)
+          and (has_table_privilege(client, t.oid, p.privilege_type)
+               or has_any_column_privilege(client, t.oid, 'SELECT,INSERT,UPDATE,REFERENCES'))
+      )
   ) then raise exception 'unexpected Jarvis schema owner or client grants'; end if;
 
   if (select count(*) from pg_class where relnamespace = 'jarvis'::regnamespace

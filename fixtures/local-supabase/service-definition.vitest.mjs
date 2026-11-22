@@ -24,11 +24,20 @@ test('Compose publishes only the explicit loopback DB and gateway bindings', () 
     '-d',
     'postgres',
   ]);
-  assert.ok(services.db.command.includes('log_statement=none'));
-  assert.ok(services.db.command.includes('log_min_error_statement=panic'));
+  assert.deepEqual(services.db.command, [
+    'postgres',
+    '-D',
+    '/etc/postgresql',
+    '-c',
+    'log_statement=none',
+    '-c',
+    'log_min_error_statement=panic',
+    '-c',
+    'log_min_duration_statement=-1',
+  ]);
   assert.equal(
-    new URL(services.auth.environment.GOTRUE_DB_DATABASE_URL).password,
-    '',
+    services.auth.environment.GOTRUE_DB_DATABASE_URL,
+    'postgres://supabase_auth_admin@db:5432/postgres',
   );
   assert.equal(
     services.auth.environment.PGPASSWORD,
