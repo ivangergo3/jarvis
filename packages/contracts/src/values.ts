@@ -70,3 +70,12 @@ export function utf8Bytes(json: string): number {
   }
   return bytes;
 }
+
+export type Timestamp = z.infer<typeof Timestamp>;
+export type Cursor = z.infer<typeof Cursor>;
+export type Sequence = z.infer<typeof Sequence>;
+export type Title = z.infer<typeof Title>;
+export type ProjectTarget = z.infer<typeof ProjectTarget>;
+export type SessionTarget = z.infer<typeof SessionTarget>;
+export type RunTarget = z.infer<typeof RunTarget>;
+export type RequestTarget = z.infer<typeof RequestTarget>;
