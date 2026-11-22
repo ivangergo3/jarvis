@@ -4,6 +4,7 @@ import {
   Command,
   DraftInput,
   matchesPrompt,
+  matchesRunRevision,
   Prompt,
 } from '../src/index.ts';
 
@@ -83,7 +84,20 @@ test('run control operations require the expected revision and make no new run o
     'run.reconcile',
   ]) {
     const command = {...header, operation, target: {...run, revision: '2'}};
-    expect(Command.parse(command)).toEqual(command);
+    const parsed = Command.parse(command);
+    expect(parsed).toEqual(command);
+    const current = {...run, revision: '2'};
+    expect(matchesRunRevision(parsed.target, current)).toBe(true);
+    for (const changed of [
+      {revision: '3'},
+      {runId: id(50)},
+      {sessionId: id(51)},
+      {projectId: id(52)},
+    ]) {
+      expect(matchesRunRevision(parsed.target, {...current, ...changed})).toBe(
+        false,
+      );
+    }
     expect(Command.safeParse({...command, target: run}).success).toBe(false);
   }
   const acknowledge = {

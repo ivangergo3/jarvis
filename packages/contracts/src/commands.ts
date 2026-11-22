@@ -26,6 +26,19 @@ const header = {
   originatingSessionId: AuthSessionId,
 };
 export const RunRevisionTarget = RunTarget.extend({revision: Sequence});
+/** Compare a parsed mutation with current trusted run state immediately before applying it. */
+export function matchesRunRevision(
+  requested: RunRevisionTarget,
+  current: RunRevisionTarget,
+): boolean {
+  return (
+    requested.projectId === current.projectId &&
+    requested.sessionId === current.sessionId &&
+    requested.runId === current.runId &&
+    requested.revision === current.revision
+  );
+}
+
 // The service resolves this immutable local registration/provider selection
 // and checks the original binding again before dispatch. It carries no credential.
 export const FrozenDestination = SessionTarget.extend({
