@@ -5,6 +5,7 @@ import {mkdir, mkdtemp, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {packager} from '@electron/packager';
+import {verifyPreviewBundle} from './verify-bundle.mjs';
 
 const checksums = new Map([
   ['arm64', 'd080c3b05a01bd16137f2c12ab9ebf083c577757fe846844ba325bafa8e8bdf4'],
@@ -102,4 +103,5 @@ const [output] = await packager({
   appCategoryType: 'public.app-category.developer-tools',
 });
 const appPath = path.join(output, 'Jarvis Preview.app');
+verifyPreviewBundle(appPath);
 console.log(appPath);
