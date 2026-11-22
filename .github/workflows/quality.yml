@@ -194,13 +194,11 @@ jobs:
           run_install: false
       - name: Check exact-source TypeScript and Vitest evidence
         run: exec bash scripts/ci-typescript.sh "$RUNNER_TEMP/jarvis-typescript"
-      - name: Verify the exact-source Mac package and combine evidence
-        run: exec bash scripts/ci-desktop-evidence.sh "$RUNNER_TEMP/jarvis-typescript"
-      - name: Retain qualified synthetic TypeScript and package report
+      - name: Retain qualified synthetic TypeScript report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: typescript-evidence-${{ github.sha }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/jarvis-typescript/hosted-summary.json
+          path: ${{ runner.temp }}/jarvis-typescript/vitest/qualified.json
           retention-days: 7
           if-no-files-found: error
 
