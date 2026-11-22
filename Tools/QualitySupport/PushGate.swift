@@ -2,6 +2,7 @@ import Foundation
 
 /// Local workflow evidence, not a security attestation. CI remains independent.
 public struct PushGate {
+    public typealias CompletePreparation = (@Sendable () throws -> Void) throws -> Void
     struct Identity: Codable, Equatable {
         let base: String
         let head: String
@@ -9,6 +10,8 @@ public struct PushGate {
         let nativeAvailable: Bool
         var scope: Scope = .full
         var developerIdentity = ""
+        var nodeToolchain = ""
+        var checkoutRoot = ""
     }
     struct Review: Codable {
         let base: String
@@ -25,6 +28,7 @@ public struct PushGate {
         let swiftArguments: [String]
         let checksPassed: Bool
         let nativeUI: String
+        let typeScriptAttempt: UUID?
     }
     struct Size: Equatable {
         var lines = 0
@@ -104,15 +108,29 @@ public struct PushGate {
             + "\n" + command(["/usr/bin/xcrun", "--show-sdk-build-version"])
         let base = try commit("origin/main")
         let head = try commit("HEAD")
-        return try Identity(
+        let scope = try scope(base: base, head: head)
+        let nodeToolchain = scope == .full ? try nodeVersions() : ""
+        let observation = try Identity(
             base: base, head: head,
             toolchain: command(["/usr/bin/env", "swift", "--version"]),
-            nativeAvailable: native, scope: scope(base: base, head: head),
+            nativeAvailable: native, scope: scope,
             developerIdentity: developer + "\n"
                 + (native ? String(contentsOf: log, encoding: .utf8) : "unavailable")
                 + "\nSDK=" + sdk
-                + "\nSDKROOT=" + (ProcessInfo.processInfo.environment["SDKROOT"] ?? "default"))
+                + "\nSDKROOT=" + (ProcessInfo.processInfo.environment["SDKROOT"] ?? "default"),
+            nodeToolchain: nodeToolchain, checkoutRoot: root.resolvingSymlinksInPath().path)
+        try clean()
+        guard try git(["rev-parse", "origin/main^{commit}", "HEAD^{commit}"]) == base + "\n" + head
+        else {
+            throw QualityFailure("Git refs changed during toolchain probes; prepare again")
+        }
+        return observation
     }
+    private func nodeVersions() throws -> String {
+        try command(["/usr/bin/env", "node", "--version"]) + "\n"
+            + command(["/usr/bin/env", "pnpm", "--version"])
+    }
+
     static func size(_ numstat: String) throws -> Size {
         var result = Size()
         for row in numstat.split(separator: "\0") {
@@ -191,13 +209,20 @@ public struct PushGate {
     func directory(_ head: String) -> URL {
         root.appendingPathComponent(".build/push-gate/\(head)")
     }
+
+    static func workspace(for attempt: UUID) -> URL {
+        // The receipt must resolve this removed worktree even when a later push uses another TMPDIR.
+        URL(fileURLWithPath: "/tmp", isDirectory: true).appendingPathComponent(
+            "jarvis-push-" + attempt.uuidString)
+    }
     static func validate(_ receipt: Receipt, identity: Identity) throws {
         guard receipt.identity == identity, receipt.checksPassed,
             !receipt.intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             receipt.review.head == identity.head, receipt.review.base == identity.base,
             !receipt.review.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             receipt.review.completed, receipt.review.findings.isEmpty,
-            receipt.nativeUI == expectedNativeResult(identity)
+            receipt.nativeUI == expectedNativeResult(identity),
+            (receipt.typeScriptAttempt != nil) == (identity.scope == .full)
         else {
             throw QualityFailure(
                 "Missing, failed or stale review/tests. Run scripts/prepare-push.sh")
@@ -208,33 +233,57 @@ public struct PushGate {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw QualityFailure("No review/test receipt. Run scripts/prepare-push.sh")
         }
-        try Self.validate(
-            JSONDecoder().decode(Receipt.self, from: Data(contentsOf: url)), identity: current)
+        let receipt = try JSONDecoder().decode(Receipt.self, from: Data(contentsOf: url))
+        try validateEvidence(receipt, current: current)
     }
-    func prepare(intent: String, swiftArguments: [String]) throws {
+    private func validateEvidence(_ receipt: Receipt, current: Identity) throws {
+        try Self.validate(receipt, identity: current)
+        if let attemptID = receipt.typeScriptAttempt {
+            let attempt = directory(current.head).appendingPathComponent(attemptID.uuidString)
+                .resolvingSymlinksInPath()
+            try VitestEvidence.validate(
+                at: attempt.appendingPathComponent("vitest"), repository: self,
+                source: Self.workspace(for: attemptID), revision: current.head)
+        }
+        // A fetch, edit or toolchain change can invalidate the initial observation during a check.
+        guard try identity() == current else {
+            throw QualityFailure(
+                "Candidate or toolchain changed during verification; prepare again")
+        }
+    }
+    func prepare(
+        intent: String, swiftArguments: [String], complete: CompletePreparation = { try $0() }
+    ) throws {
         guard !intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             intent.utf8.count <= 16_384
         else { throw QualityFailure("Supply a short intended outcome and acceptance checklist") }
         let current = try identity()
         try inspect(base: current.base, head: current.head)
-        let output = directory(current.head).appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let attempt = UUID()
+        let output = directory(current.head).appendingPathComponent(attempt.uuidString)
+        try FileManager.default.createDirectory(
+            at: output, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let receiptURL = directory(current.head).appendingPathComponent("receipt.json")
         if FileManager.default.fileExists(atPath: receiptURL.path) {
-            do {
-                let old = try JSONDecoder().decode(Receipt.self, from: Data(contentsOf: receiptURL))
-                try Self.validate(old, identity: current)
-                if old.intent == intent && old.swiftArguments == swiftArguments {
-                    print("Exact candidate already reviewed and tested")
-                    return
-                }
-            } catch { print("Invalid/stale receipt; rerunning review and tests") }
-            try FileManager.default.removeItem(at: receiptURL)
+            if let old = try? JSONDecoder().decode(
+                Receipt.self, from: Data(contentsOf: receiptURL)),
+                old.intent == intent, old.swiftArguments == swiftArguments,
+                (try? validateEvidence(old, current: current)) != nil
+            {
+                try complete { print("Exact candidate already reviewed and tested") }
+                return
+            }
+            // If an interrupt stopped a Git probe, keep the previous receipt for the next retry.
+            try complete { try FileManager.default.removeItem(at: receiptURL) }
         }
         // Verify the committed candidate in an owned detached worktree, not a moving editor tree.
-        let source = output.appendingPathComponent("candidate")
+        // Keep JavaScript module resolution outside the developer's node_modules hierarchy.
+        let source =
+            current.scope == .full
+            ? Self.workspace(for: attempt) : output.appendingPathComponent("candidate")
         var verified = false
-        _ = try git(["worktree", "add", "--detach", source.path, current.head])
+        try FileManager.default.createDirectory(
+            at: source, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         func verifySource() throws {
             let gate = PushGate(root: source, runner: runner)
             try gate.clean()
@@ -262,6 +311,13 @@ public struct PushGate {
                 )
             }
         }
+        // Install retention before Git can register or populate a partial worktree.
+        // No developer-wide post-checkout hook should change this internal verification snapshot.
+        _ = try git([
+            "-c", "core.hooksPath=/dev/null", "worktree", "add", "--detach", source.path,
+            current.head,
+        ])
+        try verifySource()
         let tools = root.appendingPathComponent(".build/tools")
         if FileManager.default.fileExists(atPath: tools.path) {
             try FileManager.default.createDirectory(
@@ -334,9 +390,18 @@ public struct PushGate {
         try verifySource()
         let receipt = Receipt(
             identity: current, review: review, intent: intent, swiftArguments: swiftArguments,
-            checksPassed: true, nativeUI: Self.expectedNativeResult(current))
-        try Self.validate(receipt, identity: current)
-        try Diagnostics.writeJSON(receipt, to: receiptURL)
+            checksPassed: true, nativeUI: Self.expectedNativeResult(current),
+            typeScriptAttempt: current.scope == .full ? attempt : nil)
+        try validateEvidence(receipt, current: current)
+        // Keep the new receipt private to this attempt until the final interruption check
+        // has accepted the complete encoded result. The hook reads only receiptURL.
+        let stagedReceipt = output.appendingPathComponent("pending-receipt.json")
+        try Diagnostics.writeJSON(receipt, to: stagedReceipt)
+        try complete {
+            guard rename(stagedReceipt.path, receiptURL.path) == 0 else {
+                throw QualityFailure("Cannot publish the completed push receipt")
+            }
+        }
         verified = true
         print("Review and local checks passed for \(current.head)")
     }
@@ -349,6 +414,17 @@ public struct PushGate {
         _ current: Identity, source: URL, output: URL, swiftArguments: [String]
     ) throws {
         print("Review passed. Running full local checks; diagnostics retained locally")
+        let snapshot = PushGate(root: source, runner: runner)
+        func verifySnapshot() throws {
+            var observed = try snapshot.identity()
+            // HEAD, base, cleanliness, SDK and every selected tool must match in both checkouts.
+            observed.checkoutRoot = current.checkoutRoot
+            guard observed == current else {
+                throw QualityFailure(
+                    "The detached checkout selected a different revision or toolchain")
+            }
+        }
+        try verifySnapshot()
         guard
             try runner(
                 Command("/bin/bash", ["scripts/check.sh"] + swiftArguments, directory: source),
@@ -357,6 +433,19 @@ public struct PushGate {
             throw QualityFailure(
                 "Local checks failed/timed out; inspect checks.log, no receipt written")
         }
+        guard
+            try runner(
+                Command(
+                    "/bin/bash",
+                    [
+                        "scripts/check-typescript.sh",
+                        root.appendingPathComponent(".pnpm-store").path,
+                    ], directory: source),
+                output.appendingPathComponent("typescript.log"), 900) == 0
+        else { throw QualityFailure("TypeScript checks failed; inspect typescript.log") }
+        try VitestEvidence.collect(
+            at: output.appendingPathComponent("vitest"), source: source,
+            revision: current.head, runner: runner)
         if current.nativeAvailable {
             guard
                 try runner(
@@ -367,6 +456,7 @@ public struct PushGate {
         } else {
             print(Self.expectedNativeResult(current))
         }
+        try verifySnapshot()
     }
 
     static func validatePush(_ input: String, head: String) throws {
@@ -381,7 +471,9 @@ public struct PushGate {
         }
     }
 
-    public func run(_ arguments: [String]) throws {
+    public func run(_ arguments: [String], completePreparation: CompletePreparation = { try $0() })
+        throws
+    {
         let mode = arguments.first ?? "size"
         let options = Array(arguments.dropFirst())
         let prefixes =
@@ -414,7 +506,8 @@ public struct PushGate {
             }
             let intent = try String(contentsOfFile: String(file.dropFirst(14)), encoding: .utf8)
             try prepare(
-                intent: intent, swiftArguments: options.filter { $0.hasPrefix("--swift-arg=") })
+                intent: intent, swiftArguments: options.filter { $0.hasPrefix("--swift-arg=") },
+                complete: completePreparation)
         case "verify":
             let current = try identity()
             try inspect(base: current.base, head: current.head)

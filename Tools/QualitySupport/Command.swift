@@ -19,8 +19,11 @@ public struct Command: Sendable {
 
     /// Blocking command execution belongs only in this CLI/test utility, never app UI work.
     /// Foundation owns launch/reaping. Timeout cleanup includes nested isolated child groups.
-    public func run(log: URL, timeout: TimeInterval) throws -> Int32 {
+    public func run(log: URL, timeout: TimeInterval, interrupted: (() -> Bool)? = nil) throws
+        -> Int32
+    {
         guard timeout > 0 else { throw QualityFailure("Command timeout must be positive") }
+        guard interrupted?() != true else { throw QualityFailure("Push preparation interrupted") }
         guard FileManager.default.createFile(atPath: log.path, contents: nil) else {
             throw QualityFailure("Cannot create command log")
         }
@@ -47,19 +50,36 @@ public struct Command: Sendable {
             process.waitUntilExit()
             throw QualityFailure("Foundation did not create an isolated child process group")
         }
-        if finished.wait(timeout: .now() + timeout) == .timedOut {
-            try Self.timedOut(process, finished: finished)
+        let deadline = DispatchTime.now() + timeout
+        while true {
+            // Only an interactive prepare needs to notice a signal while blocked on a command.
+            let wake = interrupted == nil ? deadline : min(deadline, .now() + .milliseconds(100))
+            if finished.wait(timeout: wake) == .success { break }
+            if interrupted?() == true {
+                try Self.stop(process, finished: finished, reason: "Push preparation interrupted")
+            }
+            if DispatchTime.now() >= deadline { try Self.timedOut(process, finished: finished) }
         }
         process.waitUntilExit()
+        if interrupted?() == true {
+            throw CommandCleanupFailure(
+                detail: "Interrupted as the root exited; descendant ownership is unknown")
+        }
         return process.terminationReason == .uncaughtSignal
             ? -process.terminationStatus : process.terminationStatus
     }
 
     static func timedOut(_ process: Process, finished: DispatchSemaphore) throws -> Never {
+        try stop(process, finished: finished, reason: "Test command exceeded its time limit")
+    }
+
+    private static func stop(_ process: Process, finished: DispatchSemaphore, reason: String) throws
+        -> Never
+    {
         do {
             guard process.isRunning else {
                 throw CommandCleanupFailure(
-                    detail: "Root exited at the timeout boundary; descendant ownership is unknown")
+                    detail: "Root exited before cleanup; descendant ownership is unknown")
             }
             try OwnedProcessTree.terminate(process.processIdentifier)
         } catch {
@@ -71,6 +91,6 @@ public struct Command: Sendable {
             throw CommandCleanupFailure(detail: "Owned command root was not reaped")
         }
         process.waitUntilExit()
-        throw QualityFailure("Test command exceeded its time limit")
+        throw QualityFailure(reason)
     }
 }

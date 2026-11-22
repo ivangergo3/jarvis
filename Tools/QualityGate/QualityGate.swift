@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import QualitySupport
 
@@ -7,8 +8,13 @@ enum QualityGate {
         do {
             let arguments = Array(CommandLine.arguments.dropFirst())
             if arguments.first == "push" {
-                try PushGate(root: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
-                    .run(Array(arguments.dropFirst()))
+                let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+                let options = Array(arguments.dropFirst())
+                if options.first == "prepare" {
+                    try prepare(root: root, options: options)
+                } else {
+                    try PushGate(root: root).run(options)
+                }
                 return
             }
             let mode = arguments.first ?? "test"
@@ -87,6 +93,56 @@ enum QualityGate {
             FileHandle.standardError.write(
                 Data((Diagnostics.redact(error.localizedDescription) + "\n").utf8))
             exit(1)
+        }
+    }
+
+    private static func prepare(root: URL, options: [String]) throws {
+        let queue = kqueue()
+        guard queue >= 0 else { throw QualityFailure("Cannot monitor prepare interruption") }
+        defer { close(queue) }
+        guard fcntl(queue, F_SETFD, FD_CLOEXEC) == 0 else {
+            throw QualityFailure("Cannot isolate the signal queue")
+        }
+        let signals = [SIGINT, SIGTERM]
+        let changes = signals.map {
+            kevent(
+                ident: UInt($0), filter: Int16(EVFILT_SIGNAL), flags: UInt16(EV_ADD),
+                fflags: 0, data: 0, udata: nil)
+        }
+        guard kevent(queue, changes, Int32(changes.count), nil, 0, nil) == 0 else {
+            throw QualityFailure("Cannot register prepare interruption")
+        }
+        // A caught handler returns to the default disposition in exec'd children.
+        let previous = signals.map { signal($0) { _ in } }
+        defer {
+            for (number, disposition) in zip(signals, previous) { signal(number, disposition) }
+        }
+        // All gate calls are serial. Read pending signals from the kernel directly, including at
+        // publication, so a delayed asynchronous notification cannot approve an interrupted run.
+        var cancelled = false
+        func interrupted() -> Bool {
+            if cancelled { return true }
+            var event = kevent()
+            var immediate = timespec()
+            var count: Int32
+            repeat {
+                count = kevent(queue, nil, 0, &event, 1, &immediate)
+            } while count < 0 && errno == EINTR
+            cancelled = count != 0
+            return cancelled
+        }
+        let gate = PushGate(root: root) { command, log, timeout in
+            try command.run(log: log, timeout: timeout, interrupted: interrupted)
+        }
+        try gate.run(options) { publish in
+            // No child is running during receipt operations. Restore synchronous termination
+            // before polling prior signals: an interrupt before the atomic rename now prevents it.
+            let handlers = signals.map { signal($0, SIG_DFL) }
+            defer {
+                for (number, handler) in zip(signals, handlers) { signal(number, handler) }
+            }
+            guard !interrupted() else { throw QualityFailure("Push preparation interrupted") }
+            try publish()
         }
     }
 }
