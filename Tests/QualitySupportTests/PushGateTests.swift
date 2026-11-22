@@ -18,7 +18,7 @@ struct PushGateTests {
     }
     @Test func countsAllChangesAndBlocksOverLimit() throws {
         let value = try PushGate.size(
-            ["1000\t500\tTests/new.swift", "-\t-\timage.png", "1000\t0\tpnpm-lock.yaml"]
+            ["1000\t500\tTests/new\tfile.swift", "-\t-\timage.png", "1000\t0\tpnpm-lock.yaml"]
                 .joined(separator: "\0"))
         #expect(value == PushGate.Size(lines: 2500, binaries: 1))
         try PushGate.checkSize(value)
