@@ -24,6 +24,14 @@ const externals = {
   ]),
 };
 
+const desktopEntries = new Map([
+  [
+    'apps/desktop/src/main.mts',
+    new Set(['electron', 'node:fs', 'node:os', 'node:path', 'node:url']),
+  ],
+  ['apps/desktop/src/preload.cts', new Set(['electron'])],
+]);
+
 function packageRoot(file) {
   return /^(?:apps|packages)\//.test(file) ||
     file.startsWith('fixtures/workspace-library/')
@@ -120,8 +128,27 @@ export function checkBoundaries(root) {
   function check(specifier, file, location) {
     const owner = packageRoot(file);
     const layer = layers.get(owner);
+    const desktopRuntime = desktopEntries.get(file);
+    const allowedExternals = desktopRuntime ?? externals[layer];
     const fail = (reason) => errors.push(location + ': ' + reason);
+    // The packaged host contains only its two compiled entries and Electron.
+    // Check before resolving workspace dependencies or their public exports.
+    if (
+      desktopRuntime &&
+      !specifier.startsWith('.') &&
+      !desktopRuntime.has(specifier)
+    ) {
+      fail('unapproved external dependency for packaged Electron entry');
+      return;
+    }
     if (specifier.startsWith('.')) {
+      if (desktopEntries.has(file)) {
+        fail(
+          'privileged Electron entry points cannot import local implementation',
+        );
+        return;
+      }
+
       const target = path.posix.join(path.posix.dirname(file), specifier);
       if (
         /[%?#\\]/.test(specifier) ||
@@ -159,6 +186,12 @@ export function checkBoundaries(root) {
         if (error.code !== 'MODULE_NOT_FOUND')
           fail('invalid relative module reference');
       }
+      for (const name of targets) {
+        if (desktopEntries.has(path.relative(root, name))) {
+          fail('privileged Electron entry points cannot be imported');
+          return;
+        }
+      }
       const folder = probe
         ? path.join(
             root,
@@ -193,7 +226,8 @@ export function checkBoundaries(root) {
     )
       return;
     if (isBuiltin(specifier)) {
-      if (externals[layer]) fail('unapproved external dependency');
+      if (allowedExternals && !allowedExternals.has(specifier))
+        fail('unapproved external dependency');
       return;
     }
     const name = dependencyName(specifier);
@@ -249,9 +283,9 @@ export function checkBoundaries(root) {
       fail('unknown workspace or indirect import');
       return;
     }
-    if (externals[layer]) {
+    if (allowedExternals) {
       if (
-        !externals[layer].has(specifier) &&
+        !allowedExternals.has(specifier) &&
         !(isTestFile(file) && specifier === 'vitest')
       ) {
         fail('unapproved external dependency');
@@ -321,11 +355,27 @@ export function checkBoundaries(root) {
           errors.push(file + ': do not redeclare CommonJS runtime bindings');
       }
     }
+    const sandboxedPreload = file === 'apps/desktop/src/preload.cts';
     const globals = new Set();
     for (const ref of parsed.scopeManager.globalScope.through) {
+      if (!ref.isValueReference) continue;
       const name = ref.identifier.name;
-      if (!ref.isValueReference || !commonJSNames.has(name)) continue;
       const identifier = nodeMap.get(ref.identifier);
+      // Electron's declarations also describe its Node host. The sandboxed
+      // bridge only uses ordinary JS, a literal require, and this frame flag.
+      if (
+        sandboxedPreload &&
+        name !== 'require' &&
+        !(
+          name === 'process' &&
+          ts.isPropertyAccessExpression(identifier.parent) &&
+          identifier.parent.expression === identifier &&
+          identifier.parent.name.text === 'isMainFrame'
+        )
+      ) {
+        errors.push(file + ': unsupported sandboxed preload global ' + name);
+      }
+      if (!commonJSNames.has(name)) continue;
       if (esm)
         errors.push(
           file + ': CommonJS globals are unavailable in ECMAScript modules',
@@ -349,6 +399,24 @@ export function checkBoundaries(root) {
     }
     let checkedJsx = false;
     function visit(node) {
+      if (
+        sandboxedPreload &&
+        ts.isCallExpression(node) &&
+        ts.skipOuterExpressions(node.expression).kind ===
+          ts.SyntaxKind.ImportKeyword
+      ) {
+        errors.push(file + ': sandboxed preload requires CommonJS loading');
+      }
+      if (
+        sandboxedPreload &&
+        ts.canHaveModifiers(node) &&
+        ts
+          .getModifiers(node)
+          ?.some((mod) => mod.kind === ts.SyntaxKind.DeclareKeyword)
+      ) {
+        errors.push(file + ': preload cannot declare runtime globals');
+      }
+
       if (
         !checkedJsx &&
         (ts.isJsxElement(node) ||

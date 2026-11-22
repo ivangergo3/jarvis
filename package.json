@@ -18,7 +18,8 @@
     "test": "vitest run",
     "check:imports": "node scripts/typescript/boundaries.mjs && node --test scripts/typescript/boundaries.test.mjs",
     "check:projects": "node scripts/typescript/compiler-profiles.mjs && node --test scripts/typescript/compiler-profiles.test.mjs",
-    "check:boundaries": "pnpm check:packages && pnpm check:projects && pnpm check:imports"
+    "check:boundaries": "pnpm check:packages && pnpm check:projects && pnpm check:imports",
+    "desktop:package": "node scripts/desktop/package-mac.mjs"
   },
   "devDependencies": {
     "@jarvis/workspace-fixture": "workspace:*",
@@ -29,6 +30,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.73.0",
     "vitest": "5.1.1",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "@electron/packager": "20.3.0"
   }
 }
