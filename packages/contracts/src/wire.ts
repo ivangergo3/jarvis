@@ -1,8 +1,13 @@
 import {utf8Bytes} from './values.js';
 
+export const eventLimit = 64 * 1024;
 export const batchLimit = 1024 * 1024;
 
-export function parseWire(text: string, maximum: number): unknown {
+export function parseWire(
+  text: string,
+  maximum: number,
+  validFrames?: (wire: string) => boolean,
+): unknown {
   if (
     typeof text !== 'string' ||
     text.length > maximum ||
@@ -10,6 +15,7 @@ export function parseWire(text: string, maximum: number): unknown {
   )
     return undefined;
   try {
+    if (validFrames && !validFrames(text)) return undefined;
     const value: unknown = JSON.parse(text);
     return containsUniqueMembers(text) ? value : undefined;
   } catch {
@@ -17,8 +23,17 @@ export function parseWire(text: string, maximum: number): unknown {
   }
 }
 
+function jsonWhitespace(character: string | undefined): boolean {
+  return (
+    character === ' ' ||
+    character === '\t' ||
+    character === '\n' ||
+    character === '\r'
+  );
+}
+
 function afterSpace(text: string, index: number): number {
-  while (index < text.length && text.charCodeAt(index) <= 32) index++;
+  while (jsonWhitespace(text[index])) index++;
   return index;
 }
 
@@ -48,4 +63,46 @@ function containsUniqueMembers(text: string): boolean {
     else if (token === ']' || token === '}') containers.pop();
   }
   return true;
+}
+
+/** Check frame spans before decoding the enclosing batch. Native parsing subsequently
+ * validates the JSON grammar; the caller rejects malformed keys or unterminated frames.
+ */
+export function eventFramesFit(text: string): boolean {
+  let depth = 0;
+  let start = -1;
+  let found = false;
+  for (let i = 0; i < text.length; i++) {
+    const token = text[i];
+    if (token === '"') {
+      const quote = i;
+      i = closingQuote(text, i);
+      if (depth !== 1) continue;
+      const colon = afterSpace(text, i + 1);
+      if (
+        text[colon] !== ':' ||
+        JSON.parse(text.slice(quote, i + 1)) !== 'events'
+      )
+        continue;
+      const array = afterSpace(text, colon + 1);
+      if (found || text[array] !== '[') return false;
+      found = true;
+      start = array + 1;
+      i = array;
+      depth++;
+      continue;
+    }
+    if (start >= 0 && depth === 2 && (token === ',' || token === ']')) {
+      // RFC 8259 separator whitespace belongs to the batch. Every byte within
+      // the event itself, including its formatting and original escapes, counts.
+      const first = afterSpace(text, start);
+      let end = i;
+      while (end > first && jsonWhitespace(text[end - 1])) end--;
+      if (utf8Bytes(text.slice(first, end)) > eventLimit) return false;
+      start = token === ',' ? i + 1 : -1;
+    }
+    if (token === '[' || token === '{') depth++;
+    if (token === ']' || token === '}') depth--;
+  }
+  return found && start === -1 && depth === 0;
 }
