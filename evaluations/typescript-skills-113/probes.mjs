@@ -6,7 +6,8 @@ import {View} from './apps/client/src/view.ts';
 const command = {version: 1, projectId: 'A', sessionId: '1', text: 'Inspect'};
 
 test('only a parsed command for an owned destination reaches the queue', () => {
-  const lookups = [], queued = [];
+  const lookups = [];
+  const queued = [];
   const dispatch = {
     owns(project, session) { lookups.push([project, session]); return project === 'A' && session === '1'; },
     enqueue(value) { queued.push(value); },
