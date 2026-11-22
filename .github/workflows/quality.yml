@@ -2,8 +2,6 @@ name: Jarvis quality
 
 on:
   pull_request:
-  push:
-    branches: [main]
   merge_group:
   workflow_dispatch:
 
@@ -20,7 +18,7 @@ env:
 jobs:
   scope:
     name: Select and verify change scope
-    runs-on: macos-15-intel
+    runs-on: macos-15
     timeout-minutes: 30
     outputs:
       scope: ${{ steps.scope.outputs.scope }}
@@ -42,13 +40,13 @@ jobs:
       - name: Select verification scope
         id: scope
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
-          HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.event.after }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
           scope=full
           sha_pattern='^[0-9a-f]{40}$'
           case "$GITHUB_EVENT_NAME" in
-            pull_request|push|merge_group)
+            pull_request|merge_group)
               if [[ "$BASE" =~ $sha_pattern && "$HEAD" =~ $sha_pattern ]] &&
                  git cat-file -e "$BASE^{commit}"; then
                 candidate=$(git rev-parse HEAD)
@@ -81,10 +79,23 @@ jobs:
           swift run quality-gate push ci --base="$PR_BASE" --head="$PR_HEAD"
 
   swift:
-    name: Swift checks and release build
+    name: Swift / ${{ matrix.lane }}
+    outputs:
+      unit: ${{ steps.finished.outputs.unit }}
+      hover: ${{ steps.finished.outputs.hover }}
+      release: ${{ steps.finished.outputs.release }}
+      static: ${{ steps.finished.outputs.static }}
     needs: scope
     if: needs.scope.outputs.scope == 'full'
-    runs-on: macos-15-intel
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { lane: unit, runner: macos-15 }
+          - { lane: hover, runner: macos-15 }
+          - { lane: release, runner: macos-15-intel }
+          - { lane: static, runner: macos-15-intel }
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -92,28 +103,52 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Cache pinned formatter build
+        if: matrix.lane == 'static'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .build/tools
           key: swift-format-${{ runner.os }}-${{ runner.arch }}-xcode16.4-${{ hashFiles('Tools/SwiftFormat/*') }}
       - name: Prepare pinned formatter
+        if: matrix.lane == 'static'
         run: ./scripts/format.sh bootstrap
-      - name: Check formatting, concurrency gates, tests and macOS 14 release build
+      - name: Run selected Swift checks
         id: fullchecks
-        run: ./scripts/check.sh
+        env:
+          LANE: ${{ matrix.lane }}
+          JARVIS_SWIFT_JOBS: 3
+        run: |
+          swift build --jobs 3 -Xswiftc -warnings-as-errors --product quality-gate
+          gate="$(swift build --show-bin-path)/quality-gate"
+          if [[ "$LANE" == static ]]; then
+            bash scripts/verify-ci-result.sh
+            bash scripts/verify-check-lanes.sh
+          fi
+          bash scripts/check-lane.sh "$LANE" "$gate"
       - name: Retain bounded test diagnostics
         if: always() && steps.fullchecks.outcome != 'skipped'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: test-diagnostics
+          name: test-diagnostics-${{ matrix.lane }}
           path: test-results/
           retention-days: 7
           if-no-files-found: error
+      - name: Record completed Swift lane
+        id: finished
+        env:
+          LANE: ${{ matrix.lane }}
+        run: echo "$LANE=$LANE" >> "$GITHUB_OUTPUT"
 
   native:
-    name: Native UI verification
+    name: Native UI / shard ${{ matrix.shard }}
+    outputs:
+      shard1: ${{ steps.finished.outputs.shard1 }}
+      shard2: ${{ steps.finished.outputs.shard2 }}
     needs: scope
     if: needs.scope.outputs.scope == 'full'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     runs-on: macos-15-intel
     timeout-minutes: 30
     steps:
@@ -123,15 +158,22 @@ jobs:
           fetch-depth: 0
       - name: Verify native UI with synthetic fixtures
         id: nativeui
-        run: swift run -Xswiftc -warnings-as-errors native-ui-check
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: swift run -Xswiftc -warnings-as-errors native-ui-check --shard="$SHARD"
       - name: Retain native UI evidence
         if: always() && steps.nativeui.outcome != 'skipped'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: native-ui-evidence
+          name: native-ui-evidence-${{ matrix.shard }}
           path: test-results/native-ui/
           retention-days: 7
           if-no-files-found: error
+      - name: Record completed native shard
+        id: finished
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: echo "shard$SHARD=$SHARD" >> "$GITHUB_OUTPUT"
 
   quality:
     name: macOS build and tests
@@ -147,7 +189,13 @@ jobs:
           SCOPE: ${{ needs.scope.outputs.scope }}
           SWIFT_RESULT: ${{ needs.swift.result }}
           NATIVE_RESULT: ${{ needs.native.result }}
+          SWIFT_LANES: ${{ needs.swift.outputs.unit }}/${{ needs.swift.outputs.hover }}/${{ needs.swift.outputs.release }}/${{ needs.swift.outputs.static }}
+          NATIVE_SHARDS: ${{ needs.native.outputs.shard1 }}/${{ needs.native.outputs.shard2 }}
         run: |
+          if [[ "$SCOPE" == full ]]; then
+            echo "Completed Swift lanes=$SWIFT_LANES, native shards=$NATIVE_SHARDS"
+            [[ "$SWIFT_LANES" == unit/hover/release/static && "$NATIVE_SHARDS" == 1/2 ]] || exit 1
+          fi
           printf 'Scope=%s (%s), Swift=%s, native UI=%s\n' "$SCOPE" "$SCOPE_RESULT" "$SWIFT_RESULT" "$NATIVE_RESULT"
           case "$SCOPE_RESULT/$SCOPE/$SWIFT_RESULT/$NATIVE_RESULT" in
             success/full/success/success|success/docs/skipped/skipped) exit 0 ;;

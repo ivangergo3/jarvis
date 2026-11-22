@@ -46,4 +46,40 @@ struct NativeUIReportTests {
             }
         }
     }
+
+    @Test func complementaryShardsExecuteEveryDiscoveredJourney() throws {
+        let primary = NativeUIReport.Shard.interactions
+        let remaining = NativeUIReport.Shard.remaining
+        let anchor = [
+            "testEmptyProject", "testKeyboardNavigationAndDraftDestination",
+            "testViewModesSettingsAndPanelVisibilityPreserveDraft",
+        ]
+        let required = Set(anchor + ["testEmptyWorkspace"])
+        let extra = ["testEmptyWorkspace", "testNewJourney"]
+        let all = anchor + extra
+        func checked(_ shard: NativeUIReport.Shard, _ results: [String]) throws -> Int {
+            try NativeUIReport.validate(
+                discovery: all, results: results,
+                summary: [
+                    "passedTests": results.count, "totalTestCount": results.count,
+                    "failedTests": 0, "skippedTests": 0,
+                ], required: required, shard: shard)
+        }
+        #expect(
+            primary.xcodeFilters == anchor.map { "-only-testing:JarvisUITests/JarvisUITests/" + $0 }
+        )
+        #expect(
+            remaining.xcodeFilters
+                == anchor.map { "-skip-testing:JarvisUITests/JarvisUITests/" + $0 })
+        #expect(try checked(primary, anchor) == 3)
+        #expect(try checked(remaining, extra) == 2)
+        #expect(throws: QualityFailure.self) { try checked(primary, extra) }
+        #expect(throws: QualityFailure.self) { try checked(remaining, ["testEmptyWorkspace"]) }
+        #expect(throws: QualityFailure.self) { try checked(remaining, all) }
+        #expect(throws: QualityFailure.self) {
+            try NativeUIReport.validate(
+                discovery: extra, results: extra, summary: summary, required: required,
+                shard: remaining)
+        }
+    }
 }
