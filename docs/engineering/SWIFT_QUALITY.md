@@ -114,3 +114,16 @@ References: [official formatter](https://github.com/swiftlang/swift-format),
 [pinned manifest](https://github.com/swiftlang/swift-format/blob/601.0.0/Package.swift),
 [Swift migration guide](https://www.swift.org/migration/documentation/migrationguide/),
 [GitHub runner inventory](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md).
+
+### Parallel verification
+
+The local check runs the Swift suite and the disposable hover regression probes
+in two lanes. Each SwiftPM test command has two build jobs. The hover checks
+keep their healthy, faulty and restored runs in order within their own copy.
+The release build and bundle verification follow both lanes. Independent
+pre-push review still precedes the local checks.
+
+GitHub runs the Swift checks and the native UI suite on separate macOS runners
+after verifying the change scope. The required `macOS build and tests` result
+checks that both succeeded for a full change. For a docs-only change it checks
+that the scope gate succeeded and both app jobs were skipped.

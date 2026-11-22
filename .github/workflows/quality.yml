@@ -14,13 +14,16 @@ concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
 jobs:
-  quality:
-    name: macOS build and tests
+  scope:
+    name: Select and verify change scope
     runs-on: macos-15-intel
     timeout-minutes: 30
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -69,18 +72,27 @@ jobs:
           esac
           echo "scope=$scope" >> "$GITHUB_OUTPUT"
           echo "Selected verification scope: $scope" >> "$GITHUB_STEP_SUMMARY"
+
+  swift:
+    name: Swift checks and release build
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - name: Cache pinned formatter build
-        if: steps.scope.outputs.scope != 'docs'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .build/tools
           key: swift-format-${{ runner.os }}-${{ runner.arch }}-xcode16.4-${{ hashFiles('Tools/SwiftFormat/*') }}
       - name: Prepare pinned formatter
-        if: steps.scope.outputs.scope != 'docs'
         run: ./scripts/format.sh bootstrap
       - name: Check formatting, concurrency gates, tests and macOS 14 release build
         id: fullchecks
-        if: steps.scope.outputs.scope != 'docs'
         run: ./scripts/check.sh
       - name: Retain bounded test diagnostics
         if: always() && steps.fullchecks.outcome != 'skipped'
@@ -90,9 +102,20 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: error
+
+  native:
+    name: Native UI verification
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - name: Verify native UI with synthetic fixtures
         id: nativeui
-        if: steps.scope.outputs.scope != 'docs'
         run: swift run -Xswiftc -warnings-as-errors native-ui-check
       - name: Retain native UI evidence
         if: always() && steps.nativeui.outcome != 'skipped'
@@ -102,3 +125,25 @@ jobs:
           path: test-results/native-ui/
           retention-days: 7
           if-no-files-found: error
+
+  quality:
+    name: macOS build and tests
+    needs: [scope, swift, native]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every check selected for this change
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          SCOPE: ${{ needs.scope.outputs.scope }}
+          SWIFT_RESULT: ${{ needs.swift.result }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+        run: |
+          echo "Scope=$SCOPE ($SCOPE_RESULT), Swift=$SWIFT_RESULT, native UI=$NATIVE_RESULT"
+          test "$SCOPE_RESULT" = success
+          case "$SCOPE" in
+            full) test "$SWIFT_RESULT/$NATIVE_RESULT" = success/success ;;
+            docs) test "$SWIFT_RESULT/$NATIVE_RESULT" = skipped/skipped ;;
+            *) exit 1 ;;
+          esac
