@@ -41,3 +41,12 @@ toolchain and its additional defaults.
 Review still covers readable names, meaningful public APIs, error recovery,
 runtime validation, privilege propagation and whether a type assertion is
 justified. Passing static checks alone cannot establish those properties.
+
+
+Standalone TypeScript tools belong in the root `tsconfig.json` files list.
+`pnpm typecheck` runs the existing Turbo package tasks, then checks the root
+tool project with the pinned compiler and `noEmit`. It reports owned TS files
+outside a package typecheck task when the tool project does not cover them.
+The tool project reads Git-owned files and installed dependencies. Move tools
+that need project references or generated workspace declarations into a pnpm
+package with its own native typecheck task.
