@@ -38,5 +38,9 @@
   {
     "file": "packages/contracts/test/events.vitest.mjs",
     "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
+  },
+  {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "Compose publishes only the explicit loopback DB and gateway bindings"
   }
 ]
