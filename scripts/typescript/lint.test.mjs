@@ -119,6 +119,12 @@ test('workspace lint rejects direct Array construction and accepts Array.from', 
 test('typed lint distinguishes unsafe data and floating promises from handled operations', async () => {
   const eslint = workspaceESLint();
   const filePath = 'fixtures/workspace-library/src/index.ts';
+  const compare = (operator) =>
+    `export const same = (left: number, right: number) => left ${operator} right;`;
+  const [loose] = await eslint.lintText(compare('=='), {filePath});
+  assert.ok(loose.messages.some((message) => message.ruleId === 'eqeqeq'));
+  const [strict] = await eslint.lintText(compare('==='), {filePath});
+  assert.deepEqual(strict.messages, []);
   for (const [code, rule] of [
     ['export const input: any = 1;', 'no-explicit-any'],
     ["export const input: string = JSON.parse('1');", 'no-unsafe-assignment'],
