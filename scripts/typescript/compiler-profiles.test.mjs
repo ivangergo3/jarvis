@@ -100,6 +100,16 @@ test('the effective project cannot redirect renderer imports or compile source f
   });
   assert.match(check('packages/ui').join('\n'), /ambient types/);
   write(base, {compilerOptions: {...defaults, types: ['vite/client']}});
+  const viteManifest = app + '/node_modules/vite/package.json';
+  write(app + '/node_modules/vite/client.d.ts', 'export {};');
+  const vite = {
+    name: 'vite',
+    version: '1.0.0',
+    exports: {'./client': './client.d.ts'},
+  };
+  write(viteManifest, {...vite, name: 'other-package'});
+  assert.match(check().join('\n'), /ambient types/);
+  write(viteManifest, vite);
   assert.deepEqual(check(), []);
   write(base, {compilerOptions: defaults});
   for (const override of [

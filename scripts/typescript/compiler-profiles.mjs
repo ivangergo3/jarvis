@@ -86,7 +86,19 @@ export function checkCompilerProfiles(root, owner, files) {
     layer === 'client' ? 'vite/client' : layer === 'pure' ? undefined : 'node';
   if (
     !Array.isArray(options.types) ||
-    options.types.some((name) => name !== ambientType)
+    options.types.some((name) => {
+      if (name !== ambientType) return true;
+      const directive = ts.resolveTypeReferenceDirective(
+        name,
+        config,
+        options,
+        ts.sys,
+      ).resolvedTypeReferenceDirective;
+      return (
+        directive?.packageId?.name !==
+        (name === 'node' ? '@types/node' : 'vite')
+      );
+    })
   )
     errors.push(relative + ': ambient types must match the package runtime');
   if (options.libReplacement)

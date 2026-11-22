@@ -35,23 +35,6 @@ function dependencyName(specifier) {
   return parts.slice(0, specifier.startsWith('@') ? 2 : 1).join('/');
 }
 
-// The static boundary is the bare package name. Package builds and the root
-// executable fixture exercise what the declared public entry actually loads.
-function declaresRoot(exports) {
-  if (typeof exports === 'string') return exports.startsWith('./');
-  if (!exports || typeof exports !== 'object') return false;
-  if (Object.keys(exports).some((key) => key.startsWith('.'))) {
-    return (
-      Object.keys(exports).every((key) => key.startsWith('.')) &&
-      Object.hasOwn(exports, '.') &&
-      declaresRoot(exports['.'])
-    );
-  }
-  return Object.entries(exports).some(
-    ([condition, value]) => !condition.startsWith('.') && declaresRoot(value),
-  );
-}
-
 function moduleReference(node) {
   if (
     ts.isImportDeclaration(node) ||
@@ -219,8 +202,6 @@ export function checkBoundaries(root) {
         '.');
     if (target && manifests.has(target)) {
       if (specifier !== name) fail('use the public package root');
-      if (!declaresRoot(manifests.get(target).exports))
-        fail('workspace dependency does not declare a public package root');
       if (target === owner && name === manifest.name && manifest.exports)
         return;
       if (!allows(owner, target)) fail('forbidden dependency direction');

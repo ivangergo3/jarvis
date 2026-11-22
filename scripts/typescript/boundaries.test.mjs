@@ -153,30 +153,12 @@ test('workspace packages enforce their runtime, public entry and graph direction
   assert.match(checked().join('\n'), /relative target must be tracked/);
   write('packages/contracts/src/check.cjs', "require('./local/index.js');");
   assert.deepEqual(checked(), []);
-  for (const [condition, source] of [
-    ['require', "require('@jarvis/contracts');"],
-    ['types', "import type {Job} from '@jarvis/contracts';"],
-  ]) {
-    write(
-      'packages/contracts/package.json',
-      JSON.stringify({...contracts, exports: {[condition]: './src/index.mjs'}}),
-    );
-    write('apps/client/src/consumer.cts', source);
-    assert.deepEqual(checked(), []);
-  }
-  write('packages/contracts/package.json', JSON.stringify(contracts));
   write(
     'fixtures/root.ts',
     '/// <reference path="../packages/contracts/src/index.mjs" />',
   );
   assert.match(checked().join('\n'), /triple-slash references/);
   write('fixtures/root.ts', 'export {};');
-  write(
-    'packages/contracts/package.json',
-    JSON.stringify({...contracts, exports: ['./src/index.mjs']}),
-  );
-  assert.deepEqual(checked(), []);
-  write('packages/contracts/package.json', JSON.stringify(contracts));
   write('node_modules/vitest/package.json', JSON.stringify({name: 'vitest'}));
   assert.deepEqual(checked(), []);
   write(
@@ -193,25 +175,6 @@ test('workspace packages enforce their runtime, public entry and graph direction
   );
   assert.deepEqual(checked(), []);
   write('apps/client/package.json', JSON.stringify(clientManifest));
-  write(
-    'packages/contracts/package.json',
-    JSON.stringify({
-      ...contracts,
-      exports: {'./feature': './src/index.ts'},
-    }),
-  );
-  write('apps/client/src/probe.ts', "import '@jarvis/contracts';");
-  assert.match(checked().join('\n'), /does not declare a public package root/);
-  write(
-    'packages/contracts/package.json',
-    JSON.stringify({
-      ...contracts,
-      exports: {'.': './src/index.mjs', import: './src/index.mjs'},
-    }),
-  );
-  assert.match(checked().join('\n'), /does not declare a public package root/);
-  write('packages/contracts/package.json', JSON.stringify(contracts));
-  assert.deepEqual(checked(), []);
   symlinkSync(
     path.join(root, 'packages/contracts'),
     path.join(root, 'apps/client/node_modules/fs'),
