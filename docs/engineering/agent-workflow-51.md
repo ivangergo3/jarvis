@@ -73,3 +73,5 @@ the separate release latency and longer memory qualification.
 Ticket #54 shared this real-feature exercise for its traceability pilot, avoiding
 a duplicate project. One pilot does not establish lower costs, faster delivery,
 general model compliance or a production coordination capability.
+
+The implementation, verification-planning, test-automation and code-review entries include conditional TypeScript references. The [TypeScript skill evaluation](../../evaluations/typescript-skills-113/REPORT.md) records the synthetic cases, discovery checks and platform evidence limits.

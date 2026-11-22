@@ -28,6 +28,8 @@ Do not bypass a failing gate with lint disables, broad type escapes, ignored err
 
 For Swift changes, read [Swift verification](references/swift-verification.md); this is guidance for applicable code, not authority to migrate a project.
 
+For a TypeScript change, follow the [implementation reference](references/typescript-implementation.md) at the affected package and runtime boundaries.
+
 ## Output
 
 A scoped patch and a report of behaviour changed, commands actually run, results and limitations.

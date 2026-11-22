@@ -1,0 +1,17 @@
+not ok select retains the latest conversation after a late reply
+not ok select clears the previous message while a different selection loads
+not ok select ignores the first read after reopening the same conversation
+not ok rejects null before any lookup or dispatch
+not ok rejects future version before any lookup or dispatch
+not ok rejects missing text before any lookup or dispatch
+not ok rejects wrong text type before any lookup or dispatch
+not ok rejects empty project before any lookup or dispatch
+not ok rejects empty session before any lookup or dispatch
+not ok rejects empty text before any lookup or dispatch
+not ok rejects oversize text before any lookup or dispatch
+not ok rejects unknown field before any lookup or dispatch
+ok denies inaccessible pair project-b/session-a
+ok denies inaccessible pair project-a/session-b
+ok dispatches the valid owned command once
+not ok only a parsed command for an owned destination reaches the queue
+not ok a late completion leaves the selected conversation visible
