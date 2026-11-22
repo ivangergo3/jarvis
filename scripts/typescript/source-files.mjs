@@ -6,25 +6,12 @@ import path from 'node:path';
 export function sourceFiles() {
   const output = execFileSync(
     'git',
-    [
-      'ls-files',
-      '-z',
-      '--cached',
-      '--others',
-      '--exclude-standard',
-      '--',
-      'apps',
-      'packages',
-      'fixtures/workspace-library',
-      'fixtures/verify-workspace.mjs',
-      'scripts',
-      ':(top,glob)*',
-    ],
+    ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
     {encoding: 'utf8'},
   );
   const root = realpathSync('.');
   return output.split('\0').filter((file) => {
-    if (!/\.[cm]?[jt]sx?$/.test(file)) return false;
+    if (!/\.[cm]?jsx?$/.test(file)) return false;
     const entry = lstatSync(file, {throwIfNoEntry: false});
     if (!entry) return false;
     if (!entry.isFile() || realpathSync(file) !== path.join(root, file)) {

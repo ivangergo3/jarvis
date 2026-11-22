@@ -2,7 +2,7 @@ import path from 'node:path';
 import {ESLint} from 'eslint';
 import {sourceFiles} from './source-files.mjs';
 
-const files = sourceFiles().filter((file) => /\.[cm]?jsx?$/.test(file));
+const files = sourceFiles();
 if (!files.length) throw new Error('No JavaScript workspace sources found');
 const eslint = new ESLint({
   overrideConfigFile: path.resolve('eslint.config.mjs'),

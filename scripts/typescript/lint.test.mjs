@@ -22,7 +22,7 @@ test('normal command checks tracked sources using the workspace config', (t) => 
   const owner = path.join(root, 'packages/sample');
   mkdirSync(path.join(owner, 'node_modules'), {recursive: true});
   writeFileSync(path.join(owner, 'eslint.config.mjs'), 'export default [];');
-  writeFileSync(path.join(root, '.gitignore'), 'node_modules/\n');
+  writeFileSync(path.join(root, '.gitignore'), 'node_modules/\nbuild/\n');
   const input = path.join(owner, 'node_modules/example.js');
   const removed = path.join(owner, 'removed.js');
   writeFileSync(input, 'Array(2);');
@@ -46,6 +46,14 @@ test('normal command checks tracked sources using the workspace config', (t) => 
   writeFileSync(topLevel, 'Array(3);');
   assert.match(lint().stderr, /vite\.config\.mjs/);
   writeFileSync(topLevel, 'Array.from([3]);');
+  assert.equal(lint().status, 0);
+  symlinkSync(topLevel, path.join(owner, 'unrelated.ts'));
+  const built = path.join(root, 'build/private.js');
+  mkdirSync(path.dirname(built));
+  writeFileSync(built, 'Array(1);');
+  execFileSync('git', ['add', '-f', built], {cwd: root});
+  assert.match(lint().stderr, /private\.js/);
+  writeFileSync(built, 'Array.from([1]);');
   assert.equal(lint().status, 0);
   rmSync(input);
   symlinkSync(path.join(root, 'eslint.config.mjs'), input);
