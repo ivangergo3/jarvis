@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalDependencies": ["tsconfig.base.json", ".nvmrc", ".npmrc", "pnpm-workspace.yaml"],
+  "globalDependencies": ["tsconfig.base.json", ".nvmrc", ".npmrc", "pnpm-workspace.yaml", "scripts/run-workspace.sh"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

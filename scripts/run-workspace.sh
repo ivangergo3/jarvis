@@ -2,30 +2,29 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Keep cache restoration, compilation and the consuming import in one critical section.
-if [[ ${1:-} != --locked ]]; then
-    [[ $# == 1 ]] || { echo 'Expected build, fixture or typecheck' >&2; exit 2; }
-    mkdir -p .build
-    lock=.build/typescript-workspace.lock
-    case "$(uname -s)" in
-        Darwin) exec /usr/bin/lockf -k "$lock" /bin/bash scripts/run-workspace.sh --locked "$1" ;;
-        Linux) exec flock "$lock" /bin/bash scripts/run-workspace.sh --locked "$1" ;;
-        *) echo 'The local workspace commands currently support macOS and Linux with flock.' >&2; exit 2 ;;
-    esac
-fi
-
-export TURBO_TELEMETRY_DISABLED=1
-case "${2:-}" in
-    typecheck) exec turbo run typecheck --cache=local:rw ;;
-    build|fixture) ;;
+case "${1:-}" in
+    build|fixture|typecheck) ;;
     *) echo 'Expected build, fixture or typecheck' >&2; exit 2 ;;
 esac
+[[ $# == 1 ]] || { echo 'Expected one workspace task' >&2; exit 2; }
+
+# Inherit the locked descriptor through the build and import, including on interruption.
+mkdir -p .build
+exec 9>>.build/typescript-workspace.lock
+case "$(uname -s)" in
+    Darwin) /usr/bin/lockf 9 ;;
+    Linux) flock 9 ;;
+    *) echo 'The local workspace commands currently support macOS and Linux with flock.' >&2; exit 2 ;;
+esac
+
+export TURBO_TELEMETRY_DISABLED=1
+if [[ $1 == typecheck ]]; then exec turbo run typecheck --cache=local:rw; fi
 
 # Turbo overlays cached files. Clear only this fixture's generated output before either path.
 [[ ! -L fixtures && ! -L fixtures/workspace-library ]] || { echo 'Expected local fixture directories' >&2; exit 1; }
 dist=fixtures/workspace-library/dist
 rm -rf -- "$dist"
-if [[ $2 == fixture ]]; then
+if [[ $1 == fixture ]]; then
     turbo run build --filter=@jarvis/workspace-fixture --cache=local:rw
 else
     turbo run build --cache=local:rw
@@ -33,4 +32,4 @@ fi
 for entry in index.js index.d.ts; do
     [[ -f "$dist/$entry" ]] || { echo "TypeScript did not emit the public $entry." >&2; exit 1; }
 done
-if [[ $2 == fixture ]]; then exec node fixtures/verify-workspace.mjs; fi
+if [[ $1 == fixture ]]; then exec node fixtures/verify-workspace.mjs; fi
