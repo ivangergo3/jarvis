@@ -18,6 +18,8 @@ test('Compose publishes only the explicit loopback DB and gateway bindings', () 
   assert.deepEqual(services.auth.ports ?? [], []);
   assert.equal(services.auth.environment.GOTRUE_DISABLE_SIGNUP, 'true');
   assert.equal(services.gateway.environment.KONG_ADMIN_LISTEN, 'off');
+  assert.equal(services.gateway.environment.KONG_PROXY_ACCESS_LOG, '/dev/null');
+  assert.equal(services.gateway.environment.KONG_PROXY_ERROR_LOG, '/dev/null');
   assert.deepEqual(services.db.entrypoint, [
     '/bin/sh',
     '/opt/jarvis/start-postgres.sh',

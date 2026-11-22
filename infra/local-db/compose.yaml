@@ -64,6 +64,9 @@ services:
       KONG_DECLARATIVE_CONFIG: /etc/kong/jarvis.yaml
       KONG_PROXY_LISTEN: 0.0.0.0:8000
       KONG_ADMIN_LISTEN: 'off'
+      # Nginx includes the full request URI in proxy log entries.
+      KONG_PROXY_ACCESS_LOG: /dev/null
+      KONG_PROXY_ERROR_LOG: /dev/null
     volumes:
       - ./gateway.yaml:/etc/kong/jarvis.yaml:ro
 
