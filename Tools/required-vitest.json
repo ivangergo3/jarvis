@@ -22,5 +22,9 @@
   {
     "file": "packages/contracts/test/lifecycle.vitest.mjs",
     "name": "session binding and public request status omit live credentials and private answers"
+  },
+  {
+    "file": "packages/contracts/test/snapshot.vitest.mjs",
+    "name": "snapshots page public records at a single owner-bound high-water mark"
   }
 ]
