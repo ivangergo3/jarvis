@@ -80,6 +80,11 @@ jobs:
 
   swift:
     name: Swift / ${{ matrix.lane }}
+    outputs:
+      unit: ${{ steps.finished.outputs.unit }}
+      hover: ${{ steps.finished.outputs.hover }}
+      release: ${{ steps.finished.outputs.release }}
+      static: ${{ steps.finished.outputs.static }}
     needs: scope
     if: needs.scope.outputs.scope == 'full'
     strategy:
@@ -127,9 +132,17 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: error
+      - name: Record completed Swift lane
+        id: finished
+        env:
+          LANE: ${{ matrix.lane }}
+        run: echo "$LANE=$LANE" >> "$GITHUB_OUTPUT"
 
   native:
     name: Native UI / shard ${{ matrix.shard }}
+    outputs:
+      shard1: ${{ steps.finished.outputs.shard1 }}
+      shard2: ${{ steps.finished.outputs.shard2 }}
     needs: scope
     if: needs.scope.outputs.scope == 'full'
     strategy:
@@ -156,6 +169,11 @@ jobs:
           path: test-results/native-ui/
           retention-days: 7
           if-no-files-found: error
+      - name: Record completed native shard
+        id: finished
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: echo "shard$SHARD=$SHARD" >> "$GITHUB_OUTPUT"
 
   quality:
     name: macOS build and tests
@@ -171,7 +189,13 @@ jobs:
           SCOPE: ${{ needs.scope.outputs.scope }}
           SWIFT_RESULT: ${{ needs.swift.result }}
           NATIVE_RESULT: ${{ needs.native.result }}
+          SWIFT_LANES: ${{ needs.swift.outputs.unit }}/${{ needs.swift.outputs.hover }}/${{ needs.swift.outputs.release }}/${{ needs.swift.outputs.static }}
+          NATIVE_SHARDS: ${{ needs.native.outputs.shard1 }}/${{ needs.native.outputs.shard2 }}
         run: |
+          if [[ "$SCOPE" == full ]]; then
+            echo "Completed Swift lanes=$SWIFT_LANES, native shards=$NATIVE_SHARDS"
+            [[ "$SWIFT_LANES" == unit/hover/release/static && "$NATIVE_SHARDS" == 1/2 ]] || exit 1
+          fi
           printf 'Scope=%s (%s), Swift=%s, native UI=%s\n' "$SCOPE" "$SCOPE_RESULT" "$SWIFT_RESULT" "$NATIVE_RESULT"
           case "$SCOPE_RESULT/$SCOPE/$SWIFT_RESULT/$NATIVE_RESULT" in
             success/full/success/success|success/docs/skipped/skipped) exit 0 ;;
