@@ -88,9 +88,12 @@ async function startShell() {
   });
   const window = shell;
   window.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
-  window.webContents.on('will-frame-navigate', (event) =>
-    event.preventDefault(),
-  );
+  window.webContents.on('will-frame-navigate', (event) => {
+    event.preventDefault();
+    if (smoke) {
+      console.log('JARVIS_SMOKE_DENIED ' + JSON.stringify(event.url));
+    }
+  });
   window.webContents.on('will-attach-webview', (event) =>
     event.preventDefault(),
   );
@@ -111,7 +114,24 @@ async function startShell() {
   window.on('closed', () => {
     shell = undefined;
   });
-  window.once('ready-to-show', () => window.show());
+  window.once('ready-to-show', () => {
+    window.show();
+    if (smoke) {
+      const renderer = app
+        .getAppMetrics()
+        .find((item) => item.pid === window.webContents.getOSProcessId());
+      console.log(
+        'JARVIS_SMOKE_WINDOW ' +
+          JSON.stringify({
+            packaged: app.isPackaged,
+            visible: window.isVisible(),
+            sandboxed: renderer?.sandboxed,
+            profile: app.getPath('userData'),
+            sessionData: app.getPath('sessionData'),
+          }),
+      );
+    }
+  });
   await window.loadURL(documentUrl);
 }
 

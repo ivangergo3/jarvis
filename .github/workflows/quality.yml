@@ -202,8 +202,28 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Build and verify the Intel macOS preview package
-        run: exec node scripts/desktop/package-mac.mjs
+      - name: Exercise the signed synthetic Electron preview
+        env:
+          JARVIS_SMOKE_EVIDENCE_DIR: ${{ runner.temp }}/jarvis-electron-smoke
+        run: exec node scripts/desktop/package-mac.mjs --smoke
+      - name: Check packaged desktop evidence
+        env:
+          JARVIS_SMOKE_EVIDENCE_DIR: ${{ runner.temp }}/jarvis-electron-smoke
+        run: |
+          set -euo pipefail
+          for file in workspace.png project.png smoke.json; do
+            test -s "$JARVIS_SMOKE_EVIDENCE_DIR/$file"
+          done
+      - name: Retain packaged desktop screenshots and receipt
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: desktop-smoke-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/jarvis-electron-smoke/workspace.png
+            ${{ runner.temp }}/jarvis-electron-smoke/project.png
+            ${{ runner.temp }}/jarvis-electron-smoke/smoke.json
+          retention-days: 7
+          if-no-files-found: error
 
   quality:
     name: macOS build and tests
