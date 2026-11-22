@@ -140,50 +140,10 @@ test('workspace lint rejects and restores unsafe JavaScript', async () => {
       ),
     );
   }
-  for (const extension of ['mjs', 'js']) {
-    const source = {filePath: 'packages/contracts/src/index.' + extension};
-    const [commonJS] = await eslint.lintText('module.exports = {};', source);
-    assert.ok(
-      commonJS.messages.some(
-        (message) => message.ruleId === 'no-restricted-globals',
-      ),
-    );
-    const [esm] = await eslint.lintText('export default {};', source);
-    assert.deepEqual(esm.messages, []);
-  }
   const [restored] = await eslint.lintText('export const value = 0;', {
     filePath,
   });
   assert.deepEqual(restored.messages, []);
-});
-
-test('global CommonJS loaders are used only at direct calls', async () => {
-  const eslint = workspaceESLint();
-  const filePath = 'scripts/example.cjs';
-  for (const code of [
-    "new require('fs');",
-    "require.call(null, 'fs');",
-    'const load = require;',
-    "new module.require('fs');",
-    'const {require: load} = module;',
-  ]) {
-    const [result] = await eslint.lintText(code, {filePath});
-    assert.ok(
-      result.messages.some(
-        (message) => message.ruleId === 'workspace/commonjs-loader',
-      ),
-      code,
-    );
-  }
-  for (const code of [
-    "module.exports = require('./data.cjs');",
-    "module['require']('./data.cjs');",
-    'function use(require) { return require; }',
-    'const example = {require: 1};',
-  ]) {
-    const [result] = await eslint.lintText(code, {filePath});
-    assert.deepEqual(result.messages, [], code);
-  }
 });
 
 test('workspace lint rejects direct Array construction and accepts Array.from', async () => {

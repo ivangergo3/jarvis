@@ -194,6 +194,36 @@ test('workspace packages enforce their runtime, public entry and graph direction
   write('apps/client/src/builtin.ts', "import '@jarvis/contracts';");
   write('apps/client/package.json', JSON.stringify(clientManifest));
   assert.deepEqual(checked(), []);
+  for (const source of [
+    "new require('fs');",
+    "require.call(null, 'fs');",
+    'const load = require;',
+    "new module.require('fs');",
+    'const {require: load} = module;',
+  ]) {
+    write('packages/contracts/src/loader.cjs', source);
+    assert.match(checked().join('\n'), /use a direct require call/, source);
+    write(
+      'packages/contracts/src/loader.cjs',
+      "module.exports = require('./local/index.js');",
+    );
+    assert.deepEqual(checked(), []);
+  }
+  write(
+    'packages/contracts/src/loader.cjs',
+    'function select(require, module, key) { return require(module.require(key)); }',
+  );
+  assert.deepEqual(checked(), []);
+  write('packages/contracts/src/export.js', 'module.exports = {};');
+  assert.match(checked().join('\n'), /CommonJS globals are unavailable/);
+  write(
+    'packages/contracts/package.json',
+    JSON.stringify({...contracts, type: 'commonjs'}),
+  );
+  assert.deepEqual(checked(), []);
+  write('packages/contracts/src/export.js', 'export default {};');
+  write('packages/contracts/package.json', JSON.stringify(contracts));
+  assert.deepEqual(checked(), []);
   const valid = "import type {Job} from '@jarvis/contracts';";
   for (const [owner, source, diagnostic] of [
     [

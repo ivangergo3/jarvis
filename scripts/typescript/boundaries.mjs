@@ -4,6 +4,7 @@ import {createRequire, findPackageJSON, isBuiltin} from 'node:module';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import ts from 'typescript';
+import tseslint from 'typescript-eslint';
 
 import {allows, layers} from './package-graph.mjs';
 import {isTestFile, ownedSource} from './source-paths.mjs';
@@ -35,38 +36,56 @@ function dependencyName(specifier) {
   return parts.slice(0, specifier.startsWith('@') ? 2 : 1).join('/');
 }
 
-function moduleReference(node) {
+const commonJSNames = new Set([
+  'require',
+  'module',
+  'exports',
+  '__dirname',
+  '__filename',
+]);
+
+function moduleReference(node, globals) {
   if (
     ts.isImportDeclaration(node) ||
     ts.isExportDeclaration(node) ||
     ts.isJSDocImportTag(node)
-  ) {
+  )
     return node.moduleSpecifier;
-  }
   if (ts.isImportTypeNode(node)) return node.argument.literal;
   if (ts.isExternalModuleReference(node)) return node.expression;
-  if (ts.isCallExpression(node)) {
-    const callee = ts.skipOuterExpressions(node.expression);
-    if (
-      callee.kind === ts.SyntaxKind.ImportKeyword ||
-      (ts.isIdentifier(callee) && callee.text === 'require')
-    )
-      return node.arguments[0] ?? node;
-    if (
-      ts.isPropertyAccessExpression(callee) ||
-      ts.isElementAccessExpression(callee)
-    ) {
-      const receiver = ts.skipOuterExpressions(callee.expression);
-      if (!ts.isIdentifier(receiver) || receiver.text !== 'module') return;
-      if (ts.isPropertyAccessExpression(callee)) {
-        if (callee.name.text !== 'require') return;
-      } else {
-        const key = ts.skipOuterExpressions(callee.argumentExpression);
-        if (!ts.isStringLiteralLike(key) || key.text !== 'require') return;
-      }
-      return node.arguments[0] ?? node;
-    }
-  }
+  if (!ts.isCallExpression(node)) return;
+  const callee = ts.skipOuterExpressions(node.expression);
+  if (callee.kind === ts.SyntaxKind.ImportKeyword)
+    return node.arguments[0] ?? node;
+  if (
+    ts.isIdentifier(callee) &&
+    callee.text === 'require' &&
+    globals.delete(callee)
+  )
+    return node.arguments[0] ?? node;
+  const member = moduleMember(callee);
+  if (member?.name === 'require' && globals.delete(member.receiver))
+    return node.arguments[0] ?? node;
+}
+
+function moduleMember(node) {
+  if (
+    !ts.isPropertyAccessExpression(node) &&
+    !ts.isElementAccessExpression(node)
+  )
+    return;
+  const receiver = ts.skipOuterExpressions(node.expression);
+  if (!ts.isIdentifier(receiver) || receiver.text !== 'module') return;
+  const key = ts.isPropertyAccessExpression(node)
+    ? node.name
+    : ts.skipOuterExpressions(node.argumentExpression);
+  return {
+    receiver,
+    name:
+      ts.isPropertyAccessExpression(node) || ts.isStringLiteralLike(key)
+        ? key.text
+        : undefined,
+  };
 }
 
 export function checkBoundaries(root) {
@@ -271,11 +290,32 @@ export function checkBoundaries(root) {
       errors.push(file + ': expected a regular tracked source');
       continue;
     }
-    const source = ts.createSourceFile(
-      file,
-      readFileSync(path.join(root, file), 'utf8'),
-      ts.ScriptTarget.Latest,
+    const parsed = tseslint.parser.parseForESLint(
+      readFileSync(absolute, 'utf8'),
+      {
+        filePath: absolute,
+        sourceType: 'module',
+        jsDocParsingMode: 'all',
+        ecmaFeatures: {jsx: /\.[jt]sx$/.test(file)},
+      },
     );
+    const nodeMap = parsed.services.esTreeNodeToTSNodeMap;
+    const source = nodeMap.get(parsed.ast);
+    const esm =
+      file.endsWith('.mjs') ||
+      (file.endsWith('.js') &&
+        manifests.get(packageRoot(file)).type === 'module');
+    const globals = new Set();
+    for (const ref of parsed.scopeManager.globalScope.through) {
+      const name = ref.identifier.name;
+      if (!ref.isValueReference || !commonJSNames.has(name)) continue;
+      const identifier = nodeMap.get(ref.identifier);
+      if (esm)
+        errors.push(
+          file + ': CommonJS globals are unavailable in ECMAScript modules',
+        );
+      if (name === 'module' || name === 'require') globals.add(identifier);
+    }
     if (packageRoot(file) !== '.' && source.pragmas.has('jsximportsource')) {
       errors.push(
         file + ': JSX import source overrides need an explicit source policy',
@@ -302,7 +342,9 @@ export function checkBoundaries(root) {
         checkedJsx = true;
         check('react/jsx-runtime', file, file);
       }
-      const reference = moduleReference(node);
+      const member = moduleMember(node);
+      if (member?.name === 'exports') globals.delete(member.receiver);
+      const reference = moduleReference(node, globals);
       if (reference) {
         const ref = ts.skipOuterExpressions(reference);
         const location =
@@ -316,6 +358,14 @@ export function checkBoundaries(root) {
       ts.forEachChild(node, visit);
     }
     visit(source);
+    for (const identifier of globals) {
+      const line =
+        source.getLineAndCharacterOfPosition(identifier.getStart(source)).line +
+        1;
+      errors.push(
+        file + ':' + line + ': use a direct require call or module.exports',
+      );
+    }
   }
   return errors;
 }
