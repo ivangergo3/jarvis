@@ -14,8 +14,11 @@
     "check:packages": "node scripts/typescript/package-graph.mjs && node --test scripts/typescript/package-graph.test.mjs",
     "lint": "node scripts/typescript/lint.mjs && node --test scripts/typescript/lint.test.mjs",
     "format:check": "node scripts/typescript/format.mjs && node --test scripts/typescript/format.test.mjs",
-    "check:style": "pnpm typecheck && node --test scripts/typescript/check-source-types.test.mjs && pnpm check:packages && pnpm lint && pnpm format:check",
-    "test": "vitest run"
+    "check:style": "pnpm typecheck && node --test scripts/typescript/check-source-types.test.mjs && pnpm check:boundaries && pnpm lint && pnpm format:check",
+    "test": "vitest run",
+    "check:imports": "node scripts/typescript/boundaries.mjs && node --test scripts/typescript/boundaries.test.mjs",
+    "check:projects": "node scripts/typescript/compiler-profiles.mjs && node --test scripts/typescript/compiler-profiles.test.mjs",
+    "check:boundaries": "pnpm check:packages && pnpm check:projects && pnpm check:imports"
   },
   "devDependencies": {
     "@jarvis/workspace-fixture": "workspace:*",

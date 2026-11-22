@@ -17,19 +17,20 @@ const exerciseSources = new Set(
 );
 
 // Use git's source inventory so tracked files inside build directories still count.
-export function sourceFiles() {
+export function sourceFiles(directory = process.cwd()) {
+  const root = realpathSync(directory);
   const output = execFileSync(
     'git',
     ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
-    {encoding: 'utf8'},
+    {cwd: root, encoding: 'utf8'},
   );
-  const root = realpathSync('.');
   return output.split('\0').filter((file) => {
     if (!/\.[cm]?[jt]sx?$/.test(file)) return false;
     if (exerciseSources.has(file)) return false;
-    const entry = lstatSync(file, {throwIfNoEntry: false});
+    const absolute = path.join(root, file);
+    const entry = lstatSync(absolute, {throwIfNoEntry: false});
     if (!entry) return false;
-    if (!entry.isFile() || realpathSync(file) !== path.join(root, file)) {
+    if (!entry.isFile() || realpathSync(absolute) !== absolute) {
       throw new Error('Expected a regular workspace source file: ' + file);
     }
     return true;

@@ -3,7 +3,7 @@ import {existsSync, readFileSync, realpathSync} from 'node:fs';
 import path from 'node:path';
 import {parse} from 'yaml';
 
-const layers = new Map(
+export const layers = new Map(
   Object.entries({
     '.': 'tool',
     'apps/client': 'client',
@@ -26,7 +26,7 @@ const layers = new Map(
   }),
 );
 
-function allows(from, to) {
+export function allows(from, to) {
   if (from === '.') return true;
   if (to === '.' || to.startsWith('apps/') || layers.get(to) === 'tool')
     return false;
@@ -121,16 +121,20 @@ export function packageGraphErrors(root, projects, lock) {
   return errors;
 }
 
-export function checkPackageGraph(directory) {
-  const root = realpathSync(directory);
+export function workspaceMembers(root) {
   const output = execFileSync(
     'pnpm',
     ['--recursive', 'list', '--depth=-1', '--json'],
     {cwd: root, encoding: 'utf8'},
   );
+  return JSON.parse(output);
+}
+
+export function checkPackageGraph(directory) {
+  const root = realpathSync(directory);
   return packageGraphErrors(
     root,
-    JSON.parse(output),
+    workspaceMembers(root),
     parse(readFileSync(path.join(root, 'pnpm-lock.yaml'), 'utf8')),
   );
 }
