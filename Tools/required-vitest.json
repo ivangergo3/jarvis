@@ -40,6 +40,10 @@
     "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
   },
   {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "Compose publishes only the explicit loopback DB and gateway bindings"
+  },
+  {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "a missing packaged executable fails and removes its private profile"
   },
@@ -70,9 +74,5 @@
   {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
-  },
-  {
-    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
-    "name": "Compose publishes only the explicit loopback DB and gateway bindings"
   }
 ]
