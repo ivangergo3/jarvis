@@ -22,12 +22,16 @@ struct VitestEvidenceTests {
         for scenario in [
             "zero", "duplicate", "partial", "missing-required", "skipped", "suite-error", "failed",
             "missing-suite", "other-checkout", "unhandled", "wrong-project", "low-suite-count",
-            "ambiguous", "stale", "mixed-attempt",
+            "stale", "mixed-attempt",
         ] {
             try Self.writeVitest(at: attempt.url, scenario: scenario)
             #expect(throws: QualityFailure.self, Comment(rawValue: scenario)) { try validate() }
         }
         try Self.writeVitest(at: attempt.url)
+        try validate()
+        // Vitest flattens both a nested title and a literal comparison into its discovery name.
+        // A unique passing title containing the separator is valid.
+        try Self.writeVitest(at: attempt.url, scenario: "literal-separator")
         try validate()
         try Data("{".utf8).write(to: attempt.url.appendingPathComponent("vitest-results.json"))
         #expect(throws: QualityFailure.self) { try validate() }
@@ -50,8 +54,8 @@ struct VitestEvidenceTests {
         let cases = scenario == "zero" ? [] : (scenario == "duplicate" ? [id, id] : [id])
         try Diagnostics.writeJSON(cases, to: output.appendingPathComponent("vitest-discovery.json"))
         let assertion: [String: Any] = [
-            "ancestorTitles": scenario == "ambiguous" ? [] : ["Nesting"],
-            "title": scenario == "ambiguous"
+            "ancestorTitles": scenario == "literal-separator" ? [] : ["Nesting"],
+            "title": scenario == "literal-separator"
                 ? "Nesting > works" : (scenario == "partial" ? "different" : title),
             "status": scenario == "skipped" ? "skipped" : "passed", "failureMessages": [],
         ]

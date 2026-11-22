@@ -1,5 +1,6 @@
 import Foundation
 import QualitySupport
+import os
 
 @main
 enum QualityGate {
@@ -7,8 +8,13 @@ enum QualityGate {
         do {
             let arguments = Array(CommandLine.arguments.dropFirst())
             if arguments.first == "push" {
-                try PushGate(root: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
-                    .run(Array(arguments.dropFirst()))
+                let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+                let options = Array(arguments.dropFirst())
+                if options.first == "prepare" {
+                    try prepare(root: root, options: options)
+                } else {
+                    try PushGate(root: root).run(options)
+                }
                 return
             }
             let mode = arguments.first ?? "test"
@@ -88,5 +94,27 @@ enum QualityGate {
                 Data((Diagnostics.redact(error.localizedDescription) + "\n").utf8))
             exit(1)
         }
+    }
+
+    private static func prepare(root: URL, options: [String]) throws {
+        let interrupted = OSAllocatedUnfairLock(initialState: false)
+        let sources = [SIGINT, SIGTERM].map { number in
+            let source = DispatchSource.makeSignalSource(signal: number, queue: .global())
+            source.setEventHandler { interrupted.withLock { $0 = true } }
+            // A caught handler returns to the default disposition in exec'd children.
+            let previous = signal(number) { _ in }
+            source.resume()
+            return (number, previous, source)
+        }
+        defer {
+            for (number, previous, source) in sources {
+                source.cancel()
+                signal(number, previous)
+            }
+        }
+        try PushGate(root: root) { command, log, timeout in
+            try command.run(
+                log: log, timeout: timeout, interrupted: { interrupted.withLock { $0 } })
+        }.run(options)
     }
 }

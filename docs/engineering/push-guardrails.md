@@ -66,9 +66,10 @@ The pre-push hook revalidates both reports under the exact candidate's attempt d
 Full-scope receipts require those reports. Documentation-only verification records that TypeScript was skipped and needs no Node toolchain.
 
 Receipts/reviewer output/logs stay under ignored `.build/push-gate/<head>/`; attempts
-have separate directories so retries preserve failed logs. Review and tests run
-against the detached candidate, with only the pinned formatter cache shared;
-successful worktrees are removed and nested test diagnostics retained. Failed
+have separate directories so retries preserve failed logs. Pressing Control-C during
+preparation stops the active command and its owned workers before exiting.
+Review and tests run against the detached candidate, sharing the pinned formatter
+and package-download caches. Successful worktrees are removed and nested test diagnostics retained. Failed
 candidate worktrees remain at the path printed by prepare. Full-scope worktrees use a private temporary directory outside the developer workspace, to isolate Node module resolution. Inspect the retained
 process/command diagnostics and confirm all workers stopped before explicitly
 removing an owned failed worktree with `git worktree remove`. Do not

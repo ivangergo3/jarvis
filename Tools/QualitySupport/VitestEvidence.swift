@@ -179,9 +179,8 @@ enum VitestEvidence {
             for assertion in suite.assertionResults {
                 // Vitest list joins nested suite names with " > ". The JSON reporter exposes their parts.
                 let titles = assertion.ancestorTitles + [assertion.title]
-                guard titles.allSatisfy({ !$0.isEmpty && !$0.contains(" > ") }) else {
-                    throw QualityFailure(
-                        "Vitest case or suite title is empty or contains the suite delimiter")
+                guard titles.allSatisfy({ !$0.isEmpty }) else {
+                    throw QualityFailure("Vitest case or suite title is empty")
                 }
                 let name = titles.joined(separator: " > ")
                 let id = Case(file: file, name: name)

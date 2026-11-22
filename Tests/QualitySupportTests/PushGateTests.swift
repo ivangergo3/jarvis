@@ -631,6 +631,50 @@ struct PushGateTests {
             try fixture.git(["ls-remote", "origin", "refs/heads/topic"]).hasPrefix(identity.head))
     }
 
+    @Test func interruptedPrepareStopsWorkerAndIssuesNoReceipt() throws {
+        let fixture = try Fixture()
+        try fixture.setup(feature: "docs/fixture.md")
+        let support = try TemporaryDirectory(prefix: "push-interrupt-")
+        let reviewer = support.url.appendingPathComponent("codex")
+        try """
+        #!/bin/sh
+        /bin/sleep 30 &
+        echo "$!" > "$WORKER_PID_FILE"
+        kill -INT "$PPID"
+        wait
+        """.write(to: reviewer, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: reviewer.path)
+        let marker = support.url.appendingPathComponent("pid")
+        let intent = support.url.appendingPathComponent("intent")
+        try "Check interruption".write(to: intent, atomically: true, encoding: .utf8)
+        let project = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        var environment = ProcessInfo.processInfo.environment
+        environment["PATH"] = support.url.path + ":" + (environment["PATH"] ?? "/usr/bin:/bin")
+        environment["WORKER_PID_FILE"] = marker.path
+        let log = support.url.appendingPathComponent("prepare.log")
+        let command = Command(
+            project.appendingPathComponent(".build/debug/quality-gate").path,
+            ["push", "prepare", "--intent-file=" + intent.path],
+            directory: fixture.root, environment: environment)
+        #expect(try command.run(log: log, timeout: 20) != 0)
+        #expect(try Diagnostics.tail(of: log).contains("Push preparation interrupted"))
+        let pid = try #require(
+            Int32(
+                String(contentsOf: marker, encoding: .utf8)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)))
+        if let info = try OwnedProcessTree.inspect(pid) {
+            #expect(info.pbi_status == UInt32(SZOMB))
+        }
+        let head = try fixture.git(["rev-parse", "HEAD"])
+        #expect(
+            !FileManager.default.fileExists(
+                atPath: fixture.root.appendingPathComponent(
+                    ".build/push-gate/\(head)/receipt.json"
+                ).path))
+    }
+
     @Test func installerPreservesExistingHooks() throws {
         let fixture = try Fixture()
         try fixture.setup()

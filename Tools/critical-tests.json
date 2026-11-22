@@ -18,6 +18,7 @@
   "QualitySupportTests.PushGateTests/successfulPrepareRunsReviewThenTestsAndReusesExactReceipt",
   "QualitySupportTests.PushGateTests/failuresAndMutationsCannotCreateReceipts",
   "QualitySupportTests.PushGateTests/actualHookBlocksMissingEvidenceAndAcceptsExactCandidate",
+  "QualitySupportTests.PushGateTests/interruptedPrepareStopsWorkerAndIssuesNoReceipt",
   "QualitySupportTests.PushGateTests/installerPreservesExistingHooks",
   "JarvisTests.PerformanceRegressionTests/phaseConfigurationChangesCannotBeErasedByRestoringSettings",
   "QualitySupportTests.PerformanceAuditTests/phaseConfigurationOverridesFinalSettings",
