@@ -1,0 +1,15 @@
+{
+  "name": "@jarvis/workspace-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --tsBuildInfoFile dist/.tsbuildinfo",
+    "typecheck": "tsc -p tsconfig.json --noEmit --tsBuildInfoFile .turbo/typecheck.tsbuildinfo"
+  }
+}
