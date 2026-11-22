@@ -147,6 +147,74 @@ test('workspace packages enforce their runtime, public entry and graph direction
   write('packages/contracts/src/check.cjs', "require('./local');");
   assert.match(checked().join('\n'), /relative target must be tracked/);
   write('packages/contracts/src/local/index.js', 'export {};');
+  const desktop = 'apps/desktop';
+  write(
+    desktop + '/package.json',
+    JSON.stringify({
+      name: '@jarvis/desktop',
+      devDependencies: {
+        electron: '*',
+        '@jarvis/workspace-fixture': 'workspace:*',
+      },
+    }),
+  );
+  write(desktop + '/node_modules/electron/package.json', '{"name":"electron"}');
+  installLink(desktop, 'workspace-fixture', fixture);
+  const main = desktop + '/src/main.mts';
+  const preload = desktop + '/src/preload.cts';
+  const sibling = desktop + '/src/view.ts';
+  write(main, "import 'electron'; import 'node:path';");
+  write(
+    preload,
+    "import electron = require('electron'); if (process.isMainFrame) Object.keys(electron);",
+  );
+  write(sibling, 'export {};');
+  assert.deepEqual(checked(), []);
+  for (const [file, statement, reason] of [
+    [main, "import 'node:child_process';", 'unapproved external dependency'],
+    [
+      main,
+      "import '@jarvis/workspace-fixture';",
+      'unapproved external dependency',
+    ],
+    [preload, "import 'node:fs';", 'unapproved external dependency'],
+    [preload, "import('electron');", 'sandboxed preload requires CommonJS'],
+    [
+      preload,
+      "Buffer.from('fixture');",
+      'unsupported sandboxed preload global',
+    ],
+    [
+      preload,
+      "globalThis.Buffer.from('fixture');",
+      'unsupported sandboxed preload global',
+    ],
+    [preload, 'setImmediate(() => 0);', 'unsupported sandboxed preload global'],
+    [preload, 'process.cwd();', 'unsupported sandboxed preload global'],
+    [preload, 'const host = process;', 'unsupported sandboxed preload global'],
+    [
+      preload,
+      'declare const Buffer: object; Object.keys(Buffer);',
+      'preload cannot declare runtime globals',
+    ],
+    [sibling, "import 'electron';", 'unapproved external dependency'],
+    [sibling, "import './preload.cjs';", 'privileged Electron entry points'],
+    [preload, "import './main.mjs';", 'privileged Electron entry points'],
+    [main, "import './view.js';", 'cannot import local implementation'],
+    [
+      'apps/client/src/electron.ts',
+      "import 'electron';",
+      'unapproved external dependency',
+    ],
+  ]) {
+    write(file, statement);
+    assert.ok(
+      checked().some(
+        (message) => message.includes(file) && message.includes(reason),
+      ),
+    );
+    write(file, 'export {};');
+  }
   assert.deepEqual(checked(), []);
   write('packages/contracts/src/no-extension', 'module.exports = {};');
   write('packages/contracts/src/check.cjs', "require('./no-extension');");

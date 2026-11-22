@@ -72,6 +72,22 @@ export function checkCompilerProfiles(root, owner, files) {
     return errors;
   }
   const inputs = new Set(parsed.fileNames);
+  // Electron's declarations bring Node globals into the entire compiler
+  // project. Keep that profile exclusive to the two reviewed entry points.
+  if (
+    owner === 'apps/desktop' &&
+    [...inputs].some(
+      (file) =>
+        !['src/main.mts', 'src/preload.cts'].includes(
+          path.relative(folder, file),
+        ),
+    )
+  )
+    errors.push(
+      relative +
+        ': desktop compiler globals are restricted to main and preload',
+    );
+
   for (const name of sources) {
     if (!inputs.has(path.join(root, name)))
       errors.push(name + ': missing from package typecheck inputs');
