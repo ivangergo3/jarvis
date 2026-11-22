@@ -49,6 +49,26 @@ test('the effective project cannot redirect renderer imports or compile source f
   write(base, {compilerOptions: defaults});
   write(profile, good);
   const check = (owner = app) => checkCompilerProfiles(root, owner, files);
+  const desktop = 'apps/desktop';
+  write(desktop + '/package.json', {name: 'desktop', scripts: {typecheck}});
+  write(desktop + '/src/main.mts', 'export {};');
+  write(desktop + '/src/preload.cts', 'export {};');
+  write(desktop + '/tsconfig.json', {
+    extends: '../../tsconfig.base.json',
+    include: ['src'],
+  });
+  assert.deepEqual(check(desktop), []);
+  write(desktop + '/src/caller.ts', 'export const cwd = process.cwd();');
+  assert.match(check(desktop).join('\n'), /desktop compiler globals/);
+  write(desktop + '/tsconfig.json', {
+    extends: '../../tsconfig.base.json',
+    files: ['src/main.mts', 'src/preload.cts'],
+    include: [],
+  });
+  assert.match(
+    check(desktop).join('\n'),
+    /caller.ts: missing from package typecheck/,
+  );
   assert.deepEqual(check(), []);
   write(base, {
     compilerOptions: {

@@ -1,4 +1,5 @@
 packages:
+  - apps/*
   - fixtures/workspace-library
   - packages/*
 patchedDependencies:
