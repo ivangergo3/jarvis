@@ -14,8 +14,9 @@ const checksums = new Map([
 const checksum = checksums.get(process.arch);
 if (process.platform !== 'darwin' || !checksum)
   throw new Error('The desktop preview requires Apple Silicon or Intel macOS.');
-if (process.argv.length !== 2)
-  throw new Error('Expected no packaging options.');
+const smoke = process.argv[2] === '--smoke';
+if (process.argv.length !== (smoke ? 3 : 2))
+  throw new Error('The only supported packaging option is --smoke.');
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const desktop = path.join(root, 'apps/desktop');
 const manifest = JSON.parse(
@@ -105,3 +106,7 @@ const [output] = await packager({
 const appPath = path.join(output, 'Jarvis Preview.app');
 verifyPreviewBundle(appPath);
 console.log(appPath);
+if (smoke) {
+  const {runPackagedSmoke} = await import('./smoke.mjs');
+  process.exitCode = await runPackagedSmoke(appPath);
+}
