@@ -5,6 +5,7 @@ import {chromium, expect} from '@playwright/test';
 async function checkShell(state, profile, evidence) {
   // Only attach to the ephemeral loopback endpoint emitted by our owned app.
   const browser = await chromium.connectOverCDP(state.endpoint, {
+    noDefaults: true,
     timeout: 10_000,
     artifactsDir: path.join(path.dirname(profile), 'playwright-artifacts'),
   });
@@ -82,7 +83,9 @@ async function checkShell(state, profile, evidence) {
         url.replace('/index.html', '/' + target),
       );
     await navigateFixture('minimize-for-verification');
-    await expect.poll(() => state.visibility?.minimized).toBe(true);
+    await expect
+      .poll(() => state.visibility)
+      .toMatchObject({minimized: true, focused: false, windows: 1});
     await expect
       .poll(() => page.evaluate(() => document.hasFocus()))
       .toBe(false);
