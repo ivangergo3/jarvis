@@ -21,23 +21,34 @@ for app in client server; do
   cp "$suite/result/apps/$app/src/"*.test.ts "apps/$app/src/"
 done
 
-# Require the observed failure count as well as the exit code. A broken
-# dependency or unusable test runner must not be mistaken for the expected red.
-red() {
-  local count=$1
-  shift
-  if node --test --test-reporter=tap "$@" > red.tap; then
-    echo "Expected $count failing cases" >&2
-    exit 1
-  fi
-  grep -Fx "# fail $count" red.tap
+# Match every named outcome; TAP marks a skipped or TODO case on that same
+# result line. Sorting allows parallel test files to finish in any order.
+export LC_ALL=C
+run_cases() {
+  node --test --test-reporter=tap apps/*/src/*.test.ts probes.mjs > results.tap
 }
-red 12 apps/*/src/*.test.ts
-red 2 probes.mjs
+check_inventory() {
+  sed -nE 's/^(not ok|ok) [0-9]+ - /\1 /p' results.tap | sort > actual.txt
+  diff -u expected.txt actual.txt
+  grep -Fx '# cancelled 0' results.tap
+  grep -Fx '# skipped 0' results.tap
+  grep -Fx '# todo 0' results.tap
+}
+sort "$suite/expected-original.txt" > expected.txt
+if run_cases; then
+  echo 'The unrepaired cases unexpectedly passed' >&2
+  exit 1
+fi
+check_inventory
+grep -Fx '# fail 14' results.tap
+
 for app in client server; do
   cp "$suite/result/apps/$app/src/"*.ts "apps/$app/src/"
 done
-node --test --test-reporter=tap apps/*/src/*.test.ts probes.mjs
+sed 's/^not ok /ok /' "$suite/expected-original.txt" | sort > expected.txt
+run_cases
+check_inventory
+grep -Fx '# pass 17' results.tap
 
 node renderer-probe.mjs
 cp packages/contracts/src/index.ts original.ts
