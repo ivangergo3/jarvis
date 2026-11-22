@@ -10,11 +10,13 @@
   "scripts": {
     "build": "node scripts/run-workspace.mjs build",
     "typecheck": "node scripts/run-workspace.mjs typecheck",
-    "fixture": "node scripts/run-workspace.mjs fixture"
+    "fixture": "node scripts/run-workspace.mjs fixture",
+    "check:packages": "node scripts/typescript/package-graph.mjs && node --test scripts/typescript/package-graph.test.mjs"
   },
   "devDependencies": {
     "@jarvis/workspace-fixture": "workspace:*",
     "turbo": "2.11.13",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "yaml": "2.9.1"
   }
 }

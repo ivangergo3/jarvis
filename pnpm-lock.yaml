@@ -17,6 +17,9 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
 
   fixtures/workspace-library: {}
 
@@ -61,6 +64,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
 snapshots:
 
   '@turbo/darwin-64@2.11.13':
@@ -91,3 +99,5 @@ snapshots:
       '@turbo/windows-arm64': 2.11.13
 
   typescript@6.0.3: {}
+
+  yaml@2.9.1: {}
