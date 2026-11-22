@@ -40,18 +40,22 @@ export default defineConfig(
       },
     },
     rules: {
-      '@typescript-eslint/ban-ts-comment': [
-        'error',
-        {
-          'ts-check': false,
-          'ts-expect-error': true,
-          'ts-ignore': true,
-          'ts-nocheck': true,
-        },
-      ],
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-floating-promises': ['error', {ignoreVoid: false}],
       '@typescript-eslint/no-non-null-assertion': 'error',
+    },
+  },
+  {
+    files: ['packages/**/*.{js,mjs}'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        'module',
+        'exports',
+        'require',
+        '__dirname',
+        '__filename',
+      ],
     },
   },
   {
@@ -62,8 +66,17 @@ export default defineConfig(
   },
   {
     files: ['**/*.{js,jsx,ts,tsx,mjs,mts,cjs,cts}'],
-    plugins: {'react-hooks': hooks},
+    plugins: {'react-hooks': hooks, '@typescript-eslint': tseslint.plugin},
     rules: {
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-check': false,
+          'ts-expect-error': true,
+          'ts-ignore': true,
+          'ts-nocheck': true,
+        },
+      ],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
     },
