@@ -87,11 +87,26 @@ async function startShell() {
     },
   });
   const window = shell;
+  // Finder and Dock reopen a running macOS app through Electron's activate event.
+  // A second window would lose the user's current project and selection.
+  const reopen = () => {
+    if (window.isDestroyed()) return;
+    if (window.isMinimized()) window.restore();
+    window.show();
+    app.focus({steal: true});
+    window.focus();
+  };
+  window.once('closed', () => app.off('activate', reopen));
   window.webContents.setWindowOpenHandler(() => ({action: 'deny'}));
   window.webContents.on('will-frame-navigate', (event) => {
     event.preventDefault();
     if (smoke) {
       console.log('JARVIS_SMOKE_DENIED ' + JSON.stringify(event.url));
+      // Exercise the registered listener only in the private synthetic profile.
+      if (event.url === 'jarvis-preview://fixture/minimize-for-verification')
+        window.minimize();
+      if (event.url === 'jarvis-preview://fixture/activate-for-verification')
+        app.emit('activate');
     }
   });
   window.webContents.on('will-attach-webview', (event) =>
@@ -111,10 +126,27 @@ async function startShell() {
       return {mode: 'fixture', version: 1} as const;
     },
   );
+  if (smoke) {
+    const observe = () =>
+      console.log(
+        'JARVIS_SMOKE_VISIBILITY ' +
+          JSON.stringify({
+            minimized: window.isMinimized(),
+            focused: window.isFocused(),
+            visible: window.isVisible(),
+            windows: BrowserWindow.getAllWindows().length,
+          }),
+      );
+    window.on('minimize', observe);
+    window.on('restore', observe);
+    window.on('blur', observe);
+    window.on('focus', observe);
+  }
   window.on('closed', () => {
     shell = undefined;
   });
   window.once('ready-to-show', () => {
+    app.on('activate', reopen);
     window.show();
     if (smoke) {
       const renderer = app
