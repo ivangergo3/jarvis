@@ -13,6 +13,10 @@ import path from 'node:path';
 import test from 'node:test';
 import {checkPackageGraph} from './package-graph.mjs';
 
+const {packageManager} = JSON.parse(
+  readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+);
+
 test('the installed pnpm graph detects package direction, cycles and discovery drift', (t) => {
   const root = realpathSync(
     mkdtempSync(path.join(os.tmpdir(), 'jarvis-package-graph-')),
@@ -22,7 +26,7 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
     mkdirSync(path.join(root, dir), {recursive: true});
     writeFileSync(
       path.join(root, dir, 'package.json'),
-      JSON.stringify({name, version: '1.0.0', private: true, ...fields}),
+      JSON.stringify({name, version: '1.0.0', private: true, packageManager, ...fields}),
     );
   }
   function resolve() {
