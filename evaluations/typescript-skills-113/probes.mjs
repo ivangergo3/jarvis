@@ -9,11 +9,21 @@ test('only a parsed command for an owned destination reaches the queue', () => {
   const lookups = [];
   const queued = [];
   const dispatch = {
-    owns(project, session) { lookups.push([project, session]); return project === 'A' && session === '1'; },
-    enqueue(value) { queued.push(value); },
+    owns(project, session) {
+      lookups.push([project, session]);
+      return project === 'A' && session === '1';
+    },
+    enqueue(value) {
+      queued.push(value);
+    },
   };
-  for (const input of [null, {...command, version: 2}, {...command, text: 'x'.repeat(65)},
-    {...command, sessionId: 1}, {...command, token: 'synthetic'}]) {
+  for (const input of [
+    null,
+    {...command, version: 2},
+    {...command, text: 'x'.repeat(65)},
+    {...command, sessionId: 1},
+    {...command, token: 'synthetic'},
+  ]) {
     assert.equal(submit(input, dispatch), 'invalid');
   }
   assert.deepEqual(lookups, []);
@@ -22,7 +32,10 @@ test('only a parsed command for an owned destination reaches the queue', () => {
   assert.deepEqual(queued, []);
   assert.equal(submit(command, dispatch), 'accepted');
   assert.deepEqual(queued, [command]);
-  assert.deepEqual(lookups, [['B', '1'], ['A', '1']]);
+  assert.deepEqual(lookups, [
+    ['B', '1'],
+    ['A', '1'],
+  ]);
 });
 
 test('a late completion leaves the selected conversation visible', async () => {

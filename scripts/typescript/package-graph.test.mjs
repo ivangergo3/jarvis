@@ -26,7 +26,13 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
     mkdirSync(path.join(root, dir), {recursive: true});
     writeFileSync(
       path.join(root, dir, 'package.json'),
-      JSON.stringify({name, version: '1.0.0', private: true, packageManager, ...fields}),
+      JSON.stringify({
+        name,
+        version: '1.0.0',
+        private: true,
+        packageManager,
+        ...fields,
+      }),
     );
   }
   function resolve() {

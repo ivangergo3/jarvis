@@ -1,12 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+if [[ $# == 0 ]]; then
+    swift build --jobs 2 -Xswiftc -warnings-as-errors --product quality-gate
+    set -- "$(swift build --show-bin-path)/quality-gate"
+fi
+gate=$1
 fixture=$(mktemp -d "${TMPDIR:-/tmp}/jarvis-app-architecture.XXXXXX")
 trap 'status=$?; if [[ $status != 0 && -f "$fixture/probe.log" ]]; then tail -n 60 "$fixture/probe.log" >&2; fi; rm -rf "$fixture"' EXIT
 mkdir -p "$fixture/Sources/Jarvis/Shared" "$fixture/Sources/Jarvis/Application" \
     "$fixture/Sources/Jarvis/Integrations" "$fixture/Sources/Jarvis/Presentation/Views"
 check() {
-    swift run -Xswiftc -warnings-as-errors quality-gate app-architecture --root "$fixture"
+    "$gate" app-architecture --root "$fixture"
 }
 reject() {
     if check > "$fixture/probe.log" 2>&1; then

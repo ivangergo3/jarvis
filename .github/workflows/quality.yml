@@ -14,13 +14,16 @@ concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
 jobs:
-  quality:
-    name: macOS build and tests
+  scope:
+    name: Select and verify change scope
     runs-on: macos-15-intel
     timeout-minutes: 30
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -36,15 +39,6 @@ jobs:
             echo "Whitespace check failed. Run git show --format= --check HEAD locally for details." >&2
             exit 1
           }
-      - name: Check complete PR size and added credentials
-        if: github.event_name == 'pull_request'
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD: ${{ github.event.pull_request.head.sha }}
-          PR_TARGET: ${{ github.event.pull_request.base.ref }}
-        run: |
-          test "$PR_TARGET" = main || { echo 'PRs must target main for cumulative size enforcement.' >&2; exit 1; }
-          swift run quality-gate push ci --base="$PR_BASE" --head="$PR_HEAD"
       - name: Select verification scope
         id: scope
         env:
@@ -56,31 +50,56 @@ jobs:
           case "$GITHUB_EVENT_NAME" in
             pull_request|push|merge_group)
               if [[ "$BASE" =~ $sha_pattern && "$HEAD" =~ $sha_pattern ]] &&
-                 git merge-base --is-ancestor "$BASE" HEAD; then
-                scope=$(swift run quality-gate push scope --base="$BASE" --head=HEAD)
-                if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]]; then
-                  scope=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD")
-                fi
-                if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" != pull_request ]]; then
-                  swift run quality-gate push integration --base="$BASE" --head=HEAD
+                 git cat-file -e "$BASE^{commit}"; then
+                candidate=$(git rev-parse HEAD)
+                git worktree add --detach "$RUNNER_TEMP/jarvis-quality-base" "$BASE"
+                cd "$RUNNER_TEMP/jarvis-quality-base"
+                if git merge-base --is-ancestor "$BASE" "$candidate"; then
+                  scope=$(swift run quality-gate push scope --base="$BASE" --head="$candidate")
+                  if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]]; then
+                    scope=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD")
+                  fi
+                  if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" != pull_request ]]; then
+                    swift run quality-gate push integration --base="$BASE" --head="$candidate"
+                  fi
                 fi
               fi
               ;;
           esac
           echo "scope=$scope" >> "$GITHUB_OUTPUT"
           echo "Selected verification scope: $scope" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check complete PR size and added credentials
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_TARGET: ${{ github.event.pull_request.base.ref }}
+        run: |
+          test "$PR_TARGET" = main || { echo 'PRs must target main for cumulative size enforcement.' >&2; exit 1; }
+          cd "$RUNNER_TEMP/jarvis-quality-base"
+          swift run quality-gate push ci --base="$PR_BASE" --head="$PR_HEAD"
+
+  swift:
+    name: Swift checks and release build
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - name: Cache pinned formatter build
-        if: steps.scope.outputs.scope != 'docs'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .build/tools
           key: swift-format-${{ runner.os }}-${{ runner.arch }}-xcode16.4-${{ hashFiles('Tools/SwiftFormat/*') }}
       - name: Prepare pinned formatter
-        if: steps.scope.outputs.scope != 'docs'
         run: ./scripts/format.sh bootstrap
       - name: Check formatting, concurrency gates, tests and macOS 14 release build
         id: fullchecks
-        if: steps.scope.outputs.scope != 'docs'
         run: ./scripts/check.sh
       - name: Retain bounded test diagnostics
         if: always() && steps.fullchecks.outcome != 'skipped'
@@ -90,9 +109,20 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: error
+
+  native:
+    name: Native UI verification
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - name: Verify native UI with synthetic fixtures
         id: nativeui
-        if: steps.scope.outputs.scope != 'docs'
         run: swift run -Xswiftc -warnings-as-errors native-ui-check
       - name: Retain native UI evidence
         if: always() && steps.nativeui.outcome != 'skipped'
@@ -102,3 +132,24 @@ jobs:
           path: test-results/native-ui/
           retention-days: 7
           if-no-files-found: error
+
+  quality:
+    name: macOS build and tests
+    needs: [scope, swift, native]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every check selected for this change
+        id: required_result
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          SCOPE: ${{ needs.scope.outputs.scope }}
+          SWIFT_RESULT: ${{ needs.swift.result }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+        run: |
+          printf 'Scope=%s (%s), Swift=%s, native UI=%s\n' "$SCOPE" "$SCOPE_RESULT" "$SWIFT_RESULT" "$NATIVE_RESULT"
+          case "$SCOPE_RESULT/$SCOPE/$SWIFT_RESULT/$NATIVE_RESULT" in
+            success/full/success/success|success/docs/skipped/skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
