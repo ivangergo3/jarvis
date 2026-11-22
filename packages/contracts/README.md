@@ -13,3 +13,11 @@ Create a reader with `createSnapshotReader(ownerId, snapshotId)`, using the auth
 The first page has `pageToken: null` and offset zero. A later page echoes the previous `next` as its token. The owner, snapshot ID, total record count and high-water mark stay fixed. Producers sort rows by the ASCII key returned by `snapshotRecordKey`. The reader validates ordering within and across pages while retaining only the prior key. A final page has `next: null`. A zero high-water mark describes an empty snapshot.
 
 Apply data only after an `ok` response. A malformed page or an unsupported version cannot advance the reader. Discard an expired or mismatched partial projection, then start a fresh snapshot. Public records contain safe request status. The service’s authorized live route supplies any private prompt. [Local command and event contract](../../docs/engineering/local-command-stream.md)
+
+## Event replay
+
+Pass an original JSON event to `decodeEvent`. For a batch, pass the original text plus the authenticated `ownerId`, last applied `after` cursor and a required `hasApplied(eventId)` lookup to `readEventBatch`. The lookup uses that owner’s committed projection history. After an accepted batch, commit the projected changes, event IDs and new cursor together. A repeated ID at a new sequence is invalid, including after a restart. Compare decimal cursors numerically with `BigInt`.
+
+The wire reader limits each event envelope to 64 KiB before decoding the batch. JSON separator whitespace counts towards the batch limit. Formatting and escapes inside an envelope count towards both limits. A batch holds at most 100 events and 1 MiB of original UTF-8 data. Known event kinds must carry their original project, session, run and request ancestry. Unknown kinds still require a stable target, owner and contiguous sequence. An incompatible version or event kind produces a compatibility status only after those common checks pass. Gaps, repeated IDs or keys, wrong destinations and malformed data stop the replay without advancing it.
+
+An `ok` result contains the validated events. Every other result omits them. For a trusted locally constructed object the `Event` and `EventBatch` schemas are available. Actual projection, authorization and durable cursor storage belong to the consuming service.

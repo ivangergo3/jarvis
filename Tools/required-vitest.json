@@ -28,6 +28,18 @@
     "name": "snapshots page public records at a single owner-bound high-water mark"
   },
   {
+    "file": "packages/contracts/test/events.vitest.mjs",
+    "name": "a project event has a project target; requests retain their originating run even when selection changes"
+  },
+  {
+    "file": "packages/contracts/test/events.vitest.mjs",
+    "name": "unknown protocol messages stop replay without constructing an actionable event"
+  },
+  {
+    "file": "packages/contracts/test/events.vitest.mjs",
+    "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
+  },
+  {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "a missing packaged executable fails and removes its private profile"
   },
