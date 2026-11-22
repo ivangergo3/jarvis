@@ -96,13 +96,15 @@ test('snapshots page public records at a single owner-bound high-water mark', ()
   const read = createSnapshotReader(page.ownerId, page.snapshotId);
   const start = {...page, totalRecords: '9', next: 'page-2'};
   expect(read(start)).toEqual({status: 'ok', page: start});
+  const wrongContinuation = {...secondPage, pageToken: 'unrelated-token'};
+  expect(SnapshotPage.safeParse(wrongContinuation).success).toBe(true);
+  expect(read(wrongContinuation)).toEqual({status: 'malformed'});
   for (const changed of [
     {...secondPage, snapshotId: id(54)},
     {...secondPage, ownerId: id(55)},
     {...secondPage, highWater: '42'},
     {...secondPage, totalRecords: '12'},
     {...secondPage, offset: '2'},
-    {...secondPage, pageToken: 'page-3'},
     {...secondPage, next: 'page-2'},
     {...secondPage, records: [row, ...subsequentRequests(10).slice(1)]},
   ])
