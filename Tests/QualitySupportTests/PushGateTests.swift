@@ -206,7 +206,13 @@ struct PushGateTests {
                 return 0
             }
             if command.arguments == ["swift", "--version"] {
-                try "Synthetic Swift".write(to: log, atomically: true, encoding: .utf8)
+                if failure == "fetch-during-tool-probe" {
+                    _ = try git(["update-ref", "refs/remotes/origin/main", "HEAD"])
+                }
+                let version =
+                    failure == "snapshot-swift" && command.directory != root
+                    ? "Other Swift" : "Synthetic Swift"
+                try version.write(to: log, atomically: true, encoding: .utf8)
                 return 0
             }
             if command.arguments.first == "codex" {
@@ -374,7 +380,7 @@ struct PushGateTests {
         try fixture.write("README.md", Data("A concurrent local edit".utf8))
         #expect(throws: QualityFailure.self) { try gate.verify(identity) }
         _ = try fixture.git(["restore", "--", "README.md"])
-        _ = try fixture.git(["update-ref", "refs/remotes/origin/main", identity.head])
+        fixture.failure = "fetch-during-tool-probe"
         #expect(throws: QualityFailure.self) { try gate.verify(identity) }
     }
 
@@ -484,7 +490,7 @@ struct PushGateTests {
             "review-exit", "review-timeout", "malformed", "findings", "tests", "mutation",
             "snapshot-mutation", "review-head", "snapshot-head", "incomplete", "typescript-exit",
             "missing-report", "discovery-exit", "vitest-exit", "execution-missing", "early-result",
-            "changed-discovery", "snapshot-toolchain",
+            "changed-discovery", "snapshot-toolchain", "snapshot-swift",
         ] {
             let fixture = try Fixture()
             try fixture.setup()

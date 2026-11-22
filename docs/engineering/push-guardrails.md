@@ -24,6 +24,10 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
 4. Fix findings, commit and repeat. No evidence is reused across a changed
    head, base, Swift/Xcode/SDK identity or, for full scope, Node/pnpm version. An unchanged verified candidate
    can reuse its receipt. Do not edit while checks run.
+   Full verification checks the detached checkout's Swift, SDK, Node and pnpm
+   identities before and after running the suites. The local hook checks refs and
+   cleanliness again after probing tool versions. Each check describes the checkout
+   at verification time. A later change requires a new prepare.
 5. Push one branch to origin. Pre-push refreshes main and verifies the outgoing
    SHA, clean tree, size, whitespace, added-secret scan and exact review/check receipt. Missing,
    failed, malformed or stale evidence blocks. Tags, branch deletion and direct
