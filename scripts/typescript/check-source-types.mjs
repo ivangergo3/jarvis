@@ -36,10 +36,12 @@ export function checkSourceTypes() {
       );
     })
     .map(({path: dir}) => dir + path.sep);
-  const standalone = [...sources].filter(
-    (file) =>
-      /\.[cm]?tsx?$/.test(file) &&
-      !packages.some((dir) => file.startsWith(dir)),
+  const standalone = new Set(
+    [...sources].filter(
+      (file) =>
+        /\.[cm]?tsx?$/.test(file) &&
+        !packages.some((dir) => file.startsWith(dir)),
+    ),
   );
   const modules = path.join(root, 'node_modules');
   const installed =
@@ -48,6 +50,11 @@ export function checkSourceTypes() {
   function allowed(file) {
     if (!ts.sys.fileExists(file)) return false;
     const real = fs.realpathSync(file);
+    if (/\.[cm]?tsx?$/.test(real) && files.has(real))
+      return (
+        standalone.has(real) ||
+        (sources.has(real) && /\.d\.[cm]?ts$/.test(real))
+      );
     if (files.has(real))
       return !/\.[cm]?[jt]sx?$/.test(real) || sources.has(real);
     return (
@@ -118,7 +125,7 @@ export function checkSourceTypes() {
     ].some((key) => !ts.getStrictOptionValue(options, key))
   )
     errors.push('Keep the root tool project strictly typed with noEmit.');
-  if (parsed.fileNames.some((file) => !standalone.includes(file)))
+  if (parsed.fileNames.some((file) => !standalone.has(file)))
     errors.push('Root tool entries must be owned standalone TypeScript files.');
   const program = ts.createProgram(
     parsed.fileNames,
@@ -129,7 +136,7 @@ export function checkSourceTypes() {
   diagnostics.forEach(report);
   if (diagnostics.some(({code}) => code === 2307))
     errors.push(
-      'Tools importing generated workspace declarations need a workspace package with a native typecheck task.',
+      'Tools that depend on workspace package implementation sources or generated declarations need a workspace package with a native typecheck task.',
     );
   const covered = new Set(
     program.getSourceFiles().map((file) => file.fileName),

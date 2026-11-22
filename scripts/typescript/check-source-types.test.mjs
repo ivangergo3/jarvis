@@ -24,7 +24,6 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
     'pnpm-lock.yaml',
     'turbo.json',
     'tsconfig.base.json',
-    'tsconfig.json',
     'fixtures/workspace-library/package.json',
     'fixtures/workspace-library/tsconfig.json',
     'fixtures/workspace-library/src/index.ts',
@@ -37,6 +36,15 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
     copyFileSync(name, target);
   }
   symlinkSync(path.resolve('node_modules'), path.join(root, 'node_modules'));
+  const config = path.join(root, 'tsconfig.json');
+  writeFileSync(
+    config,
+    JSON.stringify({
+      extends: './tsconfig.base.json',
+      compilerOptions: {noEmit: true},
+      files: [],
+    }),
+  );
   writeFileSync(
     path.join(root, '.gitignore'),
     'node_modules/\n.build/\n.turbo/\n.private/\n',
@@ -54,7 +62,6 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
   const source = path.join(root, 'scripts/demo.ts');
   writeFileSync(source, "export const value: number = 'broken';");
   assert.match(run().stderr, /include this standalone source/);
-  const config = path.join(root, 'tsconfig.json');
   const project = JSON.parse(readFileSync(config, 'utf8'));
   project.files = ['scripts/demo.ts'];
   writeFileSync(config, JSON.stringify(project));
@@ -72,6 +79,13 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
   assert.notEqual(hidden.status, 0);
   assert.match(hidden.stderr, /TS2307/);
   assert.doesNotMatch(hidden.stderr, /private fixture marker/);
+  writeFileSync(
+    source,
+    "export * from '../fixtures/workspace-library/src/index.js';",
+  );
+  const packageSource = run();
+  assert.notEqual(packageSource.status, 0);
+  assert.match(packageSource.stderr, /TS2307/);
   writeFileSync(source, 'export const value: number = 42;');
   writeFileSync(
     config,
