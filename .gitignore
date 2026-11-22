@@ -14,4 +14,3 @@ node_modules/
 .pnpm-store/
 .turbo/
 dist/
-/fixtures/workspace-library/.emit-*/

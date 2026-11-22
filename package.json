@@ -8,9 +8,9 @@
     "pnpm": "10.7.1"
   },
   "scripts": {
-    "build": "TURBO_TELEMETRY_DISABLED=1 turbo run build --cache=local:rw",
-    "typecheck": "TURBO_TELEMETRY_DISABLED=1 turbo run typecheck --cache=local:rw",
-    "fixture": "TURBO_TELEMETRY_DISABLED=1 turbo run build --filter=@jarvis/workspace-fixture --cache=local:rw && node fixtures/verify-workspace.mjs"
+    "build": "bash scripts/run-workspace.sh build",
+    "typecheck": "bash scripts/run-workspace.sh typecheck",
+    "fixture": "bash scripts/run-workspace.sh fixture"
   },
   "devDependencies": {
     "@jarvis/workspace-fixture": "workspace:*",

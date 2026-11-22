@@ -31,7 +31,8 @@ Building requires the installed Apple command-line tools; there are no third-par
 ## TypeScript workspace fixture
 
 From a fresh checkout, use Node 24.19.0 (run `nvm use` if you manage Node with
-nvm) and pnpm 10.7.1 on your PATH. Run these commands at the repository root:
+nvm) and pnpm 10.7.1 on your PATH. Workspace commands use the system's `lockf`
+on macOS (or `flock` on Linux). Run these commands at the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -43,9 +44,9 @@ pnpm fixture
 The first install downloads the pinned dependencies into a repository-local store.
 The build compiles the private fixture library with TypeScript 6.0.3. Turborepo
 2.11.13 caches the complete emitted `dist/` directory locally. The compiler requires
-the fixture's public source entry, `src/index.ts`. Each cache miss compiles to a fresh
-directory and checks that both public entry files were emitted before publishing
-them to `dist/`. The fixture imports its compiled
+the fixture's public source entry, `src/index.ts`. The workspace commands serialize
+builds and fixture imports. Each build clears the fixture's generated `dist/` before
+Turbo compiles or restores the current outputs. The fixture imports its compiled
 ES module by package name, checks the greeting and prints
 `Hello from the Jarvis workspace.` on success. To build and test the Swift app,
 follow [Build and verify](#build-and-verify) and [Automated quality checks](#automated-quality-checks).
