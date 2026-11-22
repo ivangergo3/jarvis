@@ -355,11 +355,27 @@ export function checkBoundaries(root) {
           errors.push(file + ': do not redeclare CommonJS runtime bindings');
       }
     }
+    const sandboxedPreload = file === 'apps/desktop/src/preload.cts';
     const globals = new Set();
     for (const ref of parsed.scopeManager.globalScope.through) {
+      if (!ref.isValueReference) continue;
       const name = ref.identifier.name;
-      if (!ref.isValueReference || !commonJSNames.has(name)) continue;
       const identifier = nodeMap.get(ref.identifier);
+      // Electron's declarations also describe its Node host. The sandboxed
+      // bridge only uses ordinary JS, a literal require, and this frame flag.
+      if (
+        sandboxedPreload &&
+        name !== 'require' &&
+        !(
+          name === 'process' &&
+          ts.isPropertyAccessExpression(identifier.parent) &&
+          identifier.parent.expression === identifier &&
+          identifier.parent.name.text === 'isMainFrame'
+        )
+      ) {
+        errors.push(file + ': unsupported sandboxed preload global ' + name);
+      }
+      if (!commonJSNames.has(name)) continue;
       if (esm)
         errors.push(
           file + ': CommonJS globals are unavailable in ECMAScript modules',
@@ -384,12 +400,21 @@ export function checkBoundaries(root) {
     let checkedJsx = false;
     function visit(node) {
       if (
-        file === 'apps/desktop/src/preload.cts' &&
+        sandboxedPreload &&
         ts.isCallExpression(node) &&
         ts.skipOuterExpressions(node.expression).kind ===
           ts.SyntaxKind.ImportKeyword
       ) {
         errors.push(file + ': sandboxed preload requires CommonJS loading');
+      }
+      if (
+        sandboxedPreload &&
+        ts.canHaveModifiers(node) &&
+        ts
+          .getModifiers(node)
+          ?.some((mod) => mod.kind === ts.SyntaxKind.DeclareKeyword)
+      ) {
+        errors.push(file + ': preload cannot declare runtime globals');
       }
 
       if (

@@ -164,7 +164,10 @@ test('workspace packages enforce their runtime, public entry and graph direction
   const preload = desktop + '/src/preload.cts';
   const sibling = desktop + '/src/view.ts';
   write(main, "import 'electron'; import 'node:path';");
-  write(preload, "import electron = require('electron');");
+  write(
+    preload,
+    "import electron = require('electron'); if (process.isMainFrame) Object.keys(electron);",
+  );
   write(sibling, 'export {};');
   assert.deepEqual(checked(), []);
   for (const [file, statement, reason] of [
@@ -176,6 +179,24 @@ test('workspace packages enforce their runtime, public entry and graph direction
     ],
     [preload, "import 'node:fs';", 'unapproved external dependency'],
     [preload, "import('electron');", 'sandboxed preload requires CommonJS'],
+    [
+      preload,
+      "Buffer.from('fixture');",
+      'unsupported sandboxed preload global',
+    ],
+    [
+      preload,
+      "globalThis.Buffer.from('fixture');",
+      'unsupported sandboxed preload global',
+    ],
+    [preload, 'setImmediate(() => 0);', 'unsupported sandboxed preload global'],
+    [preload, 'process.cwd();', 'unsupported sandboxed preload global'],
+    [preload, 'const host = process;', 'unsupported sandboxed preload global'],
+    [
+      preload,
+      'declare const Buffer: object; Object.keys(Buffer);',
+      'preload cannot declare runtime globals',
+    ],
     [sibling, "import 'electron';", 'unapproved external dependency'],
     [sibling, "import './preload.cjs';", 'privileged Electron entry points'],
     [preload, "import './main.mjs';", 'privileged Electron entry points'],
