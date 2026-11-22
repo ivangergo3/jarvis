@@ -154,7 +154,7 @@ These are agreed future changes, **not observations of today's Swift app**:
 
 The local lifecycle specification must name the service owner, prevent duplicate service/CLI owners, define confirmed shutdown/relaunch, and handle crashes, database unavailability and machine sleep truthfully. An app window, backend and running Codex processes have separate lifetimes even when a confirmed close shuts them down together. After failure, restore durable state, reconcile actual outcomes and never blindly replay uncertain commands.
 
-The owner subsequently selected confirmation for both window close and Command-Q, launch-on-open and reconciliation-based crash recovery. Exact shutdown timeout/escalation, supervision mechanism and initial concurrency still need design. These rewrite lifecycle changes are documented, not implemented in the Swift app. No login item/service has been installed.
+The owner subsequently selected confirmation for both window close and Command-Q, launch-on-open and reconciliation-based crash recovery. The [local service contract](local-service-contract.md) specifies shutdown timing, process ownership and the single active turn. These rewrite lifecycle changes are documented, not implemented in the Swift app. No login item/service has been installed.
 
 ## 9. How to use this inventory next
 
