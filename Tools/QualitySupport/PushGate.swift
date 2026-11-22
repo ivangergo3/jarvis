@@ -397,7 +397,11 @@ public struct PushGate {
         guard
             try runner(
                 Command(
-                    "/bin/bash", ["scripts/check-typescript.sh"], directory: source),
+                    "/bin/bash",
+                    [
+                        "scripts/check-typescript.sh",
+                        root.appendingPathComponent(".pnpm-store").path,
+                    ], directory: source),
                 output.appendingPathComponent("typescript.log"), 900) == 0
         else { throw QualityFailure("TypeScript checks failed; inspect typescript.log") }
         try VitestEvidence.collect(
