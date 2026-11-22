@@ -37,6 +37,25 @@ struct VitestEvidenceTests {
         #expect(throws: QualityFailure.self) { try validate() }
     }
 
+    @Test func hostedReportRetainsOnlyProcessAndHashedCaseEvidence() throws {
+        let attempt = try TemporaryDirectory(prefix: "hosted-vitest-evidence-")
+        try Self.writeVitest(at: attempt.url)
+        let manifest = Data(
+            #"[{"file":"fixtures/nested.vitest.ts","name":"Nesting > works"}]"#.utf8)
+        let cases = try VitestEvidence.validate(
+            at: attempt.url, candidate: attempt.url.appendingPathComponent("candidate"),
+            manifest: manifest, revision: "candidate")
+        let report = try HostedVitestReport(cases)
+        let expected = VitestEvidence.digest(
+            Data(#"["fixtures/nested.vitest.ts","Nesting > works"]"#.utf8))
+        #expect(report.passedCaseSHA256 == [expected])
+        #expect(report.process.revision == "candidate")
+        let output = String(decoding: try JSONEncoder().encode(report), as: UTF8.self)
+        #expect(!output.contains("Nesting"))
+        #expect(!output.contains("fixtures"))
+        #expect(!output.contains("failureMessages"))
+    }
+
     static func writeVitest(
         at output: URL, candidate: URL? = nil, revision: String = "candidate",
         scenario: String = "valid"

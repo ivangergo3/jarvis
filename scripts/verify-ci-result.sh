@@ -14,22 +14,24 @@ for scope in full docs ''; do
     for classifier in success failure skipped cancelled ''; do
         for swift in success failure skipped cancelled ''; do
             for native in success failure skipped cancelled ''; do
-                expected=1
-                if [[ "$classifier" == success ]]; then
-                    if [[ "$scope" == full && "$swift" == success && "$native" == success ]] ||
-                       [[ "$scope" == docs && "$swift" == skipped && "$native" == skipped ]]; then
-                        expected=0
+                for ts in success failure skipped cancelled ''; do
+                    expected=1
+                    if [[ "$classifier" == success ]]; then
+                        if [[ "$scope" == full && "$swift" == success && "$native" == success && "$ts" == success ]] ||
+                           [[ "$scope" == docs && "$swift" == skipped && "$native" == skipped && "$ts" == skipped ]]; then
+                            expected=0
+                        fi
                     fi
-                fi
-                actual=0
-                SCOPE_RESULT="$classifier" SCOPE="$scope" SWIFT_RESULT="$swift" NATIVE_RESULT="$native" bash -e -c "$verdict" >/dev/null || actual=$?
-                [[ "$actual" == "$expected" ]] || { echo "Unexpected CI outcome: $classifier $scope $swift $native"; exit 1; }
+                    actual=0
+                    SCOPE_RESULT="$classifier" SCOPE="$scope" SWIFT_RESULT="$swift" NATIVE_RESULT="$native" TS_RESULT="$ts" bash -e -c "$verdict" >/dev/null || actual=$?
+                    [[ "$actual" == "$expected" ]] || { echo "Unexpected CI outcome: $classifier $scope $swift $native $ts"; exit 1; }
+                done
             done
         done
     done
 done
 for missing in unit hover release static 1 2; do
-    if SCOPE_RESULT=success SCOPE=full SWIFT_RESULT=success NATIVE_RESULT=success \
+    if SCOPE_RESULT=success SCOPE=full SWIFT_RESULT=success NATIVE_RESULT=success TS_RESULT=success \
         SWIFT_LANES="${SWIFT_LANES/$missing/}" NATIVE_SHARDS="${NATIVE_SHARDS/$missing/}" \
         bash -e -c "$verdict" >/dev/null; then
         echo "A full run passed without completion evidence for $missing." >&2; exit 1

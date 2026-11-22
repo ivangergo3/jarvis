@@ -121,3 +121,14 @@ command runner. The attempt's private `vitest/` directory retains the JSON
 inventory and results, exit codes, report digests and logs. The required manifest
 comes from the verified Git commit. Every discovered case must pass, and a
 nonzero runner exit blocks the push even when the assertion report looks green.
+
+Hosted full checks use a fresh checkout on macOS, the repository's pinned Node
+and pnpm, the same TypeScript workspace checks and the same Vitest collector
+and validator as local preparation. On success, GitHub attaches one JSON report
+containing the commit, process exits, raw report digests and one SHA-256 case ID
+for each passed case. IDs hash the UTF-8 JSON array of the repository-relative
+file and full case name. The private runner workspace keeps assertion text and
+raw reports. A full change needs the
+TypeScript, Swift and native UI jobs to succeed. A prose-only change needs all
+three skipped after successful classification. These fixture runs do not cover
+live subscription sign-in or physical-device behavior.
