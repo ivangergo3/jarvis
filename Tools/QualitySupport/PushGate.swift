@@ -239,12 +239,10 @@ public struct PushGate {
                 at: attempt.appendingPathComponent("vitest"), repository: self,
                 source: Self.workspace(for: attemptID), revision: current.head)
         }
-        // A concurrent fetch or commit can move the refs while reports are being read.
-        guard
-            try git(["rev-parse", "origin/main^{commit}", "HEAD^{commit}"])
-                == current.base + "\n" + current.head
-        else {
-            throw QualityFailure("Base or head changed during verification; prepare again")
+        // A fetch, edit or toolchain change can invalidate the initial observation during a check.
+        guard try identity() == current else {
+            throw QualityFailure(
+                "Candidate or toolchain changed during verification; prepare again")
         }
     }
     func prepare(
@@ -269,7 +267,8 @@ public struct PushGate {
                 try complete { print("Exact candidate already reviewed and tested") }
                 return
             }
-            try FileManager.default.removeItem(at: receiptURL)
+            // If an interrupt stopped a Git probe, keep the previous receipt for the next retry.
+            try complete { try FileManager.default.removeItem(at: receiptURL) }
         }
         // Verify the committed candidate in an owned detached worktree, not a moving editor tree.
         // Keep JavaScript module resolution outside the developer's node_modules hierarchy.
@@ -391,11 +390,11 @@ public struct PushGate {
         // Keep the new receipt private to this attempt until the final interruption check
         // has accepted the complete encoded result. The hook reads only receiptURL.
         let stagedReceipt = output.appendingPathComponent("pending-receipt.json")
+        try Diagnostics.writeJSON(receipt, to: stagedReceipt)
         try complete {
-            try Diagnostics.writeJSON(receipt, to: stagedReceipt)
-        }
-        guard rename(stagedReceipt.path, receiptURL.path) == 0 else {
-            throw QualityFailure("Cannot publish the completed push receipt")
+            guard rename(stagedReceipt.path, receiptURL.path) == 0 else {
+                throw QualityFailure("Cannot publish the completed push receipt")
+            }
         }
         verified = true
         print("Review and local checks passed for \(current.head)")

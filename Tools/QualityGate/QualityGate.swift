@@ -135,9 +135,14 @@ enum QualityGate {
             try command.run(log: log, timeout: timeout, interrupted: interrupted)
         }
         try gate.run(options) { publish in
+            // No child is running during receipt operations. Restore synchronous termination
+            // before polling prior signals: an interrupt before the atomic rename now prevents it.
+            let handlers = signals.map { signal($0, SIG_DFL) }
+            defer {
+                for (number, handler) in zip(signals, handlers) { signal(number, handler) }
+            }
             guard !interrupted() else { throw QualityFailure("Push preparation interrupted") }
             try publish()
-            guard !interrupted() else { throw QualityFailure("Push preparation interrupted") }
         }
     }
 }

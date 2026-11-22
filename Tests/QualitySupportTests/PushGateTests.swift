@@ -358,14 +358,22 @@ struct PushGateTests {
         let gate = fixture.gate()
         let identity = try gate.identity()
         #expect(throws: QualityFailure.self) {
-            try gate.prepare(intent: "Document the fixture", swiftArguments: []) { stage in
-                try stage()
+            try gate.prepare(intent: "Document the fixture", swiftArguments: []) { _ in
                 throw QualityFailure("Interrupted after encoding and before publication")
             }
         }
         #expect(throws: QualityFailure.self) { try gate.verify(identity) }
         try gate.prepare(intent: "Document the fixture", swiftArguments: [])
         try gate.verify(identity)
+        #expect(throws: QualityFailure.self) {
+            try gate.prepare(intent: "New intent", swiftArguments: []) { _ in
+                throw QualityFailure("Interrupted while revalidating old receipt")
+            }
+        }
+        try gate.verify(identity)
+        try fixture.write("README.md", Data("A concurrent local edit".utf8))
+        #expect(throws: QualityFailure.self) { try gate.verify(identity) }
+        _ = try fixture.git(["restore", "--", "README.md"])
         _ = try fixture.git(["update-ref", "refs/remotes/origin/main", identity.head])
         #expect(throws: QualityFailure.self) { try gate.verify(identity) }
     }
