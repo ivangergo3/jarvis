@@ -16,7 +16,7 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
    a candidate, then `bash scripts/prepare-push.sh --intent-file=/path/to/checklist`.
    It fetches main, creates an owned detached verification worktree,
    launches an independent ephemeral read-only `codex exec`, validates its structured
-   result and runs `scripts/check.sh`. No implementation conversation is forwarded.
+   result and runs the checks selected for the cumulative diff. No implementation conversation is forwarded.
    The reviewer gets exact base/head, project requirements, changed files and
    necessary callers. Review must explicitly report completion; an incomplete or
    blocked review cannot approve even with no findings. All actionable findings block; optional preferences should
@@ -25,12 +25,21 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
    head/base/Swift or Xcode identity/SDK configuration. An unchanged verified candidate
    can reuse its receipt. Do not edit while checks run.
 5. Push one branch to origin. Pre-push refreshes main and verifies the outgoing
-   SHA, clean tree, size, added-secret scan and exact review/test receipt. Missing,
+   SHA, clean tree, size, whitespace, added-secret scan and exact review/check receipt. Missing,
    failed, malformed or stale evidence blocks. Tags, branch deletion and direct
    main pushes are outside this workflow and blocked by the local hook.
 6. Required GitHub checks independently run the complete PR size/secret checks,
-   full local gate and synthetic native UI journeys before merge. Owner approves
+   whitespace and the applicable app checks before merge. Owner approves
    the behaviour using the short acceptance checklist; no auto-merge is enabled.
+
+A PR that changes only ordinary Markdown under `docs/` or the root `README.md`
+gets the same independent local review and basic diff checks. App tests, builds,
+formatter setup and native UI runs are skipped locally and in CI. The required
+GitHub job still reports its result. Agent instructions (AGENTS, CLAUDE and SKILL
+Markdown files), operational engineering policies, the `docs/planning` skill and
+board rules, hidden
+paths, non-text or over-1-MiB files, executable files and symlinks take the full route. A
+mixed PR takes the full route even if its last commit only changes prose.
 
 The installed CLI supports `--ephemeral`, `--ignore-user-config`, `--sandbox
 read-only`, `--output-schema` and `--output-last-message`. The child uses existing
