@@ -23,6 +23,8 @@ Check dependency directions, runtime validation, authorization, state ownership,
 
 Reject comments used as excuses for avoidable unsafe or confusing code. Preserve useful factual constraints and documentation; deleting a comment does not resolve the underlying defect. Match UI, performance and security claims to evidence of those properties, not a build result. Report a bounded review result; repeated agreement by models is not independent runtime evidence.
 
+For a TypeScript diff, trace the changed runtime paths using the [review reference](references/typescript-review.md).
+
 ## Output
 
 A concise finding list with severity/rationale, exact locations, evidence and review limits.

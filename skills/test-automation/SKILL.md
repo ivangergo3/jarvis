@@ -21,6 +21,8 @@ For a bug regression, demonstrate failure on the defective version and success o
 
 Control time, randomness and shared state where needed; exercise cancellation, ordering and cleanup explicitly for asynchronous work. Use bounded condition waits. Retain failing seeds and useful redacted diagnostics. A test runner reporting success with zero selected tests is not test evidence; inspect discovery, skip counts and failures. Do not accept blanket snapshot regeneration: review each changed expectation against the intended behaviour.
 
+For a TypeScript workflow, use the [test automation reference](references/typescript-automation.md) when choosing fixtures, controlling asynchronous work and verifying discovery.
+
 ## Output
 
 Focused test code, invocation/results when actually run, and the contract covered and excluded.

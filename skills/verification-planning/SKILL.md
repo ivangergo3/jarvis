@@ -26,6 +26,8 @@ Use the project's supported toolchain. For JavaScript/TypeScript, distinguish ES
 
 For performance claims, read [performance evidence](references/performance-evidence.md). Allocate verification effort by consequence and uncertainty, not a token percentage. Stop repeating successful checks unless changes, failures or new evidence justify another run.
 
+For TypeScript delivered across runtimes, use the [platform evidence reference](references/typescript-verification.md) to map each claim to an executable check.
+
 ## Output
 
 A verification plan with scenario, method, expected result, evidence, prerequisites, gaps, and completion recommendation rules.
