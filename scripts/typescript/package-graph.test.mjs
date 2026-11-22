@@ -84,7 +84,7 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
   });
   assert.match(
     resolve().join('\n'),
-    /use the workspace protocol for local directories/,
+    /forbidden workspace dependency|Unsupported directory snapshot/,
   );
   manifest('apps/desktop', '@fixture/desktop');
   assert.deepEqual(resolve(), []);

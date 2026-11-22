@@ -1,6 +1,7 @@
 import {execFileSync} from 'node:child_process';
-import {existsSync, readFileSync, realpathSync, statSync} from 'node:fs';
+import {existsSync, readFileSync, realpathSync} from 'node:fs';
 import path from 'node:path';
+import {parse} from 'yaml';
 
 const layers = new Map(
   Object.entries({
@@ -32,103 +33,70 @@ function allows(from, to) {
   return layers.get(to) === 'pure' || layers.get(from) === layers.get(to);
 }
 
-// pnpm distinguishes installed workspace links from registry packages of the
-// same name. Do not infer a local edge from a dependency's name or version.
-export function packageGraphErrors(root, projects) {
+export function packageGraphErrors(root, projects, lock) {
+  if (lock?.lockfileVersion !== '9.0' || !lock.importers)
+    return ['Expected a frozen pnpm v9 lockfile'];
   const errors = [];
-  const members = new Map(
-    projects.map((project) => [
-      path.resolve(project.path),
-      path.relative(root, project.path).split(path.sep).join('/') || '.',
-    ]),
+  const members = new Set(
+    projects.map(
+      (p) => path.relative(root, p.path).split(path.sep).join('/') || '.',
+    ),
   );
   const edges = new Map();
   for (const name of layers.keys()) {
-    const location = path.resolve(root, name);
     if (
-      existsSync(path.join(location, 'package.json')) &&
-      !members.has(location)
+      existsSync(path.join(root, name, 'package.json')) &&
+      !members.has(name)
     ) {
       errors.push(name + ': classified package missing from pnpm discovery');
     }
   }
-  for (const project of projects) {
-    const owner = members.get(path.resolve(project.path));
-    if (!layers.has(owner)) {
-      errors.push(owner + ': unclassified pnpm workspace package');
-      continue;
-    }
-    const manifestPath = path.join(project.path, 'package.json');
-    if (realpathSync(manifestPath) !== manifestPath) {
+  // pnpm normally represents local members as linker edges. Copied/injected
+  // directory snapshots have different identity and need their own policy.
+  for (const pkg of Object.values(lock.packages ?? {})) {
+    if (pkg.resolution?.directory || pkg.resolution?.type === 'directory') {
       errors.push(
-        owner + ': linked workspace manifest requires explicit review',
+        'Unsupported directory snapshot; use workspace links for local packages',
       );
+    }
+  }
+  for (const owner of members) {
+    if (!layers.has(owner))
+      errors.push(owner + ': unclassified pnpm workspace package');
+    if (!Object.hasOwn(lock.importers, owner))
+      errors.push(owner + ': missing from frozen lockfile');
+  }
+  for (const [owner, importer] of Object.entries(lock.importers)) {
+    if (!members.has(owner)) {
+      errors.push(owner + ': frozen importer missing from pnpm discovery');
       continue;
     }
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
     const local = new Set();
     edges.set(owner, local);
-    const required = {...manifest.dependencies, ...manifest.devDependencies};
-    // pnpm supports the same name in multiple sections. Check every declared
-    // specifier before deduplicating local edges in the set.
-    const declarations = [
-      manifest.dependencies,
-      manifest.devDependencies,
-      manifest.peerDependencies,
-      manifest.optionalDependencies,
-    ];
-    for (const [name, spec] of declarations.flatMap((group) =>
-      Object.entries(group ?? {}),
-    )) {
-      // Jarvis uses workspace: links for local packages. The only allowed
-      // file: input is a regular relative package tarball, used by offline
-      // fixtures. Treat other forms as unsupported rather than emulate pnpm's
-      // tilde, platform-path and directory normalization.
-      const archive = /^file:((?:\.\.?\/)*(?:[\w.-]+\/)*[\w.-]+\.tgz)$/.exec(
-        spec,
-      );
-      const registry = /^(?:[\d^~<>=*][\w.^~<>=+* |\-]*|[a-zA-Z][\w.-]*)$/.test(
-        spec,
-      );
-      if (
-        !spec.startsWith('workspace:') &&
-        !registry &&
-        !(
-          archive &&
-          statSync(path.resolve(project.path, archive[1]), {
-            throwIfNoEntry: false,
-          })?.isFile()
-        )
-      ) {
-        errors.push(
-          owner +
-            ': unsupported dependency source; use the workspace protocol for local directories',
+    for (const group of [
+      importer.dependencies,
+      importer.devDependencies,
+      importer.optionalDependencies,
+    ]) {
+      for (const {version} of Object.values(group ?? {})) {
+        if (typeof version !== 'string')
+          throw new Error('Expected a pnpm v9 importer version');
+        // The pinned package manager resolves aliases, ranges, overrides and
+        // OS path syntax before recording this portable relative link.
+        if (!version.startsWith('link:')) continue;
+        const target = path.posix.normalize(
+          path.posix.join(owner, version.slice(5)),
         );
-        continue;
-      }
-      // pnpm 10 can omit local-only edges from "list --depth=0". Its installed
-      // package directory still resolves to the actual target for every name.
-      const link = path.join(project.path, 'node_modules', name);
-      if (!existsSync(link)) {
-        if (
-          Object.hasOwn(required, name) &&
-          !Object.hasOwn(manifest.optionalDependencies ?? {}, name)
-        ) {
-          errors.push(
-            owner + ': missing required dependency; run a frozen pnpm install',
-          );
+        if (!members.has(target))
+          errors.push(owner + ': link target outside the discovered workspace');
+        else {
+          local.add(target);
+          if (!allows(owner, target))
+            errors.push(
+              owner + ': forbidden workspace dependency on ' + target,
+            );
         }
-        continue;
       }
-      const target = members.get(realpathSync(link));
-      if (target === undefined) {
-        if (spec.startsWith('workspace:'))
-          errors.push(owner + ': unresolved required workspace link');
-        continue;
-      }
-      local.add(target);
-      if (!allows(owner, target))
-        errors.push(owner + ': forbidden workspace dependency on ' + target);
     }
   }
 
@@ -160,7 +128,11 @@ export function checkPackageGraph(directory) {
     ['--recursive', 'list', '--depth=-1', '--json'],
     {cwd: root, encoding: 'utf8'},
   );
-  return packageGraphErrors(root, JSON.parse(output));
+  return packageGraphErrors(
+    root,
+    JSON.parse(output),
+    parse(readFileSync(path.join(root, 'pnpm-lock.yaml'), 'utf8')),
+  );
 }
 
 if (import.meta.main) {
