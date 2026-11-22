@@ -384,6 +384,15 @@ export function checkBoundaries(root) {
     let checkedJsx = false;
     function visit(node) {
       if (
+        file === 'apps/desktop/src/preload.cts' &&
+        ts.isCallExpression(node) &&
+        ts.skipOuterExpressions(node.expression).kind ===
+          ts.SyntaxKind.ImportKeyword
+      ) {
+        errors.push(file + ': sandboxed preload requires CommonJS loading');
+      }
+
+      if (
         !checkedJsx &&
         (ts.isJsxElement(node) ||
           ts.isJsxSelfClosingElement(node) ||

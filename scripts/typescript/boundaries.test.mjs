@@ -175,6 +175,7 @@ test('workspace packages enforce their runtime, public entry and graph direction
       'unapproved external dependency',
     ],
     [preload, "import 'node:fs';", 'unapproved external dependency'],
+    [preload, "import('electron');", 'sandboxed preload requires CommonJS'],
     [sibling, "import 'electron';", 'unapproved external dependency'],
     [sibling, "import './preload.cjs';", 'privileged Electron entry points'],
     [preload, "import './main.mjs';", 'privileged Electron entry points'],
