@@ -120,6 +120,15 @@ export function TeamGraph({cards, selectedId, onSelect}: TeamGraphProps) {
                 aria-pressed={selectedId === card.id}
                 onClick={() => onSelect(card.id)}
               >
+                {graph && (
+                  <i
+                    aria-hidden="true"
+                    className={
+                      'team-port ' +
+                      (center.x < layout.reactor.x ? 'port-right' : 'port-left')
+                    }
+                  />
+                )}
                 <small>{card.status}</small>
                 <strong>{card.name}</strong>
                 <span>{card.detail}</span>

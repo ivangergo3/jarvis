@@ -71,3 +71,30 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+.team-card strong {
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 3;
+}
+.team-port {
+  position: absolute;
+  top: 50%;
+  box-sizing: border-box;
+  width: 0.52rem;
+  height: 0.52rem;
+  border: 1px solid #78aab6;
+  border-radius: 50%;
+  background: #13232b;
+  pointer-events: none;
+}
+.team-port.port-right {
+  right: 0;
+  transform: translate(50%, -50%);
+}
+.team-port.port-left {
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+.team-card[aria-pressed='true'] .team-port {
+  border-color: #e8b869;
+}

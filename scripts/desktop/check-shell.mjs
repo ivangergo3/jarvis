@@ -73,7 +73,9 @@ async function checkShell(state, profile, evidence) {
           .evaluate((image) => image.complete && image.naturalWidth > 0),
       )
       .toBe(true);
-    await session.focus();
+    await page.getByRole('button', {name: 'Cards', exact: true}).focus();
+    await page.keyboard.press('Tab');
+    await expect(session).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(session).toHaveAttribute('aria-pressed', 'true');
     const endpointError = await session.evaluate((card) => {
@@ -98,6 +100,28 @@ async function checkShell(state, profile, evidence) {
     await expect(page.locator('.team-wires')).toHaveCount(0);
     await page.getByRole('button', {name: 'Graph', exact: true}).click();
     await expect(session).toHaveAttribute('aria-pressed', 'true');
+    await expect(session.locator('.team-port')).toBeVisible();
+    const originalViewport = await page.evaluate(() => ({
+      width: innerWidth,
+      height: innerHeight,
+    }));
+    await page.setViewportSize({width: 480, height: 360});
+    await expect
+      .poll(() =>
+        session.locator('strong').evaluate((label) => {
+          const box = label.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          return [...range.getClientRects()].every(
+            (rect) =>
+              rect.left >= box.left - 1 &&
+              rect.right <= box.right + 1 &&
+              rect.bottom <= box.bottom + 1,
+          );
+        }),
+      )
+      .toBe(true);
+    await page.setViewportSize(originalViewport);
     await page.screenshot({path: path.join(evidence, 'project.png')});
     const destinations = [
       'jarvis-preview://fixture/navigation-check',
