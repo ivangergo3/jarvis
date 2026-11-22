@@ -19,7 +19,7 @@ test('the effective project cannot redirect renderer imports or compile source f
   t.after(() => rmSync(root, {recursive: true, force: true}));
   const files = new Set();
   function write(name, content) {
-    files.add(name);
+    if (!name.split('/').includes('node_modules')) files.add(name);
     const destination = path.join(root, name);
     mkdirSync(path.dirname(destination), {recursive: true});
     writeFileSync(
