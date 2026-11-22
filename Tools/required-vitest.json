@@ -14,5 +14,13 @@
   {
     "file": "packages/contracts/test/values.vitest.mjs",
     "name": "timestamps, UUID versions, and owner counters reject incompatible values"
+  },
+  {
+    "file": "packages/contracts/test/lifecycle.vitest.mjs",
+    "name": "ambiguous setup, provider refusals, unsent runs and verified stops stay distinguishable"
+  },
+  {
+    "file": "packages/contracts/test/lifecycle.vitest.mjs",
+    "name": "session binding and public request status omit live credentials and private answers"
   }
 ]
