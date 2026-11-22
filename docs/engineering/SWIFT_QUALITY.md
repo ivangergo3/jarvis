@@ -119,8 +119,10 @@ References: [official formatter](https://github.com/swiftlang/swift-format),
 
 The local check runs the Swift suite and the disposable hover regression probes
 in two lanes. Each SwiftPM test command has two build jobs. The hover checks
-keep their healthy, faulty and restored runs in order within their own copy.
-A terminal interrupt drains the active lanes and returns a failure. This lets
+run all three assertions together on the original and restored builds. Each
+defect runs separately in its own single-fault build, yielding nine results
+across five SwiftPM test invocations.
+During the paired checks a terminal interrupt drains the active commands and returns a failure. This lets
 each probe remove its temporary build. The release and bundle checks follow
 only after both lanes succeed. Independent
 pre-push review still precedes the local checks.
@@ -129,3 +131,7 @@ GitHub runs the Swift checks and the native UI suite on separate macOS runners
 after verifying the change scope. The required `macOS build and tests` result
 checks that both succeeded for a full change. For a docs-only change it checks
 that the scope gate succeeded and both app jobs were skipped.
+
+Scope and PR diff checks use the base commit’s verifier. The repository workflow
+itself is reviewed like other tracked code and remains subject to the existing
+branch-protection policy.

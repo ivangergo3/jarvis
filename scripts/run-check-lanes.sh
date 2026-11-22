@@ -30,8 +30,11 @@ wait_for_lane "$core" || failed=1
 wait_for_lane "$hover" || failed=1
 if (( interrupted != 0 )); then exit "$interrupted"; fi
 if (( failed != 0 )); then exit 1; fi
-bash scripts/check-lane.sh release "$@" &
-release=$!
-wait_for_lane "$release" || failed=1
-if (( interrupted != 0 )); then exit "$interrupted"; fi
-exit "$failed"
+# Release is the sole remaining lane. Return it to ordinary foreground
+# execution so the terminal can interrupt an active release build directly.
+set +m
+trap - HUP TERM INT
+rm -rf "$scratch"
+trap - EXIT
+unset JARVIS_CHECK_CANCEL_FILE
+exec /bin/bash scripts/check-lane.sh release "$@"

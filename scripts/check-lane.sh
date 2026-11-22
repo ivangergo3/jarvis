@@ -4,7 +4,7 @@ lane=$1
 gate=$2
 shift 2
 stage() {
-    [[ ! -e "$JARVIS_CHECK_CANCEL_FILE" ]] || return 1
+    [[ ! -e "${JARVIS_CHECK_CANCEL_FILE:-}" ]] || return 1
     "$@"
 }
 case "$lane" in

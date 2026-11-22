@@ -59,7 +59,10 @@ public enum HoverFaultProbe {
             throw QualityFailure("Connector style fault anchor changed")
         }
         let styleDefective = styleOriginal.replacingOccurrences(of: styleAnchor, with: "")
-        for (name, target, good, bad, test, assertion) in [
+        typealias Probe = (
+            name: String, target: URL, good: String, bad: String, test: String, assertion: String
+        )
+        let probes: [Probe] = [
             ("dashboard-forwarding", file, original, defective, selected, "rootUpdates"),
             (
                 "all-card-fanout", cardFile, cardOriginal, cardDefective,
@@ -71,50 +74,64 @@ public enum HoverFaultProbe {
                 "JarvisTests.AnimationEfficiencyTests/connectorHoverLoadOnlyWritesChangedLayerStyles",
                 "writes"
             ),
-        ] {
-            for fault in [false, true, false] {
-                if let marker = ProcessInfo.processInfo.environment["JARVIS_CHECK_CANCEL_FILE"],
-                    FileManager.default.fileExists(atPath: marker)
-                {
-                    throw QualityFailure("Hover verification interrupted between probes")
-                }
-                try (fault ? bad : good).write(to: target, atomically: true, encoding: .utf8)
-                for xml in try TestReport.files(in: fixture.url) {
-                    try FileManager.default.removeItem(at: xml)
-                }
-                let log = fixture.url.appendingPathComponent("test.log")
-                let command = Command(
-                    "/usr/bin/env",
-                    ["swift", "test"] + swiftArguments + [
-                        "--scratch-path", fixture.url.appendingPathComponent(".build").path,
-                        "--filter", test, "--xunit-output",
-                        fixture.url.appendingPathComponent("result.xml").path,
-                    ], directory: fixture.url)
-                let status = try fixture.retainingOnCleanupFailure {
-                    try command.run(log: log, timeout: 600)
-                }
-                let cases = try TestReport.read(
-                    TestReport.files(in: fixture.url), allowReportedIssues: true)
-                let matches = cases.filter { $0.id == TestReport.id(test) }
+        ]
+        func verify(_ selected: [Probe], defective: Bool) throws {
+            if let marker = ProcessInfo.processInfo.environment["JARVIS_CHECK_CANCEL_FILE"],
+                FileManager.default.fileExists(atPath: marker)
+            {
+                throw QualityFailure("Hover verification interrupted between probes")
+            }
+            let filters = selected.flatMap { ["--filter", $0.test] }
+            for xml in try TestReport.files(in: fixture.url) {
+                try FileManager.default.removeItem(at: xml)
+            }
+            let log = fixture.url.appendingPathComponent("test.log")
+            let command = Command(
+                "/usr/bin/env",
+                ["swift", "test"] + swiftArguments + filters + [
+                    "--scratch-path", fixture.url.appendingPathComponent(".build").path,
+                    "--xunit-output",
+                    fixture.url.appendingPathComponent("result.xml").path,
+                ], directory: fixture.url)
+            let status = try fixture.retainingOnCleanupFailure {
+                try command.run(log: log, timeout: 600)
+            }
+            let cases = try TestReport.read(
+                TestReport.files(in: fixture.url), allowReportedIssues: true)
+            let tail = try Diagnostics.tail(of: log)
+            guard cases.count == selected.count, !cases.contains(where: \.skipped) else {
+                throw QualityFailure("Incomplete hover probe results")
+            }
+            for probe in selected {
+                let matches = cases.filter { $0.id == TestReport.id(probe.test) }
                 let failed = matches.contains(where: \.failed)
-                let tail = try Diagnostics.tail(of: log)
                 // Swift Testing reports the five argument sets as one xUnit testcase.
                 guard matches.count == 1,
-                    !cases.contains(where: \.skipped),
-                    fault
-                        ? (status != 0 && failed && tail.contains(assertion))
+                    defective
+                        ? (status != 0 && failed && tail.contains(probe.assertion))
                         : (status == 0 && !failed)
                 else {
                     FileHandle.standardError.write(Data(tail.utf8))
                     throw QualityFailure("Unexpected hover regression probe outcome")
                 }
                 evidence.append(
-                    Evidence(fault: name, defective: fault, exit: status, assertionFailed: failed))
+                    Evidence(
+                        fault: probe.name, defective: defective, exit: status,
+                        assertionFailed: failed))
                 print(
-                    "Hover \(name): defective=\(fault), exit=\(status), assertion_failed=\(failed)"
+                    "Hover \(probe.name): defective=\(defective), exit=\(status), assertion_failed=\(failed)"
                 )
             }
         }
+        // The original and restored builds each exercise every assertion. Only one defect
+        // is present during each negative run, so its failure remains attributable.
+        try verify(probes, defective: false)
+        for probe in probes {
+            try probe.bad.write(to: probe.target, atomically: true, encoding: .utf8)
+            try verify([probe], defective: true)
+            try probe.good.write(to: probe.target, atomically: true, encoding: .utf8)
+        }
+        try verify(probes, defective: false)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         try Diagnostics.writeJSON(evidence, to: output.appendingPathComponent("hover-fault.json"))
     }
