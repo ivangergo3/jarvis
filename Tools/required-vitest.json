@@ -1,0 +1,18 @@
+[
+  {
+    "file": "fixtures/workspace-library/greeting.vitest.mjs",
+    "name": "includes the supplied workspace name in the greeting"
+  },
+  {
+    "file": "fixtures/contracts-public/consumer.vitest.mjs",
+    "name": "public contracts import in browser and Node consumers with branded destinations"
+  },
+  {
+    "file": "packages/contracts/test/values.vitest.mjs",
+    "name": "a request names its immutable ancestry and revision"
+  },
+  {
+    "file": "packages/contracts/test/values.vitest.mjs",
+    "name": "timestamps, UUID versions, and owner counters reject incompatible values"
+  }
+]

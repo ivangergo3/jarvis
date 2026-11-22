@@ -232,6 +232,19 @@ struct QualitySupportTests {
         #expect(throws: CommandCleanupFailure.self) {
             try Command.timedOut(root, finished: finished)
         }
+        let secondMarker = fixture.url.appendingPathComponent("interrupted-child.pid")
+        defer {
+            if let (child, _) = try? recordedChild(secondMarker) {
+                cleanup(child, workspace: fixture)
+            }
+        }
+        #expect(throws: CommandCleanupFailure.self) {
+            try Command(executable.path, [secondMarker.path, "--exit"], directory: fixture.url)
+                .run(log: fixture.url.appendingPathComponent("interrupt.log"), timeout: 10) {
+                    guard let (_, parent) = try? recordedChild(secondMarker) else { return false }
+                    return kill(parent, 0) == -1 && errno == ESRCH
+                }
+        }
     }
 
     @Test func uncertainCleanupRetainsOwnedWorkspacesAndFailedSummary() throws {
