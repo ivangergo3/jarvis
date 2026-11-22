@@ -77,6 +77,42 @@ test('normal command checks tracked sources using the workspace config', (t) => 
   assert.match(lint().stderr, /private\.js/);
   writeFileSync(built, 'Array.from([1]);');
   assert.equal(lint().status, 0);
+  writeFileSync(
+    path.join(owner, 'tsconfig.json'),
+    JSON.stringify({
+      compilerOptions: {
+        strict: true,
+        module: 'NodeNext',
+        verbatimModuleSyntax: true,
+      },
+      files: ['input.ts', 'hook.cts', 'controls.cts'],
+    }),
+  );
+  writeFileSync(
+    path.join(owner, 'controls.cts'),
+    'const read = (n: number) => n; export = read;',
+  );
+  const hook = path.join(owner, 'hook.cts');
+  const commonJS = `import read = require('./controls.cjs');
+declare function useState(n: number): number;
+declare function useEffect(f: () => void, deps: readonly unknown[]): void;
+function usePanel(value: number) { useEffect(() => { read(value); }, [value]); return useState(value); }
+export = usePanel;`;
+  writeFileSync(
+    hook,
+    commonJS
+      .replace('[value]', '[]')
+      .replace(
+        'return useState(value)',
+        'if (value) return useState(value); return 0',
+      ),
+  );
+  const brokenHook = lint();
+  assert.match(brokenHook.stderr, /react-hooks\/rules-of-hooks/);
+  assert.match(brokenHook.stderr, /react-hooks\/exhaustive-deps/);
+  writeFileSync(hook, commonJS);
+  const restoredHook = lint();
+  assert.equal(restoredHook.status, 0, restoredHook.stderr);
   rmSync(input);
   symlinkSync(path.join(root, 'eslint.config.mjs'), input);
   assert.match(lint().stderr, /Expected a regular workspace source file/);

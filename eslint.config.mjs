@@ -55,6 +55,12 @@ export default defineConfig(
     },
   },
   {
+    files: ['**/*.cts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': ['error', {allowAsImport: true}],
+    },
+  },
+  {
     files: ['**/*.{js,jsx,ts,tsx,mjs,mts,cjs,cts}'],
     plugins: {'react-hooks': hooks},
     rules: {
