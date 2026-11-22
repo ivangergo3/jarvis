@@ -76,6 +76,27 @@ async function checkShell(state, profile, evidence) {
       assert.equal(page.url(), url);
     }
     assert.deepEqual(startupErrors, []);
+    const navigateFixture = (target) =>
+      page.evaluate(
+        (url) => window.location.assign(url),
+        url.replace('/index.html', '/' + target),
+      );
+    await navigateFixture('minimize-for-verification');
+    await expect.poll(() => state.visibility?.minimized).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.hasFocus()))
+      .toBe(false);
+    await navigateFixture('activate-for-verification');
+    await expect
+      .poll(() => state.visibility)
+      .toEqual({minimized: false, focused: true, visible: true, windows: 1});
+    await expect
+      .poll(() => page.evaluate(() => document.hasFocus()))
+      .toBe(true);
+    await expect(
+      page.getByText('Shell verification', {exact: true}),
+    ).toBeVisible();
+    state.visibilityAtReopen = {...state.visibility};
     await page.close();
     return {
       packaged: true,
@@ -85,6 +106,7 @@ async function checkShell(state, profile, evidence) {
       isolation,
       url,
       blockedDestinations: destinations,
+      restoredFromMinimized: state.visibilityAtReopen,
     };
   } finally {
     // An attached browser disconnects from the remote endpoint on close.
@@ -98,6 +120,10 @@ const disconnected = () => process.exit(1);
 process.once('disconnect', disconnected);
 const state = {};
 process.on('message', async (message) => {
+  if (message.visibility) {
+    state.visibility = message.visibility;
+    return;
+  }
   if (message.denied) {
     state.denied = message.denied;
     return;
