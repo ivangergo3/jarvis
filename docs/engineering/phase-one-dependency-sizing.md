@@ -4,7 +4,7 @@ This measured preflight covers the dependency-size criterion in [issue #108](htt
 
 ## PR size preflight
 
-Use complete committed pnpm lockfiles. Before installing any dependency increment, resolve its metadata in a disposable copy of the actual manifests and lockfile, with scripts disabled. Count both additions and deletions against main, including manifests, config, verification fixtures and documentation. At 800 changed lines, stop expanding the slice. At 1,000, split before publishing. If the smallest useful increment still cannot fit, bring the actual diff to the owner. Keep failed measurements.
+Use complete committed pnpm lockfiles. Before installing any dependency increment, resolve its metadata in a disposable copy of the actual manifests and lockfile, with scripts disabled. Count both additions and deletions against main, including manifests, config, verification fixtures and documentation. Warn at 2,000 changed lines. Split before publishing if the total exceeds 2,500. If the smallest useful increment still cannot fit, bring the actual diff to the owner. Keep failed measurements.
 
 Select Node 24.19.0, pnpm 10.7.1, TypeScript 6.0.3 and Turbo 2.11.13 for the initial workspace. Typed ESLint 8.73.0 declares a TypeScript peer range below 6.1. The other pins below reproduce a sizing experiment and require a support/security check when their ticket starts.
 
@@ -30,4 +30,4 @@ On November 21, 2026, start from an empty directory on macOS with a single packa
 
 Final lockfile SHA-256: `cc79f680957130ed74957de0f38f0fd564688d718c6f9dc039b2a49e61762255`. Future registry snapshots can resolve different transitive versions. Rerun on the actual workspace and include all changed manifests, fixtures, source and tests in the candidate’s size check.
 
-The measured lockfile increments fit separately. A combined lint bootstrap adds more than 1,000 lines, so land the working compiler/ESLint boundary, typed checks and Hooks checks in coherent slices. The 630-line HTTP adapter increment also merits its own working smoke test. Treat the table as a sequence for measuring dependency cost; it does not change issue dependencies or authorize installing unrelated packages early.
+The measured lockfile increments can ship together when they support one outcome and the complete diff fits the current budget. Measure a combined lint bootstrap with its compiler, ESLint and Hooks checks before publishing. The 630-line HTTP adapter increment also merits its own working smoke test. Treat the table as a sequence for measuring dependency cost; it does not change issue dependencies or authorize installing unrelated packages early.

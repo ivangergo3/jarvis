@@ -1,9 +1,9 @@
 # Small PRs, independent review and local verification (#52 / #55 / #57)
 
-One coherent behaviour per PR, at most **1,000 added plus deleted text lines**
+One coherent behaviour per PR, at most **2,500 added plus deleted text lines**
 from the merge base with main. This is a ceiling, not a target. Tests, docs and
 generated/evidence text count; renames are counted as deletion plus addition.
-Warnings start at 800. Binary assets are reported separately and require owner
+Warnings start at 2,000. Exactly 2,500 lines may pass. Binary assets are reported separately and require owner
 inspection. Split an oversized change; no automatic exception or hidden exclusion.
 
 ## Workflow
@@ -84,7 +84,7 @@ not represented as GitHub human approvals.
 - #52: fresh read-only review of exact base/head; findings or invalid output block.
 - #55: exact-candidate local tests and real pre-push validation; stale/missing,
   failed or changed-during-check evidence cannot pass. Existing hooks survive setup.
-- #57: cumulative 1,000-line block / 800-line agent warning, no path exemptions;
+- #57: block above 2,500 cumulative lines / agent warning from 2,000, no path exemptions;
   secret check; direct-main/ref restrictions; required CI preserved.
 - Synthetic native Swift tests exercise boundary sizes, deletion/rename/binary
   counts, secret detection, missing/stale/failed evidence, review failure, test

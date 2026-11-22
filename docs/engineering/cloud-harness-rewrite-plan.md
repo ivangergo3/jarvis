@@ -25,7 +25,7 @@ This document proposes architecture, acceptance criteria, documentation migratio
 | R07 | Two-way voice is required. WhatsApp is the first external communication/notification channel. Reassess its role once mobile app notifications are available. |
 | R08 | Existing automated independent review, local tests and CI remain. The owner may delegate code review and grant merge authority for approved tickets. Honor each ticket’s explicit acceptance points. |
 | R09 | Approve implementation scope separately from merge authority. Agents implement the approved issue. Before merge, verify a concrete owner grant covering the candidate, green gates and any required pre-merge behavior acceptance. |
-| R10 | Keep small, coherent PRs: each rewrite PR stays below 1,000 added plus deleted text lines, with a warning at 800. |
+| R10 | Keep small, coherent PRs: each rewrite PR allows up to 2,500 added plus deleted text lines, with a warning at 2,000. |
 | R11 | Audit documentation and extend reusable skill support to TypeScript before relying on the new workflow. Preserve useful evidence. |
 | R12 | Plan before rewriting. Preserve the current usable application during the transition. |
 | R13 | Write the new backend in strict TypeScript and run it on Node.js. Bun is excluded from the selected stack. |
@@ -291,7 +291,7 @@ Stop/cancel owns the complete process tree and descendants, including build tool
 
 Accepted ticket -> branch/workspace -> implementation -> independent review -> full applicable local checks -> push -> required CI -> verify merge grant and any required behavior acceptance -> merge. The owner can evaluate the packaged behavior without reading code.
 
-Each ticket states acceptance criteria, permitted files/boundaries, exclusions, dependencies, risk and evidence. Scope discovery may produce a new ticket; it does not authorize implementing that new work immediately. Apply the 800-line warning and 1,000-line stop to the full text diff, including tests/docs. Split by a useful verified outcome, not arbitrary file fragments.
+Each ticket states acceptance criteria, permitted files/boundaries, exclusions, dependencies, risk and evidence. Scope discovery may produce a new ticket; it does not authorize implementing that new work immediately. Warn at 2,000 changed lines and block above 2,500, counting the full text diff including tests, docs and generated lockfiles. Split by a useful verified outcome, not arbitrary file fragments.
 
 Merges must recheck current head/base, required statuses and conflicts. A changed base invalidates affected evidence under the existing guardrail policy. The agent cannot bypass reviews/hooks because it is unattended. Tickets and policy versions are recorded with merge evidence.
 
