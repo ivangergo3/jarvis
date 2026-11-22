@@ -113,6 +113,7 @@ struct PushGateTests {
         var root: URL { temporary.url }
         init() throws { temporary = try TemporaryDirectory(prefix: "push-fixture-") }
         var reviews = 0
+        var reviewPrompt: String?
         var checks = 0
         var nativeAvailable = false
         var nativeChecks = 0
@@ -168,6 +169,7 @@ struct PushGateTests {
                 return 0
             }
             if command.arguments.first == "codex" {
+                reviewPrompt = command.arguments.last
                 candidate = command.directory
                 reviews += 1
                 #expect(command.arguments.contains("read-only"))
@@ -192,7 +194,9 @@ struct PushGateTests {
                             head: git(["rev-parse", "HEAD"]),
                             summary: "Synthetic independent review",
                             findings: failure == "findings" ? ["Bug"] : [], limitations: [],
-                            completed: failure != "incomplete"),
+                            completed: failure != "incomplete",
+                            followUps: failure == "review-missing-field"
+                                ? nil : ["Optional suggestion"]),
                         to: url)
                 }
                 return 0
@@ -229,10 +233,13 @@ struct PushGateTests {
         try fixture.setup()
         let gate = fixture.gate()
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
-        try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
+        let brief =
+            "Criteria: reuse exact evidence. Previous finding: stale approvals. Test: changed SDK."
+        try gate.prepare(intent: brief, swiftArguments: [])
+        #expect(fixture.reviewPrompt?.contains(brief) == true)
         try gate.run(["verify"])
         #expect(!FileManager.default.fileExists(atPath: try #require(fixture.candidate).path))
-        try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
+        try gate.prepare(intent: brief, swiftArguments: [])
         #expect(fixture.reviews == 1 && fixture.checks == 1 && fixture.nativeChecks == 1)
         _ = try fixture.git(["update-ref", "refs/remotes/origin/main", "HEAD"])
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
@@ -373,6 +380,7 @@ struct PushGateTests {
         for failure in [
             "review-exit", "review-timeout", "malformed", "findings", "tests", "mutation",
             "snapshot-mutation", "review-head", "snapshot-head", "incomplete",
+            "review-missing-field",
         ] {
             let fixture = try Fixture()
             try fixture.setup()
