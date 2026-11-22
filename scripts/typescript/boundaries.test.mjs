@@ -197,6 +197,11 @@ test('workspace packages enforce their runtime, public entry and graph direction
   const valid = "import type {Job} from '@jarvis/contracts';";
   for (const [owner, source, diagnostic] of [
     [
+      'packages/providers',
+      "require('fixture/../other');",
+      'noncanonical package import',
+    ],
+    [
       'apps/client',
       "export * from '@jarvis/providers';",
       'forbidden dependency direction',

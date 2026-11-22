@@ -89,10 +89,11 @@ export function checkCompilerProfiles(root, owner, files) {
     options.types.some((name) => name !== ambientType)
   )
     errors.push(relative + ': ambient types must match the package runtime');
+  if (options.libReplacement)
+    errors.push(relative + ': use the pinned compiler libraries');
   if (
     layer === 'pure' &&
-    (options.libReplacement ||
-      !options.lib?.length ||
+    (!options.lib?.length ||
       options.lib.some((lib) => !/^lib\.es[\w.]*\.d\.ts$/.test(lib)))
   )
     errors.push(relative + ': pure packages must specify ECMAScript libraries');

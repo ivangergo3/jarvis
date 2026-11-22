@@ -169,6 +169,13 @@ export function checkBoundaries(root) {
         fail('relative target must be tracked within its package');
       return;
     }
+    if (
+      /[%\\]/.test(specifier) ||
+      specifier.split('/').some((part) => part === '.' || part === '..')
+    ) {
+      fail('noncanonical package import');
+      return;
+    }
     const name = dependencyName(specifier);
     const manifest = manifests.get(owner);
     const declared = [
