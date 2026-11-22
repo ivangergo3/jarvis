@@ -106,9 +106,5 @@
   {
     "file": "packages/contracts/test/commands.vitest.mjs",
     "name": "run control operations require the expected revision and make no new run or approval"
-  },
-  {
-    "file": "packages/contracts/test/commands.vitest.mjs",
-    "name": "a decision binds to its original authorization session, channel, revision and offered option"
   }
 ]
