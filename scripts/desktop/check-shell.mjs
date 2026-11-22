@@ -90,16 +90,28 @@ async function checkShell(state, profile, evidence) {
       .poll(() => page.evaluate(() => document.hasFocus()))
       .toBe(false);
     await navigateFixture('activate-for-verification');
+    let restored;
     await expect
-      .poll(() => state.visibility)
-      .toEqual({minimized: false, focused: true, visible: true, windows: 1});
-    await expect
-      .poll(() => page.evaluate(() => document.hasFocus()))
+      .poll(async () => {
+        const native = state.visibility;
+        if (
+          !native ||
+          native.minimized ||
+          !native.visible ||
+          !native.focused ||
+          native.windows !== 1
+        )
+          return false;
+        const rendererFocused = await page.evaluate(() => document.hasFocus());
+        const projectVisible = await page
+          .getByText('Shell verification', {exact: true})
+          .isVisible();
+        if (native !== state.visibility || !rendererFocused || !projectVisible)
+          return false;
+        restored = {...native};
+        return true;
+      })
       .toBe(true);
-    await expect(
-      page.getByText('Shell verification', {exact: true}),
-    ).toBeVisible();
-    state.visibilityAtReopen = {...state.visibility};
     await page.close();
     return {
       packaged: true,
@@ -109,7 +121,7 @@ async function checkShell(state, profile, evidence) {
       isolation,
       url,
       blockedDestinations: destinations,
-      restoredFromMinimized: state.visibilityAtReopen,
+      restoredFromMinimized: restored,
     };
   } finally {
     // An attached browser disconnects from the remote endpoint on close.
