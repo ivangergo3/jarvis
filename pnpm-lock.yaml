@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  zod@4.6.7:
+    hash: 1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780
+    path: patches/zod@4.6.7.patch
+
 importers:
 
   .:
@@ -37,6 +42,12 @@ importers:
         version: 2.9.1
 
   fixtures/workspace-library: {}
+
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)
 
 packages:
 
@@ -1511,8 +1522,8 @@ snapshots:
       '@babel/parser': 7.29.15
       eslint: 10.15.0
       hermes-parser: 0.25.1
-      zod: 4.6.7
-      zod-validation-error: 4.0.2(zod@4.6.7)
+      zod: 4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)
+      zod-validation-error: 4.0.2(zod@4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780))
     transitivePeerDependencies:
       - supports-color
 
@@ -1919,8 +1930,8 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@4.6.7):
+  zod-validation-error@4.0.2(zod@4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)):
     dependencies:
-      zod: 4.6.7
+      zod: 4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)
 
-  zod@4.6.7: {}
+  zod@4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780): {}
