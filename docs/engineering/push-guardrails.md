@@ -12,7 +12,10 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
    preserved by refusing installation; integrate explicitly rather than overwrite.
 2. Stage new files and run `swift run quality-gate push size` during development.
    Pre-commit checks the entire staged PR, not merely the most recent commit.
-3. Write a short intended outcome and acceptance checklist to a local file. Commit
+3. Write a short review brief to a local file. Include the ticket, its acceptance
+   criteria for this PR, verification commands/results and remaining gaps. For a
+   repeat review, map each previous finding to its fix and regression check.
+   For a first review, say so. Commit
    a candidate, then `bash scripts/prepare-push.sh --intent-file=/path/to/checklist`.
    It fetches main, creates an owned detached verification worktree,
    launches an independent ephemeral read-only `codex exec`, validates its structured
@@ -20,10 +23,12 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
    The reviewer gets exact base/head, project requirements, changed files and
    necessary callers. Review must explicitly report completion; an incomplete or
    blocked review cannot approve even with no findings. All actionable findings block; optional preferences should
-   not be manufactured as findings. Review unknowns remain in `limitations`.
+   not be manufactured as findings. Unrelated suggestions go in `followUps`; review unknowns remain in `limitations`.
 4. Fix findings, commit and repeat. No evidence is reused across a changed
    head, base, Swift/Xcode/SDK identity or, for full scope, Node/pnpm version. An unchanged verified candidate
-   can reuse its receipt. Do not edit while checks run.
+   can reuse its receipt. After two rounds that keep expanding the change, split
+   out the smallest independently useful outcome and qualify its exact diff.
+   Keep remaining defects with the affected work. Do not edit while checks run.
    Full verification checks the detached checkout's Swift, SDK, Node and pnpm
    identities before and after running the suites. The local hook checks refs and
    cleanliness again after probing tool versions. Each check describes the checkout
