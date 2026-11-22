@@ -8,9 +8,9 @@
     "pnpm": "10.7.1"
   },
   "scripts": {
-    "build": "bash scripts/run-workspace.sh build",
-    "typecheck": "bash scripts/run-workspace.sh typecheck",
-    "fixture": "bash scripts/run-workspace.sh fixture"
+    "build": "node scripts/run-workspace.mjs build",
+    "typecheck": "node scripts/run-workspace.mjs typecheck",
+    "fixture": "node scripts/run-workspace.mjs fixture"
   },
   "devDependencies": {
     "@jarvis/workspace-fixture": "workspace:*",

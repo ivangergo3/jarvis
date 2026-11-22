@@ -31,8 +31,8 @@ Building requires the installed Apple command-line tools; there are no third-par
 ## TypeScript workspace fixture
 
 From a fresh checkout, use Node 24.19.0 (run `nvm use` if you manage Node with
-nvm) and pnpm 10.7.1 on your PATH. Workspace commands use the system's `lockf`
-on macOS (or `flock` on Linux). Run these commands at the repository root:
+nvm) and pnpm 10.7.1 on your PATH. Workspace commands use the native macOS
+file lock or the system's `flock` on Linux. Run these commands at the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
