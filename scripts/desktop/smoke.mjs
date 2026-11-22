@@ -6,7 +6,6 @@ import path from 'node:path';
 import {createInterface} from 'node:readline';
 import {setTimeout as delay} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
-import {checkShell} from './check-shell.mjs';
 
 async function confirmGroupExit(group) {
   if (!group) return;
@@ -36,7 +35,13 @@ export async function runPackagedSmoke(
   timeoutMs = 90_000,
   destination = process.env.JARVIS_SMOKE_EVIDENCE_DIR,
 ) {
-  let owner, closed, scratch, canceled;
+  let owner;
+  let closed;
+  let checker;
+  let checkerClosed;
+  let closing = false;
+  let scratch;
+  let canceled;
   const until = performance.now() + timeoutMs;
   const interrupted = Promise.withResolvers();
   // Cancellation can arrive before the first fs call or the Promise.race.
@@ -114,6 +119,41 @@ export async function runPackagedSmoke(
         ),
       );
       const state = {};
+      function startChecks() {
+        if (closing || canceled) throw new Error('Preview is stopping.');
+        // The SDK only attaches. Keeping it in a direct child also lets us
+        // cancel any in-flight Playwright assertion or hung renderer request.
+        checker = fork(
+          fileURLToPath(new URL('./check-shell.mjs', import.meta.url)),
+          [profile, evidence],
+          {
+            execArgv: [],
+            stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+            env: {...process.env, TMPDIR: scratch},
+          },
+        );
+        let result;
+        checker.on('message', (message) => {
+          result = message;
+        });
+        checkerClosed = new Promise((resolve, reject) => {
+          checker.once('error', reject);
+          checker.once('close', (code, signal) => {
+            if (code === 0 && signal === null && result?.receipt)
+              resolve(result.receipt);
+            else
+              reject(
+                new Error(
+                  result?.error ?? 'Packaged window checks did not finish.',
+                ),
+              );
+          });
+        });
+        checker.send({start: state}, (error) => {
+          if (error) finished.reject(error);
+        });
+        return checkerClosed;
+      }
       const lines = (stream, action) =>
         createInterface({input: stream}).on('line', (line) => {
           try {
@@ -135,19 +175,24 @@ export async function runPackagedSmoke(
           ['JARVIS_SMOKE_WINDOW ', 'window'],
           ['JARVIS_SMOKE_DENIED ', 'denied'],
         ]) {
-          if (line.startsWith(prefix))
+          if (line.startsWith(prefix)) {
             state[key] = JSON.parse(line.slice(prefix.length));
+            if (key === 'denied' && checker?.connected)
+              checker.send({denied: state.denied}, (error) => {
+                if (error) finished.reject(error);
+              });
+          }
         }
       });
       owner.send('start');
       [receipt] = await Promise.race([
-        Promise.all([
-          ready.promise.then(() => checkShell(state, profile, evidence)),
-          finished.promise,
-        ]),
+        Promise.all([ready.promise.then(startChecks), finished.promise]),
         interrupted.promise,
       ]);
     } finally {
+      closing = true;
+      if (checker && checker.exitCode === null && checker.signalCode === null)
+        checker.kill('SIGKILL');
       stopOwner();
       if (closed) {
         const stop = setTimeout(() => owner.kill('SIGKILL'), 2000);
@@ -159,6 +204,7 @@ export async function runPackagedSmoke(
         owner.stdout.destroy();
         owner.stderr.destroy();
       }
+      if (checkerClosed) await checkerClosed.catch(() => {});
       try {
         await confirmGroupExit(owner?.pid);
       } catch (cause) {

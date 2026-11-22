@@ -54,5 +54,9 @@
   {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "losing the owner while a helper survives retains scratch and fails qualification"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
   }
 ]

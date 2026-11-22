@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {chromium, expect} from '@playwright/test';
 
-export async function checkShell(state, profile, evidence) {
+async function checkShell(state, profile, evidence) {
   // Only attach to the ephemeral loopback endpoint emitted by our owned app.
   const browser = await chromium.connectOverCDP(state.endpoint, {
     timeout: 10_000,
@@ -91,3 +91,29 @@ export async function checkShell(state, profile, evidence) {
     await browser.close();
   }
 }
+
+if (!process.send) throw new Error('Expected the packaged preview supervisor.');
+const [profile, evidence] = process.argv.slice(2);
+const disconnected = () => process.exit(1);
+process.once('disconnect', disconnected);
+const state = {};
+process.on('message', async (message) => {
+  if (message.denied) {
+    state.denied = message.denied;
+    return;
+  }
+  if (!message.start || state.endpoint) return;
+  Object.assign(state, message.start);
+  try {
+    const receipt = await checkShell(state, profile, evidence);
+    await new Promise((resolve, reject) =>
+      process.send({receipt}, (error) => (error ? reject(error) : resolve())),
+    );
+  } catch (error) {
+    process.exitCode = 1;
+    if (process.connected) process.send({error: error.message});
+  } finally {
+    process.removeListener('disconnect', disconnected);
+    if (process.connected) process.disconnect();
+  }
+});

@@ -97,7 +97,9 @@ for (const [name, scenario, expected] of cases) {
             output += chunk.toString();
           });
         const closed = once(controller, 'close');
-        let appPid, ownerPid, helperPid;
+        let appPid;
+        let ownerPid;
+        let helperPid;
         const field = (pid, column) =>
           spawnSync('/bin/ps', ['-p', String(pid), '-o', column + '='], {
             encoding: 'utf8',
@@ -156,3 +158,72 @@ for (const [name, scenario, expected] of cases) {
     20000,
   );
 }
+
+test('interrupting a stopped Playwright check after CDP connects waits for its exit', async () => {
+  const temp = mkdtempSync(path.join(tmpdir(), 'jarvis-connected-check-'));
+  const app = path.join(temp, 'Test.app');
+  const binaries = path.join(app, 'Contents/MacOS');
+  const marker = path.join(temp, 'connected');
+  const evidence = path.join(temp, 'evidence');
+  mkdirSync(binaries, {recursive: true});
+  // Accept the real Playwright handshake and hold it until cancellation.
+  writeFileSync(
+    path.join(binaries, 'Jarvis Preview'),
+    '#!' +
+      process.execPath +
+      '\n' +
+      [
+        "const net = require('node:net');",
+        "const fs = require('node:fs');",
+        "const server = net.createServer(socket => socket.once('data', request => {",
+        "  if (request.toString().startsWith('GET /devtools/browser/')) fs.writeFileSync(process.env.JARVIS_TEST_MARKER, String(process.ppid));",
+        '}));',
+        "server.listen(0, '127.0.0.1', () => {",
+        "  console.error('DevTools listening on ws://127.0.0.1:' + server.address().port + '/devtools/browser/ab12-cd34');",
+        "  console.log('JARVIS_SMOKE_WINDOW {}');",
+        '});',
+        'setTimeout(() => process.exit(1), 12000);',
+      ].join('\n'),
+    {mode: 0o700},
+  );
+  const parent = spawn(process.execPath, [runner, app, '14000'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: {
+      ...process.env,
+      TMPDIR: temp,
+      JARVIS_SMOKE_EVIDENCE_DIR: evidence,
+      JARVIS_TEST_MARKER: marker,
+    },
+  });
+  const stopped = once(parent, 'close');
+  try {
+    await expect.poll(() => existsSync(marker), {timeout: 7000}).toBe(true);
+    const owner = Number(readFileSync(marker, 'utf8'));
+    const table = spawnSync('/bin/ps', ['-axo', 'pid=,ppid='], {
+      encoding: 'utf8',
+    });
+    const children = table.stdout
+      .trim()
+      .split('\n')
+      .map((row) => row.trim().split(/\s+/).map(Number))
+      .filter(([pid, ppid]) => ppid === parent.pid && pid !== owner);
+    expect(children).toHaveLength(1);
+    const [[checker]] = children;
+    process.kill(checker, 'SIGSTOP');
+    parent.kill('SIGINT');
+    expect(await stopped).toEqual([130, null]);
+    expect(
+      spawnSync('/bin/ps', ['-p', String(checker)], {encoding: 'utf8'}).status,
+    ).toBe(1);
+    expect(
+      readdirSync(temp).filter((name) =>
+        name.startsWith('jarvis-preview-smoke-run-'),
+      ),
+    ).toEqual([]);
+    expect(existsSync(path.join(evidence, 'smoke.json'))).toBe(false);
+  } finally {
+    if (parent.exitCode === null && parent.signalCode === null)
+      parent.kill('SIGTERM');
+    rmSync(temp, {recursive: true, force: true});
+  }
+}, 20000);
