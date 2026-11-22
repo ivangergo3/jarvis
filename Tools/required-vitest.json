@@ -8,6 +8,14 @@
     "name": "public contracts import in browser and Node consumers with branded destinations"
   },
   {
+    "file": "apps/client/test/message-blocks.vitest.mjs",
+    "name": "preserves existing whitespace, ordered list markers and table rows when block types change"
+  },
+  {
+    "file": "apps/client/test/message-blocks.vitest.mjs",
+    "name": "keeps the Swift grapheme boundaries of block markers, fences and table delimiters"
+  },
+  {
     "file": "packages/providers/test/account.vitest.mjs",
     "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
   },
