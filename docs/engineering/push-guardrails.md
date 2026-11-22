@@ -36,8 +36,8 @@ A PR that changes only ordinary Markdown under `docs/` or the root `README.md`
 gets the same independent local review and basic diff checks. App tests, builds,
 formatter setup and native UI runs are skipped locally and in CI. The required
 GitHub job still reports its result. Agent instructions (AGENTS, CLAUDE and SKILL
-Markdown files), operational engineering policies, the `docs/planning` skill and
-board rules, hidden
+Markdown files) and this guide are direct reviewer inputs and take the full route.
+Planning documents, including the rewrite plan, follow the prose route. Hidden
 paths, non-text or over-1-MiB files, executable files and symlinks take the full route. A
 mixed PR takes the full route even if its last commit only changes prose.
 

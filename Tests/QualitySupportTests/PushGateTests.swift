@@ -233,7 +233,18 @@ struct PushGateTests {
     @Test func documentationRequiresReviewAndSkipsBothProductSuites() throws {
         let fixture = try Fixture()
         fixture.nativeAvailable = true
-        try fixture.setup(feature: "docs/engineering/rewrite-verification.md")
+        try fixture.setup(feature: "docs/engineering/cloud-harness-rewrite-plan.md")
+        for path in [
+            "docs/engineering/local-command-stream.md",
+            "docs/engineering/local-service-contract.md",
+            "docs/engineering/rewrite-verification.md",
+            "docs/engineering/swift-feature-visual-inventory.md",
+            "docs/engineering/test-quality.md", "docs/engineering/agent-workflow-51.md",
+            "docs/planning/SKILL_SAFETY.md", "docs/planning/SKILL_EVALUATION.md",
+        ] {
+            try fixture.write(path, Data("Updated plan\n".utf8))
+        }
+        _ = try fixture.commitChanges()
         let gate = fixture.gate()
         let identity = try gate.identity()
         #expect(identity.scope == .docs)
@@ -316,13 +327,10 @@ struct PushGateTests {
         }
         for path in [
             "planning.md", "docs/engineering/push-guardrails.md",
-            "docs/engineering/agent-workflow-51.md",
             "docs/nested/AGENTS.md", "docs/nested/AGENTS.override.md",
             "docs/nested/CLAUDE.local.md",
             "docs/nested/CLAUDE.md", "docs/nested/SKILL.md", "docs/.private/guide.md",
-            "docs/.hidden.md", "docs/example.swift", "docs/engineering/test-quality.md",
-            "docs/engineering/cloud-harness-rewrite-plan.md",
-            "docs/planning/SKILL_SAFETY.md", "docs/planning/SKILL_EVALUATION.md",
+            "docs/.hidden.md", "docs/example.swift", ".github/workflows/check.yml",
         ] {
             try fixture.write(path, Data("Proposed change\n".utf8))
             try requireFull()
