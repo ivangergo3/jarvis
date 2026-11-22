@@ -47,15 +47,23 @@ test('snapshots page public records at a single owner-bound high-water mark', ()
   expect(SnapshotPage.parse(page)).toEqual(page);
   const rawReader = createWireSnapshotReader(page.ownerId, page.snapshotId);
   const compact = JSON.stringify(page);
-  expect(rawReader(compact.padEnd(1024 * 1024 + 1))).toEqual({
+  const unicode = compact.replace('Planning', '测试');
+  const limit = 1024 * 1024;
+  const withinLimit = unicode + ' '.repeat(limit - Buffer.byteLength(unicode));
+  const aboveLimit = withinLimit + ' ';
+  expect(aboveLimit.length).toBeLessThan(limit);
+  expect(rawReader(aboveLimit)).toEqual({
     status: 'malformed',
   });
   expect(
     rawReader(
-      compact.replace('"pageToken":', '"pageToken":"old","pageToken":'),
+      compact.replace('"pageToken":', '"page\\u0054oken":"old","pageToken":'),
     ),
   ).toEqual({status: 'malformed'});
-  expect(rawReader(compact)).toEqual({status: 'ok', page});
+  expect(rawReader(withinLimit)).toEqual({
+    status: 'ok',
+    page: JSON.parse(unicode),
+  });
   const finished = createSnapshotReader(page.ownerId, page.snapshotId);
   expect(finished({...page, schemaVersion: 2, ownerId: id(54)})).toEqual({
     status: 'malformed',
@@ -122,11 +130,28 @@ test('snapshots page public records at a single owner-bound high-water mark', ()
     {...start, totalRecords: '2'},
     {...page, records: [second, first, row]},
     {...page, records: [first, {...first, title: 'Updated title'}, row]},
-    {...page, records: Array.from({length: 101}, () => row)},
-    {...page, records: [{...row, metadata: {...payload, answer: 'private'}}]},
+    {
+      ...page,
+      records: [
+        first,
+        second,
+        {...row, metadata: {...payload, answer: 'private'}},
+      ],
+    },
   ]) {
     expect(SnapshotPage.safeParse(invalid).success).toBe(false);
   }
+  const rows = Array.from({length: 101}, (_, i) => ({
+    ...row,
+    target: {...request, requestId: id(i + 1)},
+  }));
+  const pageOf = (records) => ({
+    ...page,
+    records,
+    totalRecords: String(records.length),
+  });
+  expect(SnapshotPage.safeParse(pageOf(rows.slice(0, 100))).success).toBe(true);
+  expect(SnapshotPage.safeParse(pageOf(rows)).success).toBe(false);
   expect(wireBytes({text: 'a☀🦊'})).toBe(19);
   expect(
     SnapshotPage.safeParse({...page, records: [], totalRecords: '0'}).success,
