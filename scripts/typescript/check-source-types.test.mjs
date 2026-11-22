@@ -86,6 +86,13 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
   const packageSource = run();
   assert.notEqual(packageSource.status, 0);
   assert.match(packageSource.stderr, /TS2307/);
+  writeFileSync(
+    source,
+    '/// <reference path="../fixtures/workspace-library/dist/index.d.ts" />\nexport {};',
+  );
+  const generated = run();
+  assert.match(generated.stderr, /TS6053/);
+  assert.match(generated.stderr, /native typecheck task/);
   writeFileSync(source, 'export const value: number = 42;');
   writeFileSync(
     config,
@@ -107,4 +114,24 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
   const restored = run();
   assert.equal(restored.status, 0, restored.stdout + restored.stderr);
   assert.equal(existsSync(path.join(root, 'scripts/demo.js')), false);
+  const nested = 'fixtures/workspace-library/nested';
+  mkdirSync(path.join(root, nested));
+  writeFileSync(
+    path.join(root, nested, 'package.json'),
+    JSON.stringify({name: '@jarvis/nested-tool', private: true}),
+  );
+  writeFileSync(
+    path.join(root, nested, 'tool.ts'),
+    "export const count: number = 'wrong';",
+  );
+  const workspace = path.join(root, 'pnpm-workspace.yaml');
+  writeFileSync(
+    workspace,
+    readFileSync(workspace, 'utf8') +
+      "  - 'fixtures/workspace-library/nested'\n",
+  );
+  assert.match(
+    run().stderr,
+    /nested\/tool\.ts: include this standalone source/,
+  );
 });

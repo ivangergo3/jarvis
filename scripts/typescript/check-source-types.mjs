@@ -26,21 +26,21 @@ export function checkSourceTypes() {
     }),
   );
   const packages = members
-    .filter(({path: dir}) => {
+    .filter(({path: dir}) => dir !== root)
+    .map(({path: dir}) => {
       const manifest = path.join(dir, 'package.json');
-      return (
-        dir !== root &&
+      const typecheck =
         files.has(manifest) &&
         fs.realpathSync(manifest) === manifest &&
-        JSON.parse(fs.readFileSync(manifest, 'utf8')).scripts?.typecheck
-      );
+        JSON.parse(fs.readFileSync(manifest, 'utf8')).scripts?.typecheck;
+      return {directory: dir + path.sep, typecheck};
     })
-    .map(({path: dir}) => dir + path.sep);
+    .sort((left, right) => right.directory.length - left.directory.length);
   const standalone = new Set(
     [...sources].filter(
       (file) =>
         /\.[cm]?tsx?$/.test(file) &&
-        !packages.some((dir) => file.startsWith(dir)),
+        !packages.find(({directory}) => file.startsWith(directory))?.typecheck,
     ),
   );
   const modules = path.join(root, 'node_modules');
@@ -134,7 +134,7 @@ export function checkSourceTypes() {
   );
   const diagnostics = ts.getPreEmitDiagnostics(program);
   diagnostics.forEach(report);
-  if (diagnostics.some(({code}) => code === 2307))
+  if (diagnostics.some(({code}) => [2307, 2688, 6053, 7016].includes(code)))
     errors.push(
       'Tools that depend on workspace package implementation sources or generated declarations need a workspace package with a native typecheck task.',
     );
