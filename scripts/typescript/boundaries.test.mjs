@@ -133,6 +133,11 @@ test('workspace packages enforce their runtime, public entry and graph direction
     "import(('@jarvis/contracts/src/private'));",
   );
   assert.match(checked().join('\n'), /use the public package root/);
+  write(
+    'fixtures/verify-workspace.mjs',
+    "import('@jarvis/contracts' + '/private');",
+  );
+  assert.match(checked().join('\n'), /specifier must be a literal/);
   write('fixtures/verify-workspace.mjs', "import '@jarvis/contracts';");
   write('.git/info/exclude', 'node_modules/\nfixtures/generated.mjs\n');
   write('fixtures/generated.mjs', 'export {};');
@@ -196,6 +201,14 @@ test('workspace packages enforce their runtime, public entry and graph direction
     }),
   );
   write('apps/client/src/probe.ts', "import '@jarvis/contracts';");
+  assert.match(checked().join('\n'), /does not declare a public package root/);
+  write(
+    'packages/contracts/package.json',
+    JSON.stringify({
+      ...contracts,
+      exports: {'.': './src/index.mjs', import: './src/index.mjs'},
+    }),
+  );
   assert.match(checked().join('\n'), /does not declare a public package root/);
   write('packages/contracts/package.json', JSON.stringify(contracts));
   assert.deepEqual(checked(), []);

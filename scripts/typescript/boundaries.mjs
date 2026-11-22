@@ -40,7 +40,13 @@ function dependencyName(specifier) {
 function declaresRoot(exports) {
   if (typeof exports === 'string') return exports.startsWith('./');
   if (!exports || typeof exports !== 'object') return false;
-  if (Object.hasOwn(exports, '.')) return declaresRoot(exports['.']);
+  if (Object.keys(exports).some((key) => key.startsWith('.'))) {
+    return (
+      Object.keys(exports).every((key) => key.startsWith('.')) &&
+      Object.hasOwn(exports, '.') &&
+      declaresRoot(exports['.'])
+    );
+  }
   return Object.entries(exports).some(
     ([condition, value]) => !condition.startsWith('.') && declaresRoot(value),
   );
@@ -319,8 +325,7 @@ export function checkBoundaries(root) {
           ':' +
           (source.getLineAndCharacterOfPosition(ref.getStart(source)).line + 1);
         if (ts.isStringLiteralLike(ref)) check(ref.text, file, location);
-        else if (packageRoot(file) !== '.')
-          errors.push(location + ': module specifier must be a literal');
+        else errors.push(location + ': module specifier must be a literal');
       }
       node.jsDoc?.forEach(visit);
       ts.forEachChild(node, visit);
