@@ -6,6 +6,7 @@
   "QualitySupportTests.QualitySupportTests/ownedProcessIdentityRejectsReusedPIDs",
   "QualitySupportTests.QualitySupportTests/anExitedTimeoutSupervisorReportsUncertainOwnership",
   "QualitySupportTests.QualitySupportTests/uncertainCleanupRetainsOwnedWorkspacesAndFailedSummary",
+  "QualitySupportTests.QualitySupportTests/ownedExitCanBeConfirmedBeforeChildIsReaped",
   "QualitySupportTests.QualitySupportTests/timeoutStopsNestedIsolatedProcessGroups",
   "QualitySupportTests.PushGateTests/outgoingHistoryAndCommitMessagesCannotHideCredentials",
   "QualitySupportTests.PushGateTests/gitDisplayPreferencesCannotHideAddedCredentials",
