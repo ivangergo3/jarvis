@@ -11,9 +11,9 @@ begin
     select 1 from pg_namespace where nspname = 'jarvis' and nspowner = 'postgres'::regrole
   ) or exists (
     select 1 from unnest(array['anon','authenticated','service_role']) client
-    where has_schema_privilege(client, 'jarvis', 'USAGE')
-      or has_table_privilege(client, 'jarvis.projects', 'SELECT')
-      or has_table_privilege(client, 'jarvis.installation', 'SELECT')
+    where has_schema_privilege(client, 'jarvis', 'USAGE,CREATE')
+      or has_table_privilege(client, 'jarvis.projects', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+      or has_table_privilege(client, 'jarvis.installation', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
   ) then raise exception 'unexpected Jarvis schema owner or client grants'; end if;
 
   if (select count(*) from pg_class where relnamespace = 'jarvis'::regnamespace
@@ -24,6 +24,12 @@ begin
     insert into jarvis.installation default values;
     raise exception 'a second installation was accepted';
   exception when unique_violation then null;
+  end;
+
+  begin
+    insert into jarvis.installation (singleton) values (false);
+    raise exception 'an installation with a false singleton was accepted';
+  exception when check_violation then null;
   end;
 
   insert into auth.users(id) values (owner_a), (owner_b);

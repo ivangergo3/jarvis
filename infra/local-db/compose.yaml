@@ -2,6 +2,8 @@ services:
   db:
     # Supabase Postgres 17.12.0.000
     image: public.ecr.aws/supabase/postgres@sha256:8630950b489ecc70563300180287a98c192a4a48f5ae00b4febdaeea1abe85de
+    # Apply to both the temporary initialization server and the final postmaster.
+    command: ['postgres', '-D', '/etc/postgresql', '-c', 'log_statement=none', '-c', 'log_min_error_statement=panic', '-c', 'log_min_duration_statement=-1']
     ports:
       - '127.0.0.1:${JARVIS_DB_PORT:?}:5432'
     environment:
@@ -17,7 +19,7 @@ services:
       - pgconfig:/etc/postgresql-custom
       - ./roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-jarvis-roles.sql:ro
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'postgres', '-d', 'postgres']
+      test: ['CMD', 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres', '-d', 'postgres']
       interval: 2s
       timeout: 5s
       retries: 60
@@ -33,7 +35,8 @@ services:
       API_EXTERNAL_URL: http://127.0.0.1:${JARVIS_API_PORT:?}/auth/v1
       GOTRUE_SITE_URL: http://127.0.0.1:${JARVIS_API_PORT:?}
       GOTRUE_DB_DRIVER: postgres
-      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${JARVIS_AUTH_PASSWORD:?}@db:5432/postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin@db:5432/postgres
+      PGPASSWORD: ${JARVIS_AUTH_PASSWORD:?}
       GOTRUE_JWT_SECRET: ${JARVIS_JWT_SECRET:?}
       GOTRUE_JWT_ISSUER: http://127.0.0.1:${JARVIS_API_PORT:?}/auth/v1
       GOTRUE_JWT_AUD: authenticated
