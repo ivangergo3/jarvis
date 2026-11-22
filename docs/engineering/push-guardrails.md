@@ -67,7 +67,8 @@ Full-scope receipts require those reports. Documentation-only verification recor
 
 Receipts/reviewer output/logs stay under ignored `.build/push-gate/<head>/`; attempts
 have separate directories so retries preserve failed logs. Pressing Control-C during
-preparation stops the active command and its owned workers before exiting.
+preparation stops the active command and its owned workers before exiting. If its
+root already exited, the gate reports uncertain ownership and retains the worktree.
 Review and tests run against the detached candidate, sharing the pinned formatter
 and package-download caches. Successful worktrees are removed and nested test diagnostics retained. Failed
 candidate worktrees remain at the path printed by prepare. Full-scope worktrees use a private temporary directory outside the developer workspace, to isolate Node module resolution. Inspect the retained

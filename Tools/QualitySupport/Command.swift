@@ -61,7 +61,10 @@ public struct Command: Sendable {
             if DispatchTime.now() >= deadline { try Self.timedOut(process, finished: finished) }
         }
         process.waitUntilExit()
-        guard interrupted?() != true else { throw QualityFailure("Push preparation interrupted") }
+        if interrupted?() == true {
+            throw CommandCleanupFailure(
+                detail: "Interrupted as the root exited; descendant ownership is unknown")
+        }
         return process.terminationReason == .uncaughtSignal
             ? -process.terminationStatus : process.terminationStatus
     }

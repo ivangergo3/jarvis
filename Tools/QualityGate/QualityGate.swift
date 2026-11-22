@@ -1,6 +1,6 @@
+import Darwin
 import Foundation
 import QualitySupport
-import os
 
 @main
 enum QualityGate {
@@ -97,31 +97,47 @@ enum QualityGate {
     }
 
     private static func prepare(root: URL, options: [String]) throws {
-        let interrupted = OSAllocatedUnfairLock(initialState: false)
-        let sources = [SIGINT, SIGTERM].map { number in
-            let source = DispatchSource.makeSignalSource(signal: number, queue: .global())
-            source.setEventHandler { interrupted.withLock { $0 = true } }
-            // A caught handler returns to the default disposition in exec'd children.
-            let previous = signal(number) { _ in }
-            source.resume()
-            return (number, previous, source)
+        let queue = kqueue()
+        guard queue >= 0 else { throw QualityFailure("Cannot monitor prepare interruption") }
+        defer { close(queue) }
+        guard fcntl(queue, F_SETFD, FD_CLOEXEC) == 0 else {
+            throw QualityFailure("Cannot isolate the signal queue")
         }
+        let signals = [SIGINT, SIGTERM]
+        let changes = signals.map {
+            kevent(
+                ident: UInt($0), filter: Int16(EVFILT_SIGNAL), flags: UInt16(EV_ADD),
+                fflags: 0, data: 0, udata: nil)
+        }
+        guard kevent(queue, changes, Int32(changes.count), nil, 0, nil) == 0 else {
+            throw QualityFailure("Cannot register prepare interruption")
+        }
+        // A caught handler returns to the default disposition in exec'd children.
+        let previous = signals.map { signal($0) { _ in } }
         defer {
-            for (number, previous, source) in sources {
-                source.cancel()
-                signal(number, previous)
-            }
+            for (number, disposition) in zip(signals, previous) { signal(number, disposition) }
+        }
+        // All gate calls are serial. Read pending signals from the kernel directly, including at
+        // publication, so a delayed asynchronous notification cannot approve an interrupted run.
+        var cancelled = false
+        func interrupted() -> Bool {
+            if cancelled { return true }
+            var event = kevent()
+            var immediate = timespec()
+            var count: Int32
+            repeat {
+                count = kevent(queue, nil, 0, &event, 1, &immediate)
+            } while count < 0 && errno == EINTR
+            cancelled = count != 0
+            return cancelled
         }
         let gate = PushGate(root: root) { command, log, timeout in
-            try command.run(
-                log: log, timeout: timeout, interrupted: { interrupted.withLock { $0 } })
+            try command.run(log: log, timeout: timeout, interrupted: interrupted)
         }
-        // Receipt publication commits the completed attempt. Interruption wins until then.
         try gate.run(options) { publish in
-            try interrupted.withLock { cancelled in
-                guard !cancelled else { throw QualityFailure("Push preparation interrupted") }
-                try publish()
-            }
+            guard !interrupted() else { throw QualityFailure("Push preparation interrupted") }
+            try publish()
+            guard !interrupted() else { throw QualityFailure("Push preparation interrupted") }
         }
     }
 }

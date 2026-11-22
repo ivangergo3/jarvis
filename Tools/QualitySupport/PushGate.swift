@@ -388,8 +388,14 @@ public struct PushGate {
             checksPassed: true, nativeUI: Self.expectedNativeResult(current),
             typeScriptAttempt: current.scope == .full ? attempt : nil)
         try validateEvidence(receipt, current: current)
+        // Keep the new receipt private to this attempt until the final interruption check
+        // has accepted the complete encoded result. The hook reads only receiptURL.
+        let stagedReceipt = output.appendingPathComponent("pending-receipt.json")
         try complete {
-            try Diagnostics.writeJSON(receipt, to: receiptURL)
+            try Diagnostics.writeJSON(receipt, to: stagedReceipt)
+        }
+        guard rename(stagedReceipt.path, receiptURL.path) == 0 else {
+            throw QualityFailure("Cannot publish the completed push receipt")
         }
         verified = true
         print("Review and local checks passed for \(current.head)")

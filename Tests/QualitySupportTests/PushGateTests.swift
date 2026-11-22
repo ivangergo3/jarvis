@@ -358,8 +358,9 @@ struct PushGateTests {
         let gate = fixture.gate()
         let identity = try gate.identity()
         #expect(throws: QualityFailure.self) {
-            try gate.prepare(intent: "Document the fixture", swiftArguments: []) { _ in
-                throw QualityFailure("Interrupted before publication")
+            try gate.prepare(intent: "Document the fixture", swiftArguments: []) { stage in
+                try stage()
+                throw QualityFailure("Interrupted after encoding and before publication")
             }
         }
         #expect(throws: QualityFailure.self) { try gate.verify(identity) }
