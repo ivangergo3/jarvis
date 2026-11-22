@@ -101,3 +101,6 @@ export async function observeCodexAccount(
     return {kind: 'unavailable'};
   }
 }
+
+export {mapRunNotification} from './run-notification.js';
+export type {CodexRunBinding} from './run-notification.js';
