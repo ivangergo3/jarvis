@@ -1,4 +1,5 @@
 import {execFileSync} from 'node:child_process';
+import {existsSync} from 'node:fs';
 
 // Use git's source inventory so tracked files inside build directories still count.
 export function sourceFiles() {
@@ -11,5 +12,5 @@ export function sourceFiles() {
     ],
     {encoding: 'utf8'},
   );
-  return output.split('\0').filter(file => /\.[cm]?[jt]sx?$/.test(file));
+  return output.split('\0').filter(file => /\.[cm]?[jt]sx?$/.test(file) && existsSync(file));
 }

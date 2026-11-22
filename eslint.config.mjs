@@ -1,6 +1,6 @@
-import {defineConfig} from 'eslint/config';
+import {defineConfig, globalIgnores} from 'eslint/config';
 
-export default defineConfig({
+export default defineConfig(globalIgnores(['!**/node_modules/']), {
   files: ['**/*.{js,cjs,mjs,jsx}'],
   linterOptions: {noInlineConfig: true, reportUnusedDisableDirectives: 'error'},
   languageOptions: {parserOptions: {ecmaFeatures: {jsx: true}}},
