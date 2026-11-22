@@ -88,6 +88,9 @@ struct PushGateTests {
             .init(
                 base: "base", head: "head", toolchain: "swift", nativeAvailable: false,
                 nodeToolchain: "different Node or pnpm"),
+            .init(
+                base: "base", head: "head", toolchain: "swift", nativeAvailable: false,
+                checkoutRoot: "another clone"),
         ] {
             #expect(throws: QualityFailure.self) {
                 try PushGate.validate(receipt(), identity: candidate)
@@ -236,6 +239,10 @@ struct PushGateTests {
             if command.arguments.first == "scripts/check-typescript.sh" {
                 typeScriptChecks += 1
                 #expect(reviews == 1 && checks == 1)
+                #expect(
+                    !command.directory.resolvingSymlinksInPath().path.hasPrefix(
+                        root.resolvingSymlinksInPath().path + "/"))
+                #expect(command.arguments.last == root.appendingPathComponent(".pnpm-store").path)
                 if failure == "typescript-exit" { return 1 }
                 return 0
             }

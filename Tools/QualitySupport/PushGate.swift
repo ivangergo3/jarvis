@@ -244,7 +244,8 @@ public struct PushGate {
         try inspect(base: current.base, head: current.head)
         let attempt = UUID()
         let output = directory(current.head).appendingPathComponent(attempt.uuidString)
-        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: output, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let receiptURL = directory(current.head).appendingPathComponent("receipt.json")
         if FileManager.default.fileExists(atPath: receiptURL.path) {
             do {
