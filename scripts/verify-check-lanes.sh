@@ -46,11 +46,11 @@ fi
 touch "$lane.done"
 SH
 for mode in pass core hover; do
-    rm -f ./*.started ./*.done
+    rm -f ./*.started ./*.done release.entered
     if MODE=$mode bash "$scheduler" fixture-gate 'two words'; then
         [[ "$mode" == pass && -f release.done ]]
     else
-        [[ "$mode" != pass && ! -e release.done && -e core.started && -e hover.started ]]
+        [[ "$mode" != pass && ! -e release.entered && ! -e release.done && -e core.started && -e hover.started ]]
     fi
 done
 for slow in core hover; do

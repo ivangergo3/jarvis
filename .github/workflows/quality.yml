@@ -140,14 +140,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          persist-credentials: false
       - name: Require every check selected for this change
+        id: required_result
         env:
           SCOPE_RESULT: ${{ needs.scope.result }}
           SCOPE: ${{ needs.scope.outputs.scope }}
           SWIFT_RESULT: ${{ needs.swift.result }}
           NATIVE_RESULT: ${{ needs.native.result }}
         run: |
-          bash scripts/ci-result.sh "$SCOPE_RESULT" "$SCOPE" "$SWIFT_RESULT" "$NATIVE_RESULT"
+          printf 'Scope=%s (%s), Swift=%s, native UI=%s\n' "$SCOPE" "$SCOPE_RESULT" "$SWIFT_RESULT" "$NATIVE_RESULT"
+          case "$SCOPE_RESULT/$SCOPE/$SWIFT_RESULT/$NATIVE_RESULT" in
+            success/full/success/success|success/docs/skipped/skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
