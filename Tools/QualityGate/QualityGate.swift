@@ -7,6 +7,15 @@ enum QualityGate {
     static func main() {
         do {
             let arguments = Array(CommandLine.arguments.dropFirst())
+            if arguments.first == "hosted-vitest" {
+                guard arguments.count == 3, arguments[2].hasPrefix("/") else {
+                    throw QualityFailure("Usage: quality-gate hosted-vitest COMMIT ABSOLUTE_OUTPUT")
+                }
+                try PushGate(root: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+                    .hostedVitest(
+                        revision: arguments[1], output: URL(fileURLWithPath: arguments[2]))
+                return
+            }
             if arguments.first == "push" {
                 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
                 let options = Array(arguments.dropFirst())

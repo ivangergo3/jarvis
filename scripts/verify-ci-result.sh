@@ -9,20 +9,23 @@ verdict=$(awk '
     body { exit }
 ' .github/workflows/quality.yml)
 test -n "$verdict"
+run_verdict() ( set -e; eval "$verdict" )
 for scope in full docs ''; do
     for classifier in success failure skipped cancelled ''; do
         for swift in success failure skipped cancelled ''; do
             for native in success failure skipped cancelled ''; do
-                expected=1
-                if [[ "$classifier" == success ]]; then
-                    if [[ "$scope" == full && "$swift" == success && "$native" == success ]] ||
-                       [[ "$scope" == docs && "$swift" == skipped && "$native" == skipped ]]; then
-                        expected=0
+                for ts in success failure skipped cancelled ''; do
+                    expected=1
+                    if [[ "$classifier" == success ]]; then
+                        if [[ "$scope" == full && "$swift" == success && "$native" == success && "$ts" == success ]] ||
+                           [[ "$scope" == docs && "$swift" == skipped && "$native" == skipped && "$ts" == skipped ]]; then
+                            expected=0
+                        fi
                     fi
-                fi
-                actual=0
-                SCOPE_RESULT="$classifier" SCOPE="$scope" SWIFT_RESULT="$swift" NATIVE_RESULT="$native" bash -e -c "$verdict" >/dev/null || actual=$?
-                [[ "$actual" == "$expected" ]] || { echo "Unexpected CI outcome: $classifier $scope $swift $native"; exit 1; }
+                    actual=0
+                    SCOPE_RESULT="$classifier" SCOPE="$scope" SWIFT_RESULT="$swift" NATIVE_RESULT="$native" TS_RESULT="$ts" run_verdict >/dev/null || actual=$?
+                    [[ "$actual" == "$expected" ]] || { echo "Unexpected CI outcome: $classifier $scope $swift $native $ts"; exit 1; }
+                done
             done
         done
     done
