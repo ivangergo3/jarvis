@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-gate=$1
+scheduler="$PWD/scripts/run-check-lanes.sh"
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/jarvis-check-lanes.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT
 cd "$scratch"
@@ -11,7 +11,8 @@ set -eu
 lane=$1
 test "$3" = 'two words'
 if [[ "$lane" == release ]]; then
-    test -f core.done && test -f hover.done
+    test -f core.done
+    test -f hover.done
     touch release.done
     exit 0
 fi
@@ -24,36 +25,39 @@ for ((i=0; i<100; i++)); do
 done
 test -f "$other.started"
 if [[ "$MODE" == interrupt ]]; then
-    sleep 20 &
-    echo "$!" > "$lane.child"
-    wait
+    # Wait until the test signals the supervisor and releases both workers.
+    for ((i=0; i<100; i++)); do
+        [[ ! -e finish ]] || break
+        sleep 0.02
+    done
+    test -f finish
 fi
 [[ "$MODE" != "$lane" ]]
 touch "$lane.done"
 SH
 for mode in pass core hover; do
     rm -f ./*.started ./*.done
-    if MODE=$mode "$gate" parallel-checks 'two words'; then
+    if MODE=$mode bash "$scheduler" fixture-gate 'two words'; then
         [[ "$mode" == pass && -f release.done ]]
     else
         [[ "$mode" != pass && ! -e release.done && -e core.started && -e hover.started ]]
     fi
 done
 rm -f ./*.started ./*.done
-MODE=interrupt "$gate" parallel-checks 'two words' &
+MODE=interrupt bash "$scheduler" fixture-gate 'two words' &
 supervisor=$!
 for ((i=0; i<100; i++)); do
-    [[ ! -s core.child || ! -s hover.child ]] || break
+    [[ ! -e core.started || ! -e hover.started ]] || break
     sleep 0.02
 done
+test -f core.started
+test -f hover.started
 kill -TERM "$supervisor"
-if wait "$supervisor"; then exit 1; fi
-for lane in core hover; do
-    child=$(cat "$lane.child")
-    if kill -0 "$child" 2>/dev/null; then
-        # An exited child can briefly remain as a zombie until the host reaps it.
-        [[ "$(ps -o stat= -p "$child")" == Z* ]]
-    fi
-done
+touch finish
+status=0
+wait "$supervisor" || status=$?
+test "$status" = 143
+test -f core.done
+test -f hover.done
 test ! -e release.done
 echo 'Verified parallel execution, failure propagation and cancellation.'

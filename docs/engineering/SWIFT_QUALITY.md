@@ -120,7 +120,9 @@ References: [official formatter](https://github.com/swiftlang/swift-format),
 The local check runs the Swift suite and the disposable hover regression probes
 in two lanes. Each SwiftPM test command has two build jobs. The hover checks
 keep their healthy, faulty and restored runs in order within their own copy.
-The release build and bundle verification follow both lanes. Independent
+A terminal interrupt drains the active lanes and returns a failure. This lets
+each probe remove its temporary build. The release and bundle checks follow
+only after both lanes succeed. Independent
 pre-push review still precedes the local checks.
 
 GitHub runs the Swift checks and the native UI suite on separate macOS runners
