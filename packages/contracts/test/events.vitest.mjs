@@ -109,7 +109,12 @@ test('unknown protocol messages stop replay without constructing an actionable e
   const oversizedBatch = encodeBatch(escaped);
   const parse = vi.spyOn(JSON, 'parse');
   try {
-    for (const wire of [oversizedBatch, oversizedBatch.slice(0, -2)]) {
+    for (const wire of [
+      oversizedBatch,
+      oversizedBatch.slice(0, -2),
+      encodeBatch(JSON.stringify(future) + '\u00a0'.repeat(33_000)),
+      encodeBatch(' '.repeat(65_536) + JSON.stringify(future)),
+    ]) {
       expect(readWireBatch(wire, stream)).toEqual({status: 'malformed'});
       expect(parse).not.toHaveBeenCalledWith(wire);
     }

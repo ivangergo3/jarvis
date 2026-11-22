@@ -84,7 +84,7 @@ export function eventFramesFit(text: string): boolean {
       continue;
     }
     if (start >= 0 && depth === 2 && (token === ',' || token === ']')) {
-      if (utf8Bytes(text.slice(start, i).trim()) > eventLimit) return false;
+      if (utf8Bytes(text.slice(start, i)) > eventLimit) return false;
       start = token === ',' ? i + 1 : -1;
     }
     if (token === '[' || token === '{') depth++;
