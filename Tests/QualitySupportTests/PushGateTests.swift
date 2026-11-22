@@ -13,7 +13,8 @@ struct PushGateTests {
             base: "base", head: "head", toolchain: "swift", nativeAvailable: false)
         let receipt = PushGate.Receipt(
             identity: identity, review: review, intent: "Expected behaviour", swiftArguments: [],
-            checksPassed: true, nativeUI: "unavailable: requires full Xcode; CI required")
+            checksPassed: true, nativeUI: "unavailable: requires full Xcode; CI required",
+            typeScriptAttempt: UUID())
         #expect(throws: QualityFailure.self) { try PushGate.validate(receipt, identity: identity) }
     }
     @Test func countsAllChangesAndBlocksOverLimit() throws {
@@ -68,7 +69,8 @@ struct PushGateTests {
         ) -> PushGate.Receipt {
             .init(
                 identity: identity, review: review, intent: "Expected behaviour",
-                swiftArguments: [], checksPassed: passed, nativeUI: native)
+                swiftArguments: [], checksPassed: passed, nativeUI: native,
+                typeScriptAttempt: UUID())
         }
         try PushGate.validate(receipt(), identity: identity)
         for candidate in [
@@ -83,6 +85,9 @@ struct PushGateTests {
             .init(
                 base: "base", head: "head", toolchain: "swift", nativeAvailable: false,
                 developerIdentity: "different Xcode/SDK"),
+            .init(
+                base: "base", head: "head", toolchain: "swift", nativeAvailable: false,
+                nodeToolchain: "different Node or pnpm"),
         ] {
             #expect(throws: QualityFailure.self) {
                 try PushGate.validate(receipt(), identity: candidate)
@@ -108,14 +113,33 @@ struct PushGateTests {
         }
     }
 
+    private static func writeAttempt(_ attempt: URL, revision: String, scenario: String = "valid")
+        throws
+    {
+        let reports = attempt.appendingPathComponent("vitest")
+        try FileManager.default.createDirectory(at: reports, withIntermediateDirectories: true)
+        try VitestEvidenceTests.writeVitest(
+            at: reports,
+            candidate: PushGate.workspace(
+                for: try #require(UUID(uuidString: attempt.lastPathComponent))),
+            revision: revision,
+            scenario: scenario)
+    }
+
     private final class Fixture {
         let temporary: TemporaryDirectory
         var root: URL { temporary.url }
         init() throws { temporary = try TemporaryDirectory(prefix: "push-fixture-") }
+        deinit {
+            // A failing production verification retains the worktree for inspection.
+            if let candidate { _ = try? git(["worktree", "remove", "--force", candidate.path]) }
+        }
         var reviews = 0
         var checks = 0
         var nativeAvailable = false
         var nativeChecks = 0
+        var nodeProbes = 0
+        var typeScriptChecks = 0
         var failure = ""
         var candidate: URL?
         var sdk = "Synthetic SDK 1"
@@ -140,6 +164,11 @@ struct PushGateTests {
                 to: root.appendingPathComponent(".gitignore"), atomically: true, encoding: .utf8)
             try "base\n".write(
                 to: root.appendingPathComponent("base.txt"), atomically: true, encoding: .utf8)
+            try FileManager.default.createDirectory(
+                at: root.appendingPathComponent("Tools"), withIntermediateDirectories: true)
+            try Diagnostics.writeJSON(
+                [["file": "fixtures/nested.vitest.ts", "name": "Nesting > works"]],
+                to: root.appendingPathComponent("Tools/required-vitest.json"))
             _ = try git(["add", "."])
             _ = try git(["commit", "-qm", "base"])
             _ = try git(["update-ref", "refs/remotes/origin/main", "HEAD"])
@@ -161,6 +190,13 @@ struct PushGateTests {
                 command.arguments.first?.hasPrefix("--show-sdk-") == true
             {
                 try sdk.write(to: log, atomically: true, encoding: .utf8)
+                return 0
+            }
+            if command.arguments == ["node", "--version"]
+                || command.arguments == ["pnpm", "--version"]
+            {
+                nodeProbes += 1
+                try "Fixture toolchain".write(to: log, atomically: true, encoding: .utf8)
                 return 0
             }
             if command.arguments == ["swift", "--version"] {
@@ -197,6 +233,25 @@ struct PushGateTests {
                 }
                 return 0
             }
+            if command.arguments.first == "scripts/check-typescript.sh" {
+                typeScriptChecks += 1
+                #expect(reviews == 1 && checks == 1)
+                if failure == "typescript-exit" { return 1 }
+                return 0
+            }
+            if command.arguments.starts(with: ["pnpm", "exec", "vitest"]) {
+                #expect(reviews == 1 && checks == 1 && typeScriptChecks == 1)
+                if command.arguments[3] == "list" {
+                    if failure == "discovery-exit" { return 1 }
+                    if failure != "missing-report" {
+                        try VitestEvidenceTests.writeVitest(
+                            at: log.deletingLastPathComponent(),
+                            candidate: command.directory, revision: git(["rev-parse", "HEAD"]))
+                    }
+                    return 0
+                }
+                return failure == "vitest-exit" ? 1 : 0
+            }
             if command.executable == "/bin/bash" {
                 checks += 1
                 #expect(reviews == 1)
@@ -226,7 +281,10 @@ struct PushGateTests {
     @Test func successfulPrepareRunsReviewThenTestsAndReusesExactReceipt() throws {
         let fixture = try Fixture()
         fixture.nativeAvailable = true
-        try fixture.setup()
+        try fixture.setup(feature: "Sources/Feature.swift", content: "struct Feature {}\n")
+        try fixture.write("fixtures/feature.ts", Data("export const feature = true;\n".utf8))
+        try fixture.write("docs/feature.md", Data("Feature behavior.\n".utf8))
+        _ = try fixture.commitChanges()
         let gate = fixture.gate()
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
         try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
@@ -234,6 +292,7 @@ struct PushGateTests {
         #expect(!FileManager.default.fileExists(atPath: try #require(fixture.candidate).path))
         try gate.prepare(intent: "Expected behaviour", swiftArguments: [])
         #expect(fixture.reviews == 1 && fixture.checks == 1 && fixture.nativeChecks == 1)
+        #expect(fixture.typeScriptChecks == 1)
         _ = try fixture.git(["update-ref", "refs/remotes/origin/main", "HEAD"])
         #expect(throws: QualityFailure.self) { try gate.run(["verify"]) }
     }
@@ -266,6 +325,7 @@ struct PushGateTests {
         try gate.verify(identity)
         try gate.prepare(intent: "Document the fixture", swiftArguments: [])
         #expect(fixture.reviews == 2 && fixture.checks == 0 && fixture.nativeChecks == 0)
+        #expect(fixture.nodeProbes == 0 && fixture.typeScriptChecks == 0)
     }
 
     @Test func documentationWhitespaceFailsBeforeIndependentReview() throws {
@@ -372,7 +432,8 @@ struct PushGateTests {
     @Test func failuresAndMutationsCannotCreateReceipts() throws {
         for failure in [
             "review-exit", "review-timeout", "malformed", "findings", "tests", "mutation",
-            "snapshot-mutation", "review-head", "snapshot-head", "incomplete",
+            "snapshot-mutation", "review-head", "snapshot-head", "incomplete", "typescript-exit",
+            "missing-report", "discovery-exit", "vitest-exit",
         ] {
             let fixture = try Fixture()
             try fixture.setup()
@@ -479,19 +540,32 @@ struct PushGateTests {
         environment["PATH"] = support.url.path + ":" + (environment["PATH"] ?? "/usr/bin:/bin")
         environment["GATE_BINARY"] =
             project.appendingPathComponent(".build/debug/quality-gate").path
-        environment["HOOK"] = project.appendingPathComponent(".githooks/pre-push").path
-        let gate = PushGate(root: root)
+        let hook = project.appendingPathComponent(".githooks/pre-push")
+        try FileManager.default.copyItem(
+            at: hook, to: support.url.appendingPathComponent("pre-push"))
+        _ = try fixture.git(["config", "core.hooksPath", support.url.path])
+        _ = try fixture.git(["switch", "-c", "topic"])
+        // The synthetic repository has no package installation. Select fixture tools for both identities.
+        for tool in ["node", "pnpm"] {
+            let url = support.url.appendingPathComponent(tool)
+            try "#!/bin/sh\necho fixture-1\n".write(to: url, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes(
+                [.posixPermissions: 0o755], ofItemAtPath: url.path)
+        }
+        let gate = PushGate(root: root) { command, log, timeout in
+            var command = command
+            command.environment = environment
+            return try command.run(log: log, timeout: timeout)
+        }
         let identity = try gate.identity()
-        environment["PUSH_INPUT"] =
-            "refs/heads/topic \(identity.head) refs/heads/topic "
-            + String(repeating: "0", count: 40)
-        let command = Command(
-            "/bin/bash", ["-c", "printf '%s\\n' \"$PUSH_INPUT\" | bash \"$HOOK\" origin"],
-            directory: root, environment: environment)
+        let push = Command(
+            "/usr/bin/git", ["push", "origin", "topic"], directory: root, environment: environment)
         let log = support.url.appendingPathComponent("hook.log")
-        #expect(try command.run(log: log, timeout: 60) != 0)
-        try FileManager.default.createDirectory(
-            at: gate.directory(identity.head), withIntermediateDirectories: true)
+        #expect(try push.run(log: log, timeout: 60) != 0)
+        #expect(try Diagnostics.tail(of: log).contains("No review/test receipt"))
+        let attempt = UUID()
+        let output = gate.directory(identity.head).appendingPathComponent(attempt.uuidString)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         // Synthetic receipt exercises hook wiring, not actual model/test execution.
         try Diagnostics.writeJSON(
             PushGate.Receipt(
@@ -501,9 +575,32 @@ struct PushGateTests {
                     limitations: [], completed: true),
                 intent: "Fixture", swiftArguments: [], checksPassed: true,
                 nativeUI: identity.nativeAvailable
-                    ? "passed" : "unavailable: requires full Xcode; CI required"),
+                    ? "passed" : "unavailable: requires full Xcode; CI required",
+                typeScriptAttempt: attempt),
             to: gate.directory(identity.head).appendingPathComponent("receipt.json"))
-        #expect(try command.run(log: log, timeout: 60) == 0)
+        #expect(try push.run(log: log, timeout: 60) != 0)
+        #expect(
+            try Diagnostics.tail(of: log).contains("Missing Vitest discovery or result evidence"))
+        try Self.writeAttempt(output, revision: identity.head, scenario: "missing-required")
+        #expect(try push.run(log: log, timeout: 60) != 0)
+        #expect(
+            try Diagnostics.tail(of: log).contains(
+                "Vitest inventory, totals or required cases are incomplete"))
+        #expect(try fixture.git(["ls-remote", "origin", "refs/heads/topic"]).isEmpty)
+        try Self.writeAttempt(output, revision: identity.head, scenario: "unhandled")
+        #expect(try push.run(log: log, timeout: 60) != 0)
+        #expect(try Diagnostics.tail(of: log).contains("Vitest process failed"))
+        #expect(try fixture.git(["ls-remote", "origin", "refs/heads/topic"]).isEmpty)
+        try Self.writeAttempt(output, revision: identity.head, scenario: "stale")
+        #expect(try push.run(log: log, timeout: 60) != 0)
+        #expect(
+            try Diagnostics.tail(of: log).contains("Vitest reports refer to a different commit"))
+        try Self.writeAttempt(output, revision: identity.head)
+        let finalStatus = try push.run(log: log, timeout: 60)
+        let diagnostic = try Diagnostics.tail(of: log)
+        #expect(finalStatus == 0, Comment(rawValue: diagnostic))
+        #expect(
+            try fixture.git(["ls-remote", "origin", "refs/heads/topic"]).hasPrefix(identity.head))
     }
 
     @Test func installerPreservesExistingHooks() throws {

@@ -1,0 +1,6 @@
+[
+  {
+    "file": "fixtures/workspace-library/greeting.vitest.mjs",
+    "name": "includes the supplied workspace name in the greeting"
+  }
+]
