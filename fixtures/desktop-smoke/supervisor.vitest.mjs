@@ -7,6 +7,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -163,25 +164,29 @@ test('interrupting a stopped Playwright check after CDP connects waits for its e
   const marker = path.join(temp, 'connected');
   const evidence = path.join(temp, 'evidence');
   mkdirSync(binaries, {recursive: true});
+  const testNode = path.join(temp, 'pinned node');
+  symlinkSync(process.execPath, testNode);
+  const testScript = path.join(temp, 'hold connection.cjs');
   // Accept the real Playwright handshake and hold it until cancellation.
   writeFileSync(
     path.join(binaries, 'Jarvis Preview'),
-    '#!' +
-      process.execPath +
-      '\n' +
-      [
-        "const net = require('node:net');",
-        "const fs = require('node:fs');",
-        "const server = net.createServer(socket => socket.once('data', request => {",
-        "  if (request.toString().startsWith('GET /devtools/browser/')) fs.writeFileSync(process.env.JARVIS_TEST_MARKER, String(process.ppid));",
-        '}));',
-        "server.listen(0, '127.0.0.1', () => {",
-        "  console.error('DevTools listening on ws://127.0.0.1:' + server.address().port + '/devtools/browser/ab12-cd34');",
-        "  console.log('JARVIS_SMOKE_WINDOW {}');",
-        '});',
-        'setTimeout(() => process.exit(1), 12000);',
-      ].join('\n'),
+    '#!/bin/sh\nexec "$JARVIS_TEST_NODE" "$JARVIS_TEST_SCRIPT" "$@"\n',
     {mode: 0o700},
+  );
+  writeFileSync(
+    testScript,
+    [
+      "const net = require('node:net');",
+      "const fs = require('node:fs');",
+      "const server = net.createServer(socket => socket.once('data', request => {",
+      "  if (request.toString().startsWith('GET /devtools/browser/')) fs.writeFileSync(process.env.JARVIS_TEST_MARKER, String(process.ppid));",
+      '}));',
+      "server.listen(0, '127.0.0.1', () => {",
+      "  console.error('DevTools listening on ws://127.0.0.1:' + server.address().port + '/devtools/browser/ab12-cd34');",
+      "  console.log('JARVIS_SMOKE_WINDOW {}');",
+      '});',
+      'setTimeout(() => process.exit(1), 12000);',
+    ].join('\n'),
   );
   const parent = spawn(process.execPath, [runner, app, '14000'], {
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -190,6 +195,8 @@ test('interrupting a stopped Playwright check after CDP connects waits for its e
       TMPDIR: temp,
       JARVIS_SMOKE_EVIDENCE_DIR: evidence,
       JARVIS_TEST_MARKER: marker,
+      JARVIS_TEST_NODE: testNode,
+      JARVIS_TEST_SCRIPT: testScript,
     },
   });
   const stopped = once(parent, 'close');
