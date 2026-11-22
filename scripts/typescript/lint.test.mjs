@@ -11,7 +11,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import {ESLint} from 'eslint';
+import {workspaceESLint} from './workspace-eslint.mjs';
 
 test('normal command checks tracked sources using the workspace config', (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'jarvis-eslint-'));
@@ -64,7 +64,7 @@ test('normal command checks tracked sources using the workspace config', (t) => 
 });
 
 test('workspace lint rejects and restores unsafe JavaScript', async () => {
-  const eslint = new ESLint();
+  const eslint = workspaceESLint();
   const filePath = 'fixtures/verify-workspace.mjs';
   const [invalid] = await eslint.lintText("var value = eval('0');", {filePath});
   assert.deepEqual(
@@ -78,7 +78,7 @@ test('workspace lint rejects and restores unsafe JavaScript', async () => {
 });
 
 test('workspace lint rejects direct Array construction and accepts Array.from', async () => {
-  const eslint = new ESLint();
+  const eslint = workspaceESLint();
   const filePath = 'fixtures/verify-workspace.mjs';
   const [invalid] = await eslint.lintText('Array(3); new Array(3);', {
     filePath,
