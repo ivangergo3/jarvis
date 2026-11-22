@@ -5,6 +5,7 @@ import {chromium, expect} from '@playwright/test';
 async function checkShell(state, profile, evidence) {
   // Only attach to the ephemeral loopback endpoint emitted by our owned app.
   const browser = await chromium.connectOverCDP(state.endpoint, {
+    noDefaults: true,
     timeout: 10_000,
     artifactsDir: path.join(path.dirname(profile), 'playwright-artifacts'),
   });
@@ -76,6 +77,41 @@ async function checkShell(state, profile, evidence) {
       assert.equal(page.url(), url);
     }
     assert.deepEqual(startupErrors, []);
+    const navigateFixture = (target) =>
+      page.evaluate(
+        (url) => window.location.assign(url),
+        url.replace('/index.html', '/' + target),
+      );
+    await navigateFixture('minimize-for-verification');
+    await expect
+      .poll(() => state.visibility)
+      .toMatchObject({minimized: true, focused: false, windows: 1});
+    await expect
+      .poll(() => page.evaluate(() => document.hasFocus()))
+      .toBe(false);
+    await navigateFixture('activate-for-verification');
+    let restored;
+    await expect
+      .poll(async () => {
+        const native = state.visibility;
+        if (
+          !native ||
+          native.minimized ||
+          !native.visible ||
+          !native.focused ||
+          native.windows !== 1
+        )
+          return false;
+        const rendererFocused = await page.evaluate(() => document.hasFocus());
+        const projectVisible = await page
+          .getByText('Shell verification', {exact: true})
+          .isVisible();
+        if (native !== state.visibility || !rendererFocused || !projectVisible)
+          return false;
+        restored = {...native};
+        return true;
+      })
+      .toBe(true);
     await page.close();
     return {
       packaged: true,
@@ -85,6 +121,7 @@ async function checkShell(state, profile, evidence) {
       isolation,
       url,
       blockedDestinations: destinations,
+      restoredFromMinimized: restored,
     };
   } finally {
     // An attached browser disconnects from the remote endpoint on close.
@@ -98,6 +135,10 @@ const disconnected = () => process.exit(1);
 process.once('disconnect', disconnected);
 const state = {};
 process.on('message', async (message) => {
+  if (message.visibility) {
+    state.visibility = message.visibility;
+    return;
+  }
   if (message.denied) {
     state.denied = message.denied;
     return;
