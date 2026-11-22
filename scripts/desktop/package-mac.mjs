@@ -5,15 +5,14 @@ import {mkdir, mkdtemp, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {packager} from '@electron/packager';
-import {verifyPreviewBundle} from './verify-bundle.mjs';
+import {previewArchitecture, verifyPreviewBundle} from './verify-bundle.mjs';
 
 const checksums = new Map([
   ['arm64', 'd080c3b05a01bd16137f2c12ab9ebf083c577757fe846844ba325bafa8e8bdf4'],
   ['x64', '1c80d2ccf71b02c8fd9940fd09cafe88090a48c1bab0193c79b597b08d890e79'],
 ]);
-const checksum = checksums.get(process.arch);
-if (process.platform !== 'darwin' || !checksum)
-  throw new Error('The desktop preview requires Apple Silicon or Intel macOS.');
+const arch = previewArchitecture();
+const checksum = checksums.get(arch);
 if (process.argv.length !== 2)
   throw new Error('Expected no packaging options.');
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -64,7 +63,7 @@ const electronZipDir = process.env.JARVIS_ELECTRON_ZIP_DIR;
 if (electronZipDir) {
   const archive = path.join(
     electronZipDir,
-    'electron-v' + version + '-darwin-' + process.arch + '.zip',
+    'electron-v' + version + '-darwin-' + arch + '.zip',
   );
   const hash = createHash('sha256');
   for await (const chunk of createReadStream(archive)) hash.update(chunk);
@@ -82,7 +81,7 @@ const [output] = await packager({
   helperBundleId: 'dev.greg.jarvis.preview.helper',
   icon: path.join(root, 'Resources/AppIcon.icns'),
   platform: 'darwin',
-  arch: process.arch,
+  arch,
   electronVersion: version,
   ...(electronZipDir && {electronZipDir}),
   osxSign: {
