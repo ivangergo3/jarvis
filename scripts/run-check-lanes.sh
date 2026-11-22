@@ -28,12 +28,12 @@ hover=$!
 failed=0
 wait_for_lane "$core" || failed=1
 wait_for_lane "$hover" || failed=1
-if (( interrupted != 0 )); then exit "$interrupted"; fi
-if (( failed != 0 )); then exit 1; fi
 # Release is the sole remaining lane. Return it to ordinary foreground
 # execution so the terminal can interrupt an active release build directly.
 set +m
 trap - HUP TERM INT
+if (( interrupted != 0 )); then exit "$interrupted"; fi
+if (( failed != 0 )); then exit 1; fi
 rm -rf "$scratch"
 trap - EXIT
 unset JARVIS_CHECK_CANCEL_FILE
