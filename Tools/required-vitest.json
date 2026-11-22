@@ -38,5 +38,37 @@
   {
     "file": "packages/contracts/test/events.vitest.mjs",
     "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a missing packaged executable fails and removes its private profile"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a packaged app exiting with code 17 cannot publish a passing receipt"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a packaged app exiting zero before its window opens fails qualification"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a stopped preview owner resumes on cancellation and cleans its app and helper"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a stalled preview times out without leaving its app or helper running"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a crashed packaged app fails and its surviving helper is stopped"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "losing the owner while a helper survives retains scratch and fails qualification"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
   }
 ]
