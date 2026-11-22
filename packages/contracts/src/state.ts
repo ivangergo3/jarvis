@@ -1,9 +1,9 @@
 import {z} from 'zod';
 import {batchLimit, parseWire} from './wire.js';
 import {pageHeader, validPageRange} from './paging.js';
+import type {OwnerId} from './values.js';
 import {
   CommandId,
-  OwnerId,
   ProjectTarget,
   RequestTarget,
   RunTarget,
