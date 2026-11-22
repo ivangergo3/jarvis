@@ -12,3 +12,5 @@ The final output line gives the absolute path to `Jarvis Preview.app`. Open that
 The window shows a synthetic workspace. Select **Observatory**, then **Sessions** to see **Shell verification**. Use **All projects** to return to the workspace. The preview uses bundle identifier `dev.greg.jarvis.preview` and its own `Jarvis Preview` application-support directory.
 
 The build uses an ad-hoc signature for local development. Developer ID distribution and notarization require separate qualification.
+
+Before printing the bundle path, packaging verifies its preview identity, host architecture and ad-hoc signature, including signed resources. Full GitHub checks run the same packaging command on Intel macOS.

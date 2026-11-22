@@ -202,6 +202,9 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      - name: Build and verify the Intel macOS preview package
+        run: exec node scripts/desktop/package-mac.mjs
+
   quality:
     name: macOS build and tests
     needs: [scope, swift, native, typescript]
