@@ -112,9 +112,16 @@ enum QualityGate {
                 signal(number, previous)
             }
         }
-        try PushGate(root: root) { command, log, timeout in
+        let gate = PushGate(root: root) { command, log, timeout in
             try command.run(
                 log: log, timeout: timeout, interrupted: { interrupted.withLock { $0 } })
-        }.run(options)
+        }
+        // Receipt publication commits the completed attempt. Interruption wins until then.
+        try gate.run(options) { publish in
+            try interrupted.withLock { cancelled in
+                guard !cancelled else { throw QualityFailure("Push preparation interrupted") }
+                try publish()
+            }
+        }
     }
 }

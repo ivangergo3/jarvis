@@ -2,6 +2,7 @@ import Foundation
 
 /// Local workflow evidence, not a security attestation. CI remains independent.
 public struct PushGate {
+    public typealias CompletePreparation = (@Sendable () throws -> Void) throws -> Void
     struct Identity: Codable, Equatable {
         let base: String
         let head: String
@@ -231,15 +232,24 @@ public struct PushGate {
     }
     private func validateEvidence(_ receipt: Receipt, current: Identity) throws {
         try Self.validate(receipt, identity: current)
-        guard let attemptID = receipt.typeScriptAttempt else { return }
-        let attempt = directory(current.head).appendingPathComponent(attemptID.uuidString)
-            .resolvingSymlinksInPath()
-        try VitestEvidence.validate(
-            at: attempt.appendingPathComponent("vitest"), repository: self,
-            source: Self.workspace(for: attemptID),
-            revision: current.head)
+        if let attemptID = receipt.typeScriptAttempt {
+            let attempt = directory(current.head).appendingPathComponent(attemptID.uuidString)
+                .resolvingSymlinksInPath()
+            try VitestEvidence.validate(
+                at: attempt.appendingPathComponent("vitest"), repository: self,
+                source: Self.workspace(for: attemptID), revision: current.head)
+        }
+        // A concurrent fetch or commit can move the refs while reports are being read.
+        guard
+            try git(["rev-parse", "origin/main^{commit}", "HEAD^{commit}"])
+                == current.base + "\n" + current.head
+        else {
+            throw QualityFailure("Base or head changed during verification; prepare again")
+        }
     }
-    func prepare(intent: String, swiftArguments: [String]) throws {
+    func prepare(
+        intent: String, swiftArguments: [String], complete: CompletePreparation = { try $0() }
+    ) throws {
         guard !intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             intent.utf8.count <= 16_384
         else { throw QualityFailure("Supply a short intended outcome and acceptance checklist") }
@@ -251,14 +261,14 @@ public struct PushGate {
             at: output, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let receiptURL = directory(current.head).appendingPathComponent("receipt.json")
         if FileManager.default.fileExists(atPath: receiptURL.path) {
-            do {
-                let old = try JSONDecoder().decode(Receipt.self, from: Data(contentsOf: receiptURL))
-                try validateEvidence(old, current: current)
-                if old.intent == intent && old.swiftArguments == swiftArguments {
-                    print("Exact candidate already reviewed and tested")
-                    return
-                }
-            } catch { print("Invalid/stale receipt; rerunning review and tests") }
+            if let old = try? JSONDecoder().decode(
+                Receipt.self, from: Data(contentsOf: receiptURL)),
+                old.intent == intent, old.swiftArguments == swiftArguments,
+                (try? validateEvidence(old, current: current)) != nil
+            {
+                try complete { print("Exact candidate already reviewed and tested") }
+                return
+            }
             try FileManager.default.removeItem(at: receiptURL)
         }
         // Verify the committed candidate in an owned detached worktree, not a moving editor tree.
@@ -269,11 +279,6 @@ public struct PushGate {
         var verified = false
         try FileManager.default.createDirectory(
             at: source, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
-        // No developer-wide post-checkout hook should change this internal verification snapshot.
-        _ = try git([
-            "-c", "core.hooksPath=/dev/null", "worktree", "add", "--detach", source.path,
-            current.head,
-        ])
         func verifySource() throws {
             let gate = PushGate(root: source, runner: runner)
             try gate.clean()
@@ -301,6 +306,12 @@ public struct PushGate {
                 )
             }
         }
+        // Install retention before Git can register or populate a partial worktree.
+        // No developer-wide post-checkout hook should change this internal verification snapshot.
+        _ = try git([
+            "-c", "core.hooksPath=/dev/null", "worktree", "add", "--detach", source.path,
+            current.head,
+        ])
         try verifySource()
         let tools = root.appendingPathComponent(".build/tools")
         if FileManager.default.fileExists(atPath: tools.path) {
@@ -377,7 +388,9 @@ public struct PushGate {
             checksPassed: true, nativeUI: Self.expectedNativeResult(current),
             typeScriptAttempt: current.scope == .full ? attempt : nil)
         try validateEvidence(receipt, current: current)
-        try Diagnostics.writeJSON(receipt, to: receiptURL)
+        try complete {
+            try Diagnostics.writeJSON(receipt, to: receiptURL)
+        }
         verified = true
         print("Review and local checks passed for \(current.head)")
     }
@@ -443,7 +456,9 @@ public struct PushGate {
         }
     }
 
-    public func run(_ arguments: [String]) throws {
+    public func run(_ arguments: [String], completePreparation: CompletePreparation = { try $0() })
+        throws
+    {
         let mode = arguments.first ?? "size"
         let options = Array(arguments.dropFirst())
         let prefixes =
@@ -476,7 +491,8 @@ public struct PushGate {
             }
             let intent = try String(contentsOfFile: String(file.dropFirst(14)), encoding: .utf8)
             try prepare(
-                intent: intent, swiftArguments: options.filter { $0.hasPrefix("--swift-arg=") })
+                intent: intent, swiftArguments: options.filter { $0.hasPrefix("--swift-arg=") },
+                complete: completePreparation)
         case "verify":
             let current = try identity()
             try inspect(base: current.base, head: current.head)

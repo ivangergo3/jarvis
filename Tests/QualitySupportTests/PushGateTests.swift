@@ -352,6 +352,23 @@ struct PushGateTests {
         #expect(fixture.nodeProbes == 0 && fixture.typeScriptChecks == 0)
     }
 
+    @Test func cancellationAtPublicationAndNewGitRefsPreventApproval() throws {
+        let fixture = try Fixture()
+        try fixture.setup(feature: "README.md")
+        let gate = fixture.gate()
+        let identity = try gate.identity()
+        #expect(throws: QualityFailure.self) {
+            try gate.prepare(intent: "Document the fixture", swiftArguments: []) { _ in
+                throw QualityFailure("Interrupted before publication")
+            }
+        }
+        #expect(throws: QualityFailure.self) { try gate.verify(identity) }
+        try gate.prepare(intent: "Document the fixture", swiftArguments: [])
+        try gate.verify(identity)
+        _ = try fixture.git(["update-ref", "refs/remotes/origin/main", identity.head])
+        #expect(throws: QualityFailure.self) { try gate.verify(identity) }
+    }
+
     @Test func documentationWhitespaceFailsBeforeIndependentReview() throws {
         let fixture = try Fixture()
         try fixture.setup(feature: "README.md", content: "Trailing space \n")
