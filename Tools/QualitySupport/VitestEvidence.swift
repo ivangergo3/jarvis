@@ -17,6 +17,11 @@ enum VitestEvidence {
         let executionSHA256: String?
     }
 
+    struct VerifiedCases {
+        let exits: Exits
+        let passed: Set<Case>
+    }
+
     private struct Report: Decodable {
         struct Suite: Decodable {
             struct Assertion: Decodable {
@@ -104,16 +109,18 @@ enum VitestEvidence {
         }
     }
 
+    @discardableResult
     static func validate(at attempt: URL, repository: PushGate, source: URL, revision: String)
-        throws
+        throws -> VerifiedCases
     {
         let manifest = try repository.git(["show", revision + ":Tools/required-vitest.json"])
-        try validate(
+        return try validate(
             at: attempt, candidate: source, manifest: Data(manifest.utf8), revision: revision)
     }
 
+    @discardableResult
     static func validate(at attempt: URL, candidate: URL, manifest: Data, revision: String)
-        throws
+        throws -> VerifiedCases
     {
         for file in ["vitest-discovery.json", "vitest-results.json", "process.json"] {
             guard FileManager.default.fileExists(atPath: attempt.appendingPathComponent(file).path)
@@ -196,6 +203,7 @@ enum VitestEvidence {
         guard passed == collected, report.numTotalTestSuites >= minimumSuites else {
             throw QualityFailure("Vitest discovery and results differ")
         }
+        return VerifiedCases(exits: exits, passed: passed)
     }
 
     static func digest(_ data: Data) -> String {

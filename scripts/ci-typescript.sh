@@ -7,7 +7,6 @@ umask 077
 mkdir "$evidence"
 head=$(git rev-parse HEAD)
 test "$head" = "${GITHUB_SHA:?Expected the CI checkout revision}"
-printf '%s\n' "$head" > "$evidence/source-revision.txt"
 test "$(node -p 'process.versions.node')" = "$(cat .nvmrc)"
 test "pnpm@$(pnpm --version)" = "$(node -p 'require("./package.json").packageManager')"
 test -z "$(git status --porcelain --untracked-files=all)"
@@ -18,5 +17,9 @@ app=$(tail -n 1 "$evidence/desktop-build.log")
 identifier=$(/usr/bin/plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")
 test "$identifier" = dev.greg.jarvis.preview
 /usr/bin/codesign --verify --deep --strict "$app"
-printf 'source=%s\nbundle=%s\nrunner_arch=%s\nsignature=verified\n' \
-  "$head" "$identifier" "$(uname -m)" > "$evidence/desktop-package.txt"
+# Publish a single allowlisted success artifact. Raw reporter files can contain assertion values.
+jq -e --arg revision "$head" --arg bundle "$identifier" --arg arch "$(uname -m)" '
+  select(.process.revision == $revision and (.passedCaseSHA256 | length > 0))
+  | . + {desktop: {bundle: $bundle, architecture: $arch, signature: "verified"}}
+' "$evidence/vitest/qualified.json" > "$evidence/hosted-summary.tmp"
+mv "$evidence/hosted-summary.tmp" "$evidence/hosted-summary.json"

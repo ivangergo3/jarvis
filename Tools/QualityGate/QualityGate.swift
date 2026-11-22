@@ -11,16 +11,21 @@ enum QualityGate {
                 guard arguments.count == 3, arguments[2].hasPrefix("/") else {
                     throw QualityFailure("Usage: quality-gate hosted-vitest COMMIT ABSOLUTE_OUTPUT")
                 }
-                try PushGate(root: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
-                    .hostedVitest(
-                        revision: arguments[1], output: URL(fileURLWithPath: arguments[2]))
+                let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+                try withInterruptibleGate(root: root) { gate, complete in
+                    try gate.hostedVitest(
+                        revision: arguments[1], output: URL(fileURLWithPath: arguments[2]),
+                        complete: complete)
+                }
                 return
             }
             if arguments.first == "push" {
                 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
                 let options = Array(arguments.dropFirst())
                 if options.first == "prepare" {
-                    try prepare(root: root, options: options)
+                    try withInterruptibleGate(root: root) { gate, complete in
+                        try gate.run(options, completePreparation: complete)
+                    }
                 } else {
                     try PushGate(root: root).run(options)
                 }
@@ -105,7 +110,9 @@ enum QualityGate {
         }
     }
 
-    private static func prepare(root: URL, options: [String]) throws {
+    private static func withInterruptibleGate(
+        root: URL, operation: (PushGate, PushGate.CompletePreparation) throws -> Void
+    ) throws {
         let queue = kqueue()
         guard queue >= 0 else { throw QualityFailure("Cannot monitor prepare interruption") }
         defer { close(queue) }
@@ -143,7 +150,7 @@ enum QualityGate {
         let gate = PushGate(root: root) { command, log, timeout in
             try command.run(log: log, timeout: timeout, interrupted: interrupted)
         }
-        try gate.run(options) { publish in
+        try operation(gate) { publish in
             // No child is running during receipt operations. Restore synchronous termination
             // before polling prior signals: an interrupt before the atomic rename now prevents it.
             let handlers = signals.map { signal($0, SIG_DFL) }

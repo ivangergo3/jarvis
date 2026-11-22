@@ -9,7 +9,6 @@ verdict=$(awk '
     body { exit }
 ' .github/workflows/quality.yml)
 test -n "$verdict"
-run_verdict() ( set -e; eval "$verdict" )
 for scope in full docs ''; do
     for classifier in success failure skipped cancelled ''; do
         for swift in success failure skipped cancelled ''; do
@@ -23,7 +22,7 @@ for scope in full docs ''; do
                         fi
                     fi
                     actual=0
-                    SCOPE_RESULT="$classifier" SCOPE="$scope" SWIFT_RESULT="$swift" NATIVE_RESULT="$native" TS_RESULT="$ts" run_verdict >/dev/null || actual=$?
+                    SCOPE_RESULT="$classifier" SCOPE="$scope" SWIFT_RESULT="$swift" NATIVE_RESULT="$native" TS_RESULT="$ts" bash -e -c "$verdict" >/dev/null || actual=$?
                     [[ "$actual" == "$expected" ]] || { echo "Unexpected CI outcome: $classifier $scope $swift $native $ts"; exit 1; }
                 done
             done
