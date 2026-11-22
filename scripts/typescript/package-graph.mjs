@@ -80,20 +80,29 @@ export function packageGraphErrors(root, projects) {
     for (const [name, spec] of declarations.flatMap((group) =>
       Object.entries(group ?? {}),
     )) {
-      // A directory copied into the store with file: no longer realpaths to
-      // its source. Require workspace: links for local directory dependencies.
-      const localPath =
-        /^(?:file:|link:)(.*)$/.exec(spec)?.[1] ??
-        (/^(?:\.\.?\/|\/)/.test(spec) ? spec : undefined);
+      // Jarvis uses workspace: links for local packages. The only allowed
+      // file: input is a regular relative package tarball, used by offline
+      // fixtures. Treat other forms as unsupported rather than emulate pnpm's
+      // tilde, platform-path and directory normalization.
+      const archive = /^file:((?:\.\.?\/)*(?:[\w.-]+\/)*[\w.-]+\.tgz)$/.exec(
+        spec,
+      );
+      const registry = /^(?:[\d^~<>=*][\w.^~<>=+* |\-]*|[a-zA-Z][\w.-]*)$/.test(
+        spec,
+      );
       if (
-        localPath &&
-        statSync(path.resolve(project.path, localPath), {
-          throwIfNoEntry: false,
-        })?.isDirectory()
+        !spec.startsWith('workspace:') &&
+        !registry &&
+        !(
+          archive &&
+          statSync(path.resolve(project.path, archive[1]), {
+            throwIfNoEntry: false,
+          })?.isFile()
+        )
       ) {
         errors.push(
           owner +
-            ': local directory dependencies must use the workspace protocol',
+            ': unsupported dependency source; use the workspace protocol for local directories',
         );
         continue;
       }

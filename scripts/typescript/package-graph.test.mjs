@@ -77,12 +77,14 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
   assert.deepEqual(resolve(), []);
 
   manifest('apps/desktop', '@fixture/desktop', {
-    devDependencies: {'@fixture/providers': 'file:../../packages/providers'},
+    devDependencies: {
+      '@fixture/providers': String.raw`file:..\..\packages\providers`,
+    },
     peerDependencies: {'@fixture/providers': '^1.0.0'},
   });
   assert.match(
     resolve().join('\n'),
-    /local directory dependencies must use the workspace protocol/,
+    /use the workspace protocol for local directories/,
   );
   manifest('apps/desktop', '@fixture/desktop');
   assert.deepEqual(resolve(), []);
