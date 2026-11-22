@@ -22,7 +22,7 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
     mkdirSync(path.join(root, dir), {recursive: true});
     writeFileSync(
       path.join(root, dir, 'package.json'),
-      JSON.stringify({name, private: true, ...fields}),
+      JSON.stringify({name, version: '1.0.0', private: true, ...fields}),
     );
   }
   function resolve() {
@@ -77,7 +77,8 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
   assert.deepEqual(resolve(), []);
 
   manifest('apps/desktop', '@fixture/desktop', {
-    dependencies: {'@fixture/providers': 'file:../../packages/providers'},
+    devDependencies: {'@fixture/providers': 'file:../../packages/providers'},
+    peerDependencies: {'@fixture/providers': '^1.0.0'},
   });
   assert.match(
     resolve().join('\n'),

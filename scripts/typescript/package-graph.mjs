@@ -69,12 +69,17 @@ export function packageGraphErrors(root, projects) {
     const local = new Set();
     edges.set(owner, local);
     const required = {...manifest.dependencies, ...manifest.devDependencies};
-    const declared = {
-      ...required,
-      ...manifest.peerDependencies,
-      ...manifest.optionalDependencies,
-    };
-    for (const [name, spec] of Object.entries(declared)) {
+    // pnpm supports the same name in multiple sections. Check every declared
+    // specifier before deduplicating local edges in the set.
+    const declarations = [
+      manifest.dependencies,
+      manifest.devDependencies,
+      manifest.peerDependencies,
+      manifest.optionalDependencies,
+    ];
+    for (const [name, spec] of declarations.flatMap((group) =>
+      Object.entries(group ?? {}),
+    )) {
       // A directory copied into the store with file: no longer realpaths to
       // its source. Require workspace: links for local directory dependencies.
       const localPath =
