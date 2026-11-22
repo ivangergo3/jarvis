@@ -8,7 +8,7 @@ Local phase only: start NestJS on opening Jarvis; no automatic login start. Wind
 
 Proposed shutdown sequence: gate new dispatch -> request cancellation -> verify owned process-tree cleanup -> persist resolved/interrupted/uncertain state -> close. Confirmation does not prove a command stopped. A timeout or lost acknowledgement cannot become success, rollback or permission to resend. Stop only Jarvis-owned processes; local Supabase data must survive. Closing Jarvis does not authorize removing volumes or stopping unrelated containers/apps.
 
-After crash/reboot, restore durable records, reconcile owned processes/provider receipts, then show actual state. Never automatically replay a command with an uncertain effect. Define the exact supervision/cleanup timeout policy during lifecycle implementation; do not infer it from a mock test. Browser/mobile disconnect must not inherit local-machine shutdown semantics without an explicit later decision.
+After crash/reboot, restore durable records, reconcile owned processes/provider receipts, then show actual state. Never automatically replay a command with an uncertain effect. Qualify the 60-awake-second cancellation interval, the five awake seconds after each observed TERM and actual packaged cleanup against the [local service contract](local-service-contract.md). Browser/mobile disconnect must not inherit local-machine shutdown semantics without an explicit later decision.
 
 ## Checks implemented against the current Swift baseline
 
