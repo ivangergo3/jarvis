@@ -8,6 +8,22 @@
     "name": "public contracts import in browser and Node consumers with branded destinations"
   },
   {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "stops before account reads for signed-out, alternative or malformed login observations"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "reports missing or mismatched routing and transport errors without exposing worker output"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "cancellation stops account reads and never publishes a late identity"
+  },
+  {
     "file": "packages/contracts/test/values.vitest.mjs",
     "name": "a request names its immutable ancestry and revision"
   },
@@ -40,19 +56,35 @@
     "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
   },
   {
-    "file": "packages/providers/test/account.vitest.mjs",
-    "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a missing packaged executable fails and removes its private profile"
   },
   {
-    "file": "packages/providers/test/account.vitest.mjs",
-    "name": "stops before account reads for signed-out, alternative or malformed login observations"
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a packaged app exiting with code 17 cannot publish a passing receipt"
   },
   {
-    "file": "packages/providers/test/account.vitest.mjs",
-    "name": "reports missing or mismatched routing and transport errors without exposing worker output"
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a packaged app exiting zero before its window opens fails qualification"
   },
   {
-    "file": "packages/providers/test/account.vitest.mjs",
-    "name": "cancellation stops account reads and never publishes a late identity"
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a stopped preview owner resumes on cancellation and cleans its app and helper"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a stalled preview times out without leaving its app or helper running"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "a crashed packaged app fails and its surviving helper is stopped"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "losing the owner while a helper survives retains scratch and fails qualification"
+  },
+  {
+    "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
+    "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
   }
 ]
