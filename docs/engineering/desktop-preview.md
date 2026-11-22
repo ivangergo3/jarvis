@@ -14,3 +14,5 @@ The window shows a synthetic workspace. Select **Observatory**, then **Sessions*
 The build uses an ad-hoc signature for local development. Developer ID distribution and notarization require separate qualification.
 
 Before printing the bundle path, packaging verifies its preview identity, host architecture and ad-hoc signature, including signed resources. Full GitHub checks run the same packaging command on Intel macOS.
+
+Run `pnpm desktop:package --smoke` to exercise the signed bundle with Playwright. It opens the synthetic window, checks the renderer sandbox and preload bridge, visits Observatory and Sessions, tests blocked navigation, then closes the window. The result directory contains two screenshots and a JSON receipt. Set `JARVIS_SMOKE_EVIDENCE_DIR` to a new absolute output path if desired. GitHub retains these three files from its Intel run. If process cleanup cannot be verified, the command fails and prints the location of its retained diagnostic profile.
