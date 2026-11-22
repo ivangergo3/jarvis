@@ -2,6 +2,7 @@ services:
   db:
     # Supabase Postgres 17.12.0.000
     image: public.ecr.aws/supabase/postgres@sha256:8630950b489ecc70563300180287a98c192a4a48f5ae00b4febdaeea1abe85de
+    entrypoint: ['/bin/sh', '/opt/jarvis/start-postgres.sh']
     # Apply to both the temporary initialization server and the final postmaster.
     command: ['postgres', '-D', '/etc/postgresql', '-c', 'log_statement=none', '-c', 'log_min_error_statement=panic', '-c', 'log_min_duration_statement=-1']
     ports:
@@ -15,6 +16,7 @@ services:
       JWT_SECRET: ${JARVIS_JWT_SECRET:?}
       JWT_EXP: 3600
     volumes:
+      - ./start-postgres.sh:/opt/jarvis/start-postgres.sh:ro
       - pgdata:/var/lib/postgresql/data
       - pgconfig:/etc/postgresql-custom
       - ./roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-jarvis-roles.sql:ro

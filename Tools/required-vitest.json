@@ -44,6 +44,10 @@
     "name": "Compose publishes only the explicit loopback DB and gateway bindings"
   },
   {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "database bootstrap validates the generated password before touching a volume"
+  },
+  {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "a missing packaged executable fails and removes its private profile"
   },
