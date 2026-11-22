@@ -56,6 +56,18 @@
     "name": "a project event has a project target; requests retain their originating run even when selection changes"
   },
   {
+    "file": "packages/providers/test/run-notification.vitest.mjs",
+    "name": "maps a finished assistant item to its original private destination and provider identity"
+  },
+  {
+    "file": "packages/providers/test/run-notification.vitest.mjs",
+    "name": "withholds questions, restricted content and oversized items without copying their private text"
+  },
+  {
+    "file": "packages/providers/test/run-notification.vitest.mjs",
+    "name": "maps confirmed turn status and keeps interruption separate from verified process cleanup"
+  },
+  {
     "file": "packages/contracts/test/events.vitest.mjs",
     "name": "unknown protocol messages stop replay without constructing an actionable event"
   },
