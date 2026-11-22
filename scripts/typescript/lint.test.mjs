@@ -129,6 +129,17 @@ test('workspace lint rejects and restores unsafe JavaScript', async () => {
     invalid.messages.map((message) => message.ruleId),
     ['no-var', 'no-eval'],
   );
+  for (const directive of ['@ts-nocheck', '@ts-ignore', '@ts-expect-error']) {
+    const [suppressed] = await eslint.lintText(
+      '// ' + directive + '\nexport const value = 0;',
+      {filePath},
+    );
+    assert.ok(
+      suppressed.messages.some(
+        (message) => message.ruleId === '@typescript-eslint/ban-ts-comment',
+      ),
+    );
+  }
   const [restored] = await eslint.lintText('export const value = 0;', {
     filePath,
   });

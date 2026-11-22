@@ -4,7 +4,7 @@ After a frozen pnpm install, run `pnpm check:packages` to verify the workspace p
 
 For example, a desktop dependency on `packages/providers` is rejected even if it is declared as a development dependency. Use normal workspace links for local packages. Copied directory snapshots are rejected. An installed registry dependency with the same name as a workspace package is a separate node.
 
-This command verifies the package graph. Source imports, public entry points, lint and formatting are separate increments of [#110](https://github.com/ivangergo3/jarvis/issues/110). The local push gate and required CI integrations belong to [#111](https://github.com/ivangergo3/jarvis/issues/111) and [#112](https://github.com/ivangergo3/jarvis/issues/112).
+The local push gate and required CI integrations belong to [#111](https://github.com/ivangergo3/jarvis/issues/111) and [#112](https://github.com/ivangergo3/jarvis/issues/112).
 
 ## Compiler and typed lint
 
@@ -50,3 +50,11 @@ outside a package typecheck task when the tool project does not cover them.
 The tool project reads Git-owned files and installed dependencies. Move tools
 that need project references or generated workspace declarations into a pnpm
 package with its own native typecheck task.
+
+## Package boundaries
+
+`pnpm check:boundaries` runs the frozen package graph, the package TypeScript profile check and `pnpm check:imports`. The import check walks staged and committed JavaScript, TypeScript and JSX in the workspace. An import, re-export, type reference, dynamic import or direct require that crosses a package boundary must use the bare name of a declared, installed workspace dependency. Package-local relative imports stay with their owner. The import check uses the pinned ESLint parser’s scope information to limit references to the global CommonJS loaders to direct `require(...)` and `module.require(...)` calls. CommonJS files can use `module.exports` for their exports. CommonJS reserves its wrapper names at module scope. Use the runtime’s declarations for these globals. Renderer and pure packages can use only the external entries approved for their layer. The negative fixtures restore valid imports after exercising server, process, credential, private and undeclared dependency violations.
+
+Each typed workspace member runs `tsc -p tsconfig.json` through its `typecheck` script. Its tracked compiler profile includes all of its tracked TypeScript sources, preserves the explicit workspace strict defaults, and limits ambient types to its runtime. The source policy assumes the standard package resolver. Changes that redirect module names through compiler options require review.
+
+The source check verifies the import spelling and dependency direction. Use `pnpm build` and `pnpm fixture` to verify Node resolves the published entry and the original consumer loads the compiled workspace library. Application bundling, HTML entry behavior and public asset serving belong to the [renderer integration](https://github.com/ivangergo3/jarvis/issues/119).
