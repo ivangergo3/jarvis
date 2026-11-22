@@ -109,12 +109,46 @@ test('unknown protocol messages stop replay without constructing an actionable e
   const oversizedBatch = encodeBatch(escaped);
   const parse = vi.spyOn(JSON, 'parse');
   try {
-    expect(readWireBatch(oversizedBatch, stream)).toEqual({
-      status: 'malformed',
-    });
-    expect(parse).not.toHaveBeenCalledWith(oversizedBatch);
+    for (const wire of [oversizedBatch, oversizedBatch.slice(0, -2)]) {
+      expect(readWireBatch(wire, stream)).toEqual({status: 'malformed'});
+      expect(parse).not.toHaveBeenCalledWith(wire);
+    }
   } finally {
     parse.mockRestore();
+  }
+  const runFrame = {
+    ...event,
+    kind: 'run.state',
+    target: run,
+    payload: {revision: '1', observation: {}},
+  };
+  const futureFrames = [
+    encodeBatch(JSON.stringify({...runFrame, schemaVersion: 2})),
+    JSON.stringify({...batch, schemaVersion: 2, events: [runFrame]}),
+  ];
+  const nativeParse = JSON.parse;
+  const readObservation = vi.fn(() => {
+    throw new Error('Future observation decoded');
+  });
+  const parseOpaque = vi.spyOn(JSON, 'parse').mockImplementation((text) => {
+    const value = nativeParse(text);
+    if (futureFrames.includes(text)) {
+      Object.defineProperty(value.events[0].payload, 'observation', {
+        get: readObservation,
+      });
+    }
+    return value;
+  });
+  try {
+    for (const wire of futureFrames) {
+      expect(readWireBatch(wire, stream)).toEqual({
+        status: 'unsupported_version',
+      });
+      expect(parseOpaque).toHaveBeenCalledWith(wire);
+    }
+    expect(readObservation).not.toHaveBeenCalled();
+  } finally {
+    parseOpaque.mockRestore();
   }
   const quoted = encodeFuture(
     JSON.stringify({text: 'braces [{}] and escaped " and ,'}),

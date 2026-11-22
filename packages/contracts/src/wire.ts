@@ -90,5 +90,5 @@ export function eventFramesFit(text: string): boolean {
     if (token === '[' || token === '{') depth++;
     if (token === ']' || token === '}') depth--;
   }
-  return found;
+  return found && start === -1 && depth === 0;
 }

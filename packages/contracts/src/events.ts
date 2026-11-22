@@ -92,7 +92,10 @@ const kindHeader = z.object({
 const unknownEnvelope = z.strictObject({
   ...kindHeader.shape,
   target: z.union(variants.options.map((option) => option.shape.target)),
-  payload: z.record(z.string(), z.unknown()),
+  payload: z.custom<object>(
+    (value) =>
+      typeof value === 'object' && value !== null && !Array.isArray(value),
+  ),
 });
 const targetForKind = new Map<string, z.ZodType>(
   variants.options.map((option) => [
@@ -106,13 +109,13 @@ export function decodeEvent(wire: string): DecodedEvent {
   return decodedEvent(parseWire(wire, eventLimit));
 }
 
-function decodedEvent(value: unknown): DecodedEvent {
+function decodedEvent(value: unknown, futureBatch = false): DecodedEvent {
   const version = wireVersion(value);
   if (version === 'malformed') return {status: 'malformed'};
   const kind = kindHeader.safeParse(value);
   if (!kind.success) return {status: 'malformed'};
   const target = targetForKind.get(kind.data.kind);
-  if (version === 'unsupported_version' || !target) {
+  if (futureBatch || version === 'unsupported_version' || !target) {
     const frame = unknownEnvelope.safeParse(value);
     if (
       !frame.success ||
@@ -120,7 +123,10 @@ function decodedEvent(value: unknown): DecodedEvent {
     )
       return {status: 'malformed'};
     return {
-      status: version === 'unsupported_version' ? version : 'unsupported_event',
+      status:
+        futureBatch || version === 'unsupported_version'
+          ? 'unsupported_version'
+          : 'unsupported_event',
     };
   }
   const event = Event.safeParse(value);
@@ -210,20 +216,22 @@ export function readEventBatch(
     !ordered(expected.ownerId, expected.after, frames.data, expected.hasApplied)
   )
     return {status: 'malformed'};
-  if (version === 'ok') {
-    const batch = EventBatch.safeParse(value);
-    if (batch.success) return {status: 'ok', batch: batch.data};
-  }
+  const events: Event[] = [];
   let unknown: 'unsupported_version' | 'unsupported_event' | undefined =
     version === 'unsupported_version' ? version : undefined;
   for (const item of items.data.events) {
-    const event = decodedEvent(item);
+    const event = decodedEvent(item, version === 'unsupported_version');
     if (event.status === 'malformed') return {status: 'malformed'};
+    if (event.status === 'ok') events.push(event.event);
     if (
       event.status === 'unsupported_version' ||
       (event.status === 'unsupported_event' && !unknown)
     )
       unknown = event.status;
   }
-  return {status: unknown ?? 'malformed'};
+  if (unknown) return {status: unknown};
+  return {
+    status: 'ok',
+    batch: {...items.data, schemaVersion: Version.value, events},
+  };
 }
