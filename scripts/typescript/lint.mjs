@@ -2,7 +2,7 @@ import {sourceFiles} from './source-files.mjs';
 import {workspaceESLint} from './workspace-eslint.mjs';
 
 const files = sourceFiles();
-if (!files.length) throw new Error('No JavaScript workspace sources found');
+if (!files.length) throw new Error('No workspace sources found');
 const eslint = workspaceESLint();
 const results = await eslint.lintFiles(files);
 const formatter = await eslint.loadFormatter('stylish');

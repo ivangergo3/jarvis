@@ -47,7 +47,29 @@ test('normal command checks tracked sources using the workspace config', (t) => 
   assert.match(lint().stderr, /vite\.config\.mjs/);
   writeFileSync(topLevel, 'Array.from([3]);');
   assert.equal(lint().status, 0);
-  symlinkSync(topLevel, path.join(owner, 'unrelated.ts'));
+  const linkedTypeScript = path.join(owner, 'unrelated.ts');
+  symlinkSync(topLevel, linkedTypeScript);
+  assert.match(lint().stderr, /Expected a regular workspace source file/);
+  rmSync(linkedTypeScript);
+  const typed = path.join(owner, 'input.ts');
+  writeFileSync(
+    path.join(owner, 'tsconfig.json'),
+    JSON.stringify({compilerOptions: {strict: true}, files: ['input.ts']}),
+  );
+  writeFileSync(typed, 'export const input: any = 1;');
+  const invalidType = lint();
+  assert.equal(invalidType.status, 1, invalidType.stderr);
+  assert.match(invalidType.stderr, /no-explicit-any/);
+  writeFileSync(typed, 'export const input = 1;');
+  assert.equal(lint().status, 0);
+  const additionalSource = path.join(
+    root,
+    'evaluations/typescript-skills-113/case/runner.js',
+  );
+  mkdirSync(path.dirname(additionalSource), {recursive: true});
+  writeFileSync(additionalSource, 'eval("1");');
+  assert.match(lint().stderr, /no-eval/);
+  rmSync(additionalSource);
   const built = path.join(root, 'build/private.js');
   mkdirSync(path.dirname(built));
   writeFileSync(built, 'Array(1);');
@@ -89,6 +111,65 @@ test('workspace lint rejects direct Array construction and accepts Array.from', 
   );
   const [clean] = await eslint.lintText(
     'export const items = Array.from([3]);',
+    {filePath},
+  );
+  assert.deepEqual(clean.messages, []);
+});
+
+test('typed lint distinguishes unsafe data and floating promises from handled operations', async () => {
+  const eslint = workspaceESLint();
+  const filePath = 'fixtures/workspace-library/src/index.ts';
+  for (const [code, rule] of [
+    ['export const input: any = 1;', 'no-explicit-any'],
+    ["export const input: string = JSON.parse('1');", 'no-unsafe-assignment'],
+    ['Promise.resolve(1);', 'no-floating-promises'],
+    ['void Promise.resolve(1);', 'no-floating-promises'],
+    ['// @ts-ignore\nexport const value = 1;', 'ban-ts-comment'],
+  ]) {
+    const [result] = await eslint.lintText(code, {filePath});
+    assert.ok(
+      result.messages.some(
+        (message) => message.ruleId === '@typescript-eslint/' + rule,
+      ),
+      JSON.stringify(result.messages),
+    );
+  }
+  const [clean] = await eslint.lintText(
+    'export const value: number = await Promise.resolve(1);',
+    {filePath},
+  );
+  assert.deepEqual(clean.messages, []);
+});
+
+test('React lint checks Hook call order and effect dependencies', async () => {
+  const eslint = workspaceESLint();
+  for (const filePath of [
+    'apps/client/src/fixture.cjs',
+    'packages/ui/src/example.cts',
+    'fixtures/workspace-library/example.cjs',
+  ]) {
+    const config = await eslint.calculateConfigForFile(filePath);
+    assert.equal(config.rules['react-hooks/rules-of-hooks'][0], 2);
+    assert.equal(config.rules['react-hooks/exhaustive-deps'][0], 2);
+  }
+  const filePath = 'scripts/example.cjs';
+  for (const [code, rule] of [
+    ['function View({show}) { if (show) { useState(1); } }', 'rules-of-hooks'],
+    [
+      'function View({name}) { useEffect(() => render(name), []); }',
+      'exhaustive-deps',
+    ],
+  ]) {
+    const [result] = await eslint.lintText(code, {filePath});
+    assert.ok(
+      result.messages.some(
+        (message) => message.ruleId === 'react-hooks/' + rule,
+      ),
+      JSON.stringify(result.messages),
+    );
+  }
+  const [clean] = await eslint.lintText(
+    'function View({name}) { useEffect(() => render(name), [name]); }',
     {filePath},
   );
   assert.deepEqual(clean.messages, []);
