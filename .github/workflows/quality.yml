@@ -39,15 +39,6 @@ jobs:
             echo "Whitespace check failed. Run git show --format= --check HEAD locally for details." >&2
             exit 1
           }
-      - name: Check complete PR size and added credentials
-        if: github.event_name == 'pull_request'
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD: ${{ github.event.pull_request.head.sha }}
-          PR_TARGET: ${{ github.event.pull_request.base.ref }}
-        run: |
-          test "$PR_TARGET" = main || { echo 'PRs must target main for cumulative size enforcement.' >&2; exit 1; }
-          swift run quality-gate push ci --base="$PR_BASE" --head="$PR_HEAD"
       - name: Select verification scope
         id: scope
         env:
@@ -56,28 +47,38 @@ jobs:
         run: |
           scope=full
           sha_pattern='^[0-9a-f]{40}$'
-          # A change to code or tooling cannot grant itself a docs-only run.
-          only_doc_paths() {
-            git diff --quiet --no-ext-diff --no-renames "$BASE...$1" -- . \
-              ":(exclude)README.md" ":(exclude,glob)docs/**/*.md"
-          }
           case "$GITHUB_EVENT_NAME" in
             pull_request|push|merge_group)
               if [[ "$BASE" =~ $sha_pattern && "$HEAD" =~ $sha_pattern ]] &&
-                 git merge-base --is-ancestor "$BASE" HEAD && only_doc_paths HEAD &&
-                 { [[ "$GITHUB_EVENT_NAME" != pull_request ]] || only_doc_paths "$HEAD"; }; then
-                scope=$(swift run quality-gate push scope --base="$BASE" --head=HEAD)
-                if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]]; then
-                  scope=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD")
-                fi
-                if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" != pull_request ]]; then
-                  swift run quality-gate push integration --base="$BASE" --head=HEAD
+                 git cat-file -e "$BASE^{commit}"; then
+                candidate=$(git rev-parse HEAD)
+                git worktree add --detach "$RUNNER_TEMP/jarvis-quality-base" "$BASE"
+                cd "$RUNNER_TEMP/jarvis-quality-base"
+                if git merge-base --is-ancestor "$BASE" "$candidate"; then
+                  scope=$(swift run quality-gate push scope --base="$BASE" --head="$candidate")
+                  if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]]; then
+                    scope=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD")
+                  fi
+                  if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" != pull_request ]]; then
+                    swift run quality-gate push integration --base="$BASE" --head="$candidate"
+                  fi
                 fi
               fi
               ;;
           esac
           echo "scope=$scope" >> "$GITHUB_OUTPUT"
           echo "Selected verification scope: $scope" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check complete PR size and added credentials
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_TARGET: ${{ github.event.pull_request.base.ref }}
+        run: |
+          test "$PR_TARGET" = main || { echo 'PRs must target main for cumulative size enforcement.' >&2; exit 1; }
+          cd "$RUNNER_TEMP/jarvis-quality-base"
+          swift run quality-gate push ci --base="$PR_BASE" --head="$PR_HEAD"
 
   swift:
     name: Swift checks and release build

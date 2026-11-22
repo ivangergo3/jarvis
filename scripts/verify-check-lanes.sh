@@ -27,10 +27,12 @@ test -f "$other.started"
 if [[ "$MODE" == interrupt ]]; then
     # Wait until the test signals the supervisor and releases both workers.
     for ((i=0; i<100; i++)); do
-        [[ ! -e finish ]] || break
+        [[ ! -e "$JARVIS_CHECK_CANCEL_FILE" ]] || break
         sleep 0.02
     done
-    test -f finish
+    test -f "$JARVIS_CHECK_CANCEL_FILE"
+    touch "$lane.done"
+    exit 1
 fi
 [[ "$MODE" != "$lane" ]]
 touch "$lane.done"
@@ -53,7 +55,6 @@ done
 test -f core.started
 test -f hover.started
 kill -TERM "$supervisor"
-touch finish
 status=0
 wait "$supervisor" || status=$?
 test "$status" = 143

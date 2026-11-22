@@ -73,6 +73,11 @@ public enum HoverFaultProbe {
             ),
         ] {
             for fault in [false, true, false] {
+                if let marker = ProcessInfo.processInfo.environment["JARVIS_CHECK_CANCEL_FILE"],
+                    FileManager.default.fileExists(atPath: marker)
+                {
+                    throw QualityFailure("Hover verification interrupted between probes")
+                }
                 try (fault ? bad : good).write(to: target, atomically: true, encoding: .utf8)
                 for xml in try TestReport.files(in: fixture.url) {
                     try FileManager.default.removeItem(at: xml)

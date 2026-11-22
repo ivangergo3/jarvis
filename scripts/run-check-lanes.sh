@@ -4,10 +4,13 @@ set -eu
 # checks can unwind normally and remove their own scratch files. The parent
 # waits for them, reports cancellation, and does not launch the next batch.
 set -m
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/jarvis-lanes.XXXXXX")
+trap 'rm -rf "$scratch"' EXIT
+export JARVIS_CHECK_CANCEL_FILE="$scratch/cancel"
 interrupted=0
-trap 'interrupted=130' INT
-trap 'interrupted=143' TERM
-trap 'interrupted=129' HUP
+trap 'interrupted=130; : > "$JARVIS_CHECK_CANCEL_FILE"' INT
+trap 'interrupted=143; : > "$JARVIS_CHECK_CANCEL_FILE"' TERM
+trap 'interrupted=129; : > "$JARVIS_CHECK_CANCEL_FILE"' HUP
 
 wait_for_lane() {
     local pid=$1 status
