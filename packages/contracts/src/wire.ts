@@ -23,8 +23,17 @@ export function parseWire(
   }
 }
 
+function jsonWhitespace(character: string | undefined): boolean {
+  return (
+    character === ' ' ||
+    character === '\t' ||
+    character === '\n' ||
+    character === '\r'
+  );
+}
+
 function afterSpace(text: string, index: number): number {
-  while (index < text.length && text.charCodeAt(index) <= 32) index++;
+  while (jsonWhitespace(text[index])) index++;
   return index;
 }
 
@@ -84,7 +93,12 @@ export function eventFramesFit(text: string): boolean {
       continue;
     }
     if (start >= 0 && depth === 2 && (token === ',' || token === ']')) {
-      if (utf8Bytes(text.slice(start, i)) > eventLimit) return false;
+      // RFC 8259 separator whitespace belongs to the batch. Every byte within
+      // the event itself, including its formatting and original escapes, counts.
+      const first = afterSpace(text, start);
+      let end = i;
+      while (end > first && jsonWhitespace(text[end - 1])) end--;
+      if (utf8Bytes(text.slice(first, end)) > eventLimit) return false;
       start = token === ',' ? i + 1 : -1;
     }
     if (token === '[' || token === '{') depth++;
