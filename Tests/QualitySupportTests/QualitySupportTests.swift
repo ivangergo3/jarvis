@@ -75,6 +75,18 @@ struct QualitySupportTests {
         }
     }
 
+    @Test func signaledCompletionAfterDeadlineCannotReportAnExitStatus() throws {
+        let completion = DispatchSemaphore(value: 0)
+        completion.signal()
+        #expect(throws: CommandCleanupFailure.self) {
+            try Command.observedCompletion(completion, until: .now(), deadline: .now())
+        }
+        let future = DispatchTime.now() + 30
+        #expect(try !Command.observedCompletion(completion, until: .now(), deadline: future))
+        completion.signal()
+        #expect(try Command.observedCompletion(completion, until: future, deadline: future))
+    }
+
     @Test func timeoutAlsoStopsDescendants() throws {
         let temporary = try TemporaryDirectory(prefix: "quality-descendant-")
         let log = temporary.url.appendingPathComponent("process.log")

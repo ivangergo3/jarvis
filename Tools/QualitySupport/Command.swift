@@ -54,7 +54,7 @@ public struct Command: Sendable {
         while true {
             // Only an interactive prepare needs to notice a signal while blocked on a command.
             let wake = interrupted == nil ? deadline : min(deadline, .now() + .milliseconds(100))
-            if finished.wait(timeout: wake) == .success { break }
+            if try Self.observedCompletion(finished, until: wake, deadline: deadline) { break }
             if interrupted?() == true {
                 try Self.stop(process, finished: finished, reason: "Push preparation interrupted")
             }
@@ -67,6 +67,20 @@ public struct Command: Sendable {
         }
         return process.terminationReason == .uncaughtSignal
             ? -process.terminationStatus : process.terminationStatus
+    }
+
+    static func observedCompletion(
+        _ finished: DispatchSemaphore, until wake: DispatchTime, deadline: DispatchTime
+    ) throws -> Bool {
+        guard finished.wait(timeout: wake) == .success else { return false }
+        // A previously signaled semaphore can succeed even when its deadline has passed.
+        guard DispatchTime.now() < deadline else {
+            throw CommandCleanupFailure(
+                detail:
+                    "Command exit was observed after its time limit; descendant cleanup is uncertain"
+            )
+        }
+        return true
     }
 
     static func timedOut(_ process: Process, finished: DispatchSemaphore) throws -> Never {
