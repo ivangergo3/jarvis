@@ -17,7 +17,7 @@ Separately review a proposed one-line addition to the public `packages/contracts
 +export {basename as displayTitle} from 'node:path';
 ```
 
-The client imports this package. The renderer runtime has no Node built-ins or polyfills. The submit change above does not require the proposed export. Report any actionable finding with trigger and consequence.
+The client draft validator in `apps/client/src/draft.ts` imports the public runtime schema. The renderer runtime has no Node built-ins or polyfills. The submit change above does not require the proposed export. Report any actionable finding with trigger and consequence.
 
 ## Verification planning
 
