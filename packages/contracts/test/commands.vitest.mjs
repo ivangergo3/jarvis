@@ -36,6 +36,14 @@ const submitted = {
 };
 test('submission refers to one frozen destination and the precise sealed editor revision', () => {
   expect(Command.parse(submitted)).toEqual(submitted);
+  for (const invalid of [
+    {...submitted, schemaVersion: 2},
+    {...submitted, operation: 'run.future'},
+    {...submitted, payload: null},
+    {...submitted, payload: {...submitted.payload, text: null}},
+    {...submitted, payload: {...submitted.payload, text: undefined}},
+  ])
+    expect(Command.safeParse(invalid).success).toBe(false);
   for (const target of [
     session,
     {...frozen, sessionId: undefined},
@@ -102,6 +110,7 @@ test('run control operations require the expected revision and make no new run o
   };
   expect(Command.parse(retire)).toEqual(retire);
   for (const target of [
+    {...retire.target, originalSessionId: header.originatingSessionId},
     {...retire.target, originalOperation: undefined},
     {...retire.target, originalControllerEpoch: undefined},
     {...retire.target, originalOperation: 'run.cancel'},
