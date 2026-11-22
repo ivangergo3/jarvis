@@ -1,0 +1,24 @@
+diff --git a/v4/core/schemas.d.cts b/v4/core/schemas.d.cts
+index 4cfc93fd329bcde3eb8f8b905bbbff5bf7cb74f3..212345a1c31d86f64230b7539e551ac85290da48 100644
+--- a/v4/core/schemas.d.cts
++++ b/v4/core/schemas.d.cts
+@@ -191,6 +191,7 @@ export declare const URL_BAD_FORMAT = 1;
+ /** The URL parser rejected the input. */
+ export declare const URL_UNPARSEABLE = 2;
+ export declare function canParseURL(input: string): boolean;
++type URL = typeof globalThis extends { URL: { prototype: infer U } } ? U : { readonly href: string; readonly hostname: string; readonly protocol: string };
+ export declare function validateURL(trimmed: string, def: Pick<$ZodURLDef, "protocol" | "hostname" | "normalize">): URL | true | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE;
+ /** Parses a URL while preserving the non-normalizing HTTP guard. */
+ export declare function parseURLObject(trimmed: string, def: Pick<$ZodURLDef, "protocol" | "normalize">): URL | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE;
+diff --git a/v4/core/schemas.d.ts b/v4/core/schemas.d.ts
+index 818c97bb3065ca2b9458376615cb2da682e9032f..2820a1d0774aa6f0d105c2a779dca5e791283aa0 100644
+--- a/v4/core/schemas.d.ts
++++ b/v4/core/schemas.d.ts
+@@ -191,6 +191,7 @@ export declare const URL_BAD_FORMAT = 1;
+ /** The URL parser rejected the input. */
+ export declare const URL_UNPARSEABLE = 2;
+ export declare function canParseURL(input: string): boolean;
++type URL = typeof globalThis extends { URL: { prototype: infer U } } ? U : { readonly href: string; readonly hostname: string; readonly protocol: string };
+ export declare function validateURL(trimmed: string, def: Pick<$ZodURLDef, "protocol" | "hostname" | "normalize">): URL | true | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE;
+ /** Parses a URL while preserving the non-normalizing HTTP guard. */
+ export declare function parseURLObject(trimmed: string, def: Pick<$ZodURLDef, "protocol" | "normalize">): URL | typeof URL_BAD_FORMAT | typeof URL_UNPARSEABLE;
