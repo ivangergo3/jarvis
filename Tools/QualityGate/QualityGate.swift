@@ -6,6 +6,11 @@ enum QualityGate {
     static func main() {
         do {
             let arguments = Array(CommandLine.arguments.dropFirst())
+            if arguments.first == "parallel-checks" {
+                try ParallelChecks.run(
+                    gate: CommandLine.arguments[0], arguments: Array(arguments.dropFirst()))
+                return
+            }
             if arguments.first == "push" {
                 try PushGate(root: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
                     .run(Array(arguments.dropFirst()))

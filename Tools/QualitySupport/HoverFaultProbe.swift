@@ -81,6 +81,7 @@ public enum HoverFaultProbe {
                 let command = Command(
                     "/usr/bin/env",
                     ["swift", "test"] + swiftArguments + [
+                        "--scratch-path", fixture.url.appendingPathComponent(".build").path,
                         "--filter", test, "--xunit-output",
                         fixture.url.appendingPathComponent("result.xml").path,
                     ], directory: fixture.url)

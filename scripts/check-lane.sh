@@ -1,10 +1,8 @@
 #!/bin/bash
 set -euo pipefail
-gate=$1
-shift
-# xargs appends the lane after the caller's optional Swift arguments.
-lane=${!#}
-set -- "${@:1:$#-1}"
+lane=$1
+gate=$2
+shift 2
 case "$lane" in
     core)
         ./scripts/format.sh check
@@ -17,6 +15,11 @@ case "$lane" in
         ;;
     hover)
         "$gate" hover-fault "$@" --swift-arg=--jobs --swift-arg=2
+        ;;
+    release)
+        "$gate" authority
+        ./build.sh
+        bash scripts/verify-bundle.sh
         ;;
     *) echo "Unknown check lane: $lane" >&2; exit 2 ;;
 esac

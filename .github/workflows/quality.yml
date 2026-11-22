@@ -56,10 +56,16 @@ jobs:
         run: |
           scope=full
           sha_pattern='^[0-9a-f]{40}$'
+          # A change to code or tooling cannot grant itself a docs-only run.
+          only_doc_paths() {
+            git diff --quiet --no-ext-diff --no-renames "$BASE...$1" -- . \
+              ":(exclude)README.md" ":(exclude,glob)docs/**/*.md"
+          }
           case "$GITHUB_EVENT_NAME" in
             pull_request|push|merge_group)
               if [[ "$BASE" =~ $sha_pattern && "$HEAD" =~ $sha_pattern ]] &&
-                 git merge-base --is-ancestor "$BASE" HEAD; then
+                 git merge-base --is-ancestor "$BASE" HEAD && only_doc_paths HEAD &&
+                 { [[ "$GITHUB_EVENT_NAME" != pull_request ]] || only_doc_paths "$HEAD"; }; then
                 scope=$(swift run quality-gate push scope --base="$BASE" --head=HEAD)
                 if [[ "$scope" == docs && "$GITHUB_EVENT_NAME" == pull_request ]]; then
                   scope=$(swift run quality-gate push scope --base="$BASE" --head="$HEAD")
