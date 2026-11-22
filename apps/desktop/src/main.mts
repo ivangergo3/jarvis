@@ -1,5 +1,5 @@
 import {app, BrowserWindow, ipcMain, net, protocol, session} from 'electron';
-import {readdirSync} from 'node:fs';
+import {lstatSync, readdirSync, realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -11,14 +11,21 @@ const smoke = app.commandLine.hasSwitch('jarvis-fixture-smoke');
 const profile = smoke
   ? app.commandLine.getSwitchValue('jarvis-fixture-smoke')
   : path.join(app.getPath('appData'), 'Jarvis Preview');
-if (
-  smoke &&
-  (path.dirname(profile) !== path.resolve(tmpdir()) ||
-    !/^jarvis-preview-smoke-[A-Za-z0-9]{6}$/.test(path.basename(profile)))
-) {
-  throw new Error(
-    'Expected an isolated temporary Jarvis Preview smoke profile',
-  );
+if (smoke) {
+  const directory = lstatSync(profile, {throwIfNoEntry: false});
+  const name = path.basename(profile);
+  if (
+    path.dirname(profile) !== path.resolve(tmpdir()) ||
+    !/^jarvis-preview-smoke-[A-Za-z0-9]{6}$/.test(name) ||
+    !directory?.isDirectory() ||
+    directory.uid !== process.getuid?.() ||
+    (directory.mode & 0o077) !== 0 ||
+    realpathSync(profile) !== path.join(realpathSync(tmpdir()), name) ||
+    readdirSync(profile).length !== 0
+  ) {
+    console.error('Expected a private empty Jarvis Preview smoke profile.');
+    process.exit(1);
+  }
 }
 app.setPath('userData', profile);
 app.setPath('sessionData', profile);

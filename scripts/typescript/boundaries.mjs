@@ -128,8 +128,19 @@ export function checkBoundaries(root) {
   function check(specifier, file, location) {
     const owner = packageRoot(file);
     const layer = layers.get(owner);
-    const allowedExternals = desktopEntries.get(file) ?? externals[layer];
+    const desktopRuntime = desktopEntries.get(file);
+    const allowedExternals = desktopRuntime ?? externals[layer];
     const fail = (reason) => errors.push(location + ': ' + reason);
+    // The packaged host contains only its two compiled entries and Electron.
+    // Check before resolving workspace dependencies or their public exports.
+    if (
+      desktopRuntime &&
+      !specifier.startsWith('.') &&
+      !desktopRuntime.has(specifier)
+    ) {
+      fail('unapproved external dependency for packaged Electron entry');
+      return;
+    }
     if (specifier.startsWith('.')) {
       if (desktopEntries.has(file)) {
         fail(

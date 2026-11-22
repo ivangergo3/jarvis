@@ -152,10 +152,14 @@ test('workspace packages enforce their runtime, public entry and graph direction
     desktop + '/package.json',
     JSON.stringify({
       name: '@jarvis/desktop',
-      devDependencies: {electron: '*'},
+      devDependencies: {
+        electron: '*',
+        '@jarvis/workspace-fixture': 'workspace:*',
+      },
     }),
   );
   write(desktop + '/node_modules/electron/package.json', '{"name":"electron"}');
+  installLink(desktop, 'workspace-fixture', fixture);
   const main = desktop + '/src/main.mts';
   const preload = desktop + '/src/preload.cts';
   const sibling = desktop + '/src/view.ts';
@@ -165,6 +169,11 @@ test('workspace packages enforce their runtime, public entry and graph direction
   assert.deepEqual(checked(), []);
   for (const [file, statement, reason] of [
     [main, "import 'node:child_process';", 'unapproved external dependency'],
+    [
+      main,
+      "import '@jarvis/workspace-fixture';",
+      'unapproved external dependency',
+    ],
     [preload, "import 'node:fs';", 'unapproved external dependency'],
     [sibling, "import 'electron';", 'unapproved external dependency'],
     [sibling, "import './preload.cjs';", 'privileged Electron entry points'],
