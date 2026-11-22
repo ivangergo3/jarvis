@@ -160,6 +160,7 @@ jobs:
           path: |
             ${{ runner.temp }}/jarvis-typescript/source-revision.txt
             ${{ runner.temp }}/jarvis-typescript/vitest/*.json
+            ${{ runner.temp }}/jarvis-typescript/desktop-package.txt
           retention-days: 7
           if-no-files-found: error
 

@@ -13,3 +13,10 @@ test "pnpm@$(pnpm --version)" = "$(node -p 'require("./package.json").packageMan
 test -z "$(git status --porcelain --untracked-files=all)"
 bash scripts/check-typescript.sh
 swift run --jobs 2 quality-gate hosted-vitest "$head" "$evidence/vitest"
+pnpm desktop:package | tee "$evidence/desktop-build.log"
+app=$(tail -n 1 "$evidence/desktop-build.log")
+identifier=$(/usr/bin/plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")
+test "$identifier" = dev.greg.jarvis.preview
+/usr/bin/codesign --verify --deep --strict "$app"
+printf 'source=%s\nbundle=%s\nrunner_arch=%s\nsignature=verified\n' \
+  "$head" "$identifier" "$(uname -m)" > "$evidence/desktop-package.txt"

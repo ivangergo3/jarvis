@@ -120,7 +120,9 @@ nonzero runner exit blocks the push even when the assertion report looks green.
 Hosted full checks use a fresh checkout on macOS, the repository's pinned Node
 and pnpm, the same TypeScript workspace checks and the same Vitest collector
 and validator as local preparation. GitHub attaches the commit, discovery
-inventory, actual results, exit statuses and digests. A full change needs the
+inventory, actual results, exit statuses and digests. The Intel macOS job also
+packages Jarvis Preview, verifies its bundle identifier and code signature,
+and attaches the package verification result. A full change needs the
 TypeScript, Swift and native UI jobs to succeed. A prose-only change needs all
 three skipped after successful classification. These fixture runs do not cover
 live subscription sign-in or physical-device behavior.
