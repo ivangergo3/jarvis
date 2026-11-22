@@ -11,15 +11,7 @@ test "$(node -p 'process.versions.node')" = "$(cat .nvmrc)"
 test "pnpm@$(pnpm --version)" = "$(node -p 'require("./package.json").packageManager')"
 test -z "$(git status --porcelain --untracked-files=all)"
 bash scripts/check-typescript.sh
-swift run --jobs 2 quality-gate hosted-vitest "$head" "$evidence/vitest"
-pnpm desktop:package | tee "$evidence/desktop-build.log"
-app=$(tail -n 1 "$evidence/desktop-build.log")
-identifier=$(/usr/bin/plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")
-test "$identifier" = dev.greg.jarvis.preview
-/usr/bin/codesign --verify --deep --strict "$app"
-# Publish a single allowlisted success artifact. Raw reporter files can contain assertion values.
-jq -e --arg revision "$head" --arg bundle "$identifier" --arg arch "$(uname -m)" '
-  select(.process.revision == $revision and (.passedCaseSHA256 | length > 0))
-  | . + {desktop: {bundle: $bundle, architecture: $arch, signature: "verified"}}
-' "$evidence/vitest/qualified.json" > "$evidence/hosted-summary.tmp"
-mv "$evidence/hosted-summary.tmp" "$evidence/hosted-summary.json"
+swift build --jobs 2 --product quality-gate
+binary="$(swift build --show-bin-path)/quality-gate"
+# Make the signal-aware native gate the Actions step entry process during Vitest.
+exec "$binary" hosted-vitest "$head" "$evidence/vitest"

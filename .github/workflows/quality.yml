@@ -151,7 +151,9 @@ jobs:
         with:
           run_install: false
       - name: Check exact-source TypeScript and Vitest evidence
-        run: bash scripts/ci-typescript.sh "$RUNNER_TEMP/jarvis-typescript"
+        run: exec bash scripts/ci-typescript.sh "$RUNNER_TEMP/jarvis-typescript"
+      - name: Verify the exact-source Mac package and combine evidence
+        run: exec bash scripts/ci-desktop-evidence.sh "$RUNNER_TEMP/jarvis-typescript"
       - name: Retain qualified synthetic TypeScript and package report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
