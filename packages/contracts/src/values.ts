@@ -22,6 +22,16 @@ export type SnapshotId = z.infer<typeof SnapshotId>;
 export type CommandId = z.infer<typeof CommandId>;
 
 export const Version = z.literal(1);
+const versionHeader = z.object({schemaVersion: z.int().nonnegative()});
+export function wireVersion(
+  value: unknown,
+): 'ok' | 'malformed' | 'unsupported_version' {
+  const version = versionHeader.safeParse(value);
+  if (!version.success) return 'malformed';
+  return version.data.schemaVersion === Version.value
+    ? 'ok'
+    : 'unsupported_version';
+}
 export const Timestamp = z.iso.datetime({precision: 3});
 export const Cursor = z
   .string()
@@ -42,3 +52,21 @@ export const RequestTarget = RunTarget.extend({
   generationId: GenerationId,
   revision: Sequence,
 });
+
+/** Size of an encoded JSON value, with strings measured in UTF-8 bytes. */
+export function wireBytes(value: object): number {
+  return utf8Bytes(JSON.stringify(value));
+}
+
+/** Number of bytes in an already encoded JSON frame, including original escapes. */
+export function utf8Bytes(json: string): number {
+  let bytes = 0;
+  for (const symbol of json) {
+    const unit = symbol.charCodeAt(0);
+    if (symbol.length === 2) bytes += 4;
+    else if (unit <= 0x7f) bytes++;
+    else if (unit <= 0x7ff) bytes += 2;
+    else bytes += 3;
+  }
+  return bytes;
+}
