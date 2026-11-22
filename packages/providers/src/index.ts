@@ -6,7 +6,7 @@ const identifier = z
   .max(512)
   .regex(/^[^\s\p{C}]+$/u);
 const status = z.object({
-  authMethod: z.string().nullable(),
+  authMethod: identifier.nullable(),
   authToken: z.null().optional(),
   requiresOpenaiAuth: z.literal(true),
 });
@@ -24,7 +24,7 @@ const accountRecord = z.object({
 });
 
 type AccountObservation =
-  | {kind: 'signed-out' | 'other-auth-method' | 'unavailable'}
+  | {kind: 'signed-out' | 'other-auth-method' | 'unavailable' | 'cancelled'}
   | {
       kind: 'observed-chatgpt-workspace';
       userId: string;
@@ -42,9 +42,11 @@ type AccountRead =
 /** Read account identity from a single, already-initialized worker. This
  * observation does not establish current model access or authorize a turn. */
 export async function observeCodexAccount(
-  read: (request: AccountRead) => Promise<unknown>,
+  read: (request: AccountRead, signal: AbortSignal) => Promise<unknown>,
   expectedOrigin: string,
+  signal: AbortSignal,
 ): Promise<AccountObservation> {
+  if (signal.aborted) return {kind: 'cancelled'};
   if (!URL.canParse(expectedOrigin)) return {kind: 'unavailable'};
   const origin = new URL(expectedOrigin);
   if (origin.protocol !== 'https:' || expectedOrigin !== origin.origin)
@@ -52,21 +54,29 @@ export async function observeCodexAccount(
 
   try {
     const auth = status.safeParse(
-      await read({
-        method: 'getAuthStatus',
-        params: {includeToken: false, refreshToken: false},
-      }),
+      await read(
+        {
+          method: 'getAuthStatus',
+          params: {includeToken: false, refreshToken: false},
+        },
+        signal,
+      ),
     );
+    if (signal.aborted) return {kind: 'cancelled'};
     if (!auth.success) return {kind: 'unavailable'};
     if (auth.data.authMethod === null) return {kind: 'signed-out'};
     if (auth.data.authMethod !== 'chatgpt') return {kind: 'other-auth-method'};
 
     const observed = accountRecord.safeParse(
-      await read({
-        method: 'account/read',
-        params: {refreshToken: false},
-      }),
+      await read(
+        {
+          method: 'account/read',
+          params: {refreshToken: false},
+        },
+        signal,
+      ),
     );
+    if (signal.aborted) return {kind: 'cancelled'};
     if (!observed.success) return {kind: 'unavailable'};
     const {account, userId, workspaceRouting} = observed.data;
     if (
@@ -81,7 +91,12 @@ export async function observeCodexAccount(
       workspaceId: workspaceRouting.chatgptAccountId,
       backendOrigin: workspaceRouting.backendOrigin,
     };
-  } catch {
+  } catch (error) {
+    if (
+      signal.aborted ||
+      (error instanceof Error && error.name === 'AbortError')
+    )
+      return {kind: 'cancelled'};
     // Transport errors may contain raw provider output. Expose only the outcome.
     return {kind: 'unavailable'};
   }

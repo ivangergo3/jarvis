@@ -1,6 +1,8 @@
 import {expect, test} from 'vitest';
-import {observeCodexAccount} from '../src/index.ts';
+import {observeCodexAccount as observe} from '../src/index.ts';
 
+const observeCodexAccount = (read, origin) =>
+  observe(read, origin, new AbortController().signal);
 const origin = 'https://example.invalid';
 const auth = {requiresOpenaiAuth: true, authMethod: 'chatgpt', authToken: null};
 const observed = {
@@ -45,6 +47,8 @@ test('reads ChatGPT identity and workspace from the same account response withou
 test('stops before account reads for signed-out, alternative or malformed login observations', async () => {
   for (const [response, kind] of [
     [{...auth, authMethod: null}, 'signed-out'],
+    [{...auth, authMethod: ''}, 'unavailable'],
+    [{...auth, authMethod: '  '}, 'unavailable'],
     [{...auth, authMethod: 'apikey'}, 'other-auth-method'],
     [{...auth, authMethod: 'future'}, 'other-auth-method'],
     [{...auth, authToken: 'fixture-only'}, 'unavailable'],
@@ -94,4 +98,42 @@ test('reports missing or mismatched routing and transport errors without exposin
     });
     expect(unused.requests).toHaveLength(0);
   }
+});
+
+test('cancellation stops account reads and never publishes a late identity', async () => {
+  const controller = new AbortController();
+  const read = async (request, signal) => {
+    expect(signal).toBe(controller.signal);
+    if (request.method === 'getAuthStatus') return auth;
+    controller.abort();
+    return observed;
+  };
+  expect(await observe(read, origin, controller.signal)).toEqual({
+    kind: 'cancelled',
+  });
+  const skipped = worker();
+  expect(await observe(skipped.read, origin, controller.signal)).toEqual({
+    kind: 'cancelled',
+  });
+  expect(skipped.requests).toHaveLength(0);
+
+  const first = new AbortController();
+  let requests = 0;
+  expect(
+    await observe(
+      async () => {
+        requests++;
+        first.abort();
+        return auth;
+      },
+      origin,
+      first.signal,
+    ),
+  ).toEqual({kind: 'cancelled'});
+  expect(requests).toBe(1);
+  expect(
+    await observeCodexAccount(async () => {
+      throw new DOMException('sensitive', 'AbortError');
+    }, origin),
+  ).toEqual({kind: 'cancelled'});
 });

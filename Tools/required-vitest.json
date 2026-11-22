@@ -50,5 +50,9 @@
   {
     "file": "packages/providers/test/account.vitest.mjs",
     "name": "reports missing or mismatched routing and transport errors without exposing worker output"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "cancellation stops account reads and never publishes a late identity"
   }
 ]
