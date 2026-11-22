@@ -42,6 +42,11 @@ test('normal command checks tracked sources using the workspace config', (t) => 
   writeFileSync(input, 'Array.from([2]);');
   const restored = lint();
   assert.equal(restored.status, 0, restored.stderr);
+  const topLevel = path.join(root, 'vite.config.mjs');
+  writeFileSync(topLevel, 'Array(3);');
+  assert.match(lint().stderr, /vite\.config\.mjs/);
+  writeFileSync(topLevel, 'Array.from([3]);');
+  assert.equal(lint().status, 0);
   rmSync(input);
   symlinkSync(path.join(root, 'eslint.config.mjs'), input);
   assert.match(lint().stderr, /Expected a regular workspace source file/);

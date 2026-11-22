@@ -18,7 +18,7 @@ export function sourceFiles() {
       'fixtures/workspace-library',
       'fixtures/verify-workspace.mjs',
       'scripts',
-      'eslint.config.mjs',
+      ':(top,glob)*',
     ],
     {encoding: 'utf8'},
   );
