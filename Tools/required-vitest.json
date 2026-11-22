@@ -8,6 +8,22 @@
     "name": "public contracts import in browser and Node consumers with branded destinations"
   },
   {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "stops before account reads for signed-out, alternative or malformed login observations"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "reports missing or mismatched routing and transport errors without exposing worker output"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "cancellation stops account reads and never publishes a late identity"
+  },
+  {
     "file": "packages/contracts/test/values.vitest.mjs",
     "name": "a request names its immutable ancestry and revision"
   },
