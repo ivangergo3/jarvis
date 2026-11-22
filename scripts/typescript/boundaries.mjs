@@ -302,10 +302,11 @@ export function checkBoundaries(root) {
     const nodeMap = parsed.services.esTreeNodeToTSNodeMap;
     const source = nodeMap.get(parsed.ast);
     const esm =
-      file.endsWith('.mjs') ||
-      (file.endsWith('.js') &&
+      /\.m[jt]s$/.test(file) ||
+      (/\.[jt]sx?$/.test(file) &&
         manifests.get(packageRoot(file)).type === 'module');
-    // A declaration erased by TypeScript cannot supply a local runtime loader.
+    // Top-level CommonJS declarations share the Node wrapper scope. TypeScript
+    // ambient declarations never provide a local value.
     for (const scope of parsed.scopeManager.scopes) {
       for (const variable of scope.variables) {
         if (
@@ -313,10 +314,11 @@ export function checkBoundaries(root) {
           variable.defs.some(
             (def) =>
               def.isVariableDefinition &&
-              nodeMap.get(def.name)?.flags & ts.NodeFlags.Ambient,
+              ((!esm && scope.type === 'module') ||
+                nodeMap.get(def.name)?.flags & ts.NodeFlags.Ambient),
           )
         )
-          errors.push(file + ': do not redeclare ambient CommonJS globals');
+          errors.push(file + ': do not redeclare CommonJS runtime bindings');
       }
     }
     const globals = new Set();

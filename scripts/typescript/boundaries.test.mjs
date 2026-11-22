@@ -230,13 +230,32 @@ test('workspace packages enforce their runtime, public entry and graph direction
   );
   assert.match(
     checked().join('\n'),
-    /do not redeclare ambient CommonJS globals/,
+    /do not redeclare CommonJS runtime bindings/,
   );
   write(
     'packages/contracts/src/ambient.cts',
     'function select(module: { require(id: string): unknown }) { return module.require("local"); }',
   );
   assert.deepEqual(checked(), []);
+  write(
+    'packages/contracts/src/loader.cjs',
+    "var require; require('node:path');",
+  );
+  assert.match(
+    checked().join('\n'),
+    /do not redeclare CommonJS runtime bindings/,
+  );
+  write(
+    'packages/contracts/src/loader.cjs',
+    "module.exports = require('./local/index.js');",
+  );
+  for (const suffix of ['mts', 'mjs']) {
+    const file = 'packages/providers/src/environment.' + suffix;
+    write(file, "module.require('node:path');");
+    assert.match(checked().join('\n'), /CommonJS globals are unavailable/);
+    write(file, "import 'node:path';");
+    assert.deepEqual(checked(), []);
+  }
   const valid = "import type {Job} from '@jarvis/contracts';";
   for (const [owner, source, diagnostic] of [
     [
