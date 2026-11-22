@@ -108,6 +108,20 @@ async function checkShell(state, profile, evidence) {
     await page.setViewportSize({width: 480, height: 360});
     await expect
       .poll(() =>
+        page
+          .locator('.team-viewport')
+          .evaluate(
+            (viewport) =>
+              window.innerWidth === 480 &&
+              viewport.clientWidth > 0 &&
+              viewport.clientWidth <= window.innerWidth &&
+              viewport.querySelector('.team-canvas').clientWidth ===
+                viewport.clientWidth,
+          ),
+      )
+      .toBe(true);
+    await expect
+      .poll(() =>
         session.locator('strong').evaluate((label) => {
           const box = label.getBoundingClientRect();
           const range = document.createRange();
