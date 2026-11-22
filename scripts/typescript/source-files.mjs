@@ -1,16 +1,35 @@
 import {execFileSync} from 'node:child_process';
-import {existsSync} from 'node:fs';
+import {lstatSync, realpathSync} from 'node:fs';
+import path from 'node:path';
 
 // Use git's source inventory so tracked files inside build directories still count.
 export function sourceFiles() {
   const output = execFileSync(
     'git',
     [
-      'ls-files', '-z', '--cached', '--others', '--exclude-standard', '--',
-      'apps', 'packages', 'fixtures/workspace-library', 'fixtures/verify-workspace.mjs',
-      'scripts', 'eslint.config.mjs',
+      'ls-files',
+      '-z',
+      '--cached',
+      '--others',
+      '--exclude-standard',
+      '--',
+      'apps',
+      'packages',
+      'fixtures/workspace-library',
+      'fixtures/verify-workspace.mjs',
+      'scripts',
+      'eslint.config.mjs',
     ],
     {encoding: 'utf8'},
   );
-  return output.split('\0').filter(file => /\.[cm]?[jt]sx?$/.test(file) && existsSync(file));
+  const root = realpathSync('.');
+  return output.split('\0').filter((file) => {
+    if (!/\.[cm]?[jt]sx?$/.test(file)) return false;
+    const entry = lstatSync(file, {throwIfNoEntry: false});
+    if (!entry) return false;
+    if (!entry.isFile() || realpathSync(file) !== path.join(root, file)) {
+      throw new Error('Expected a regular workspace source file: ' + file);
+    }
+    return true;
+  });
 }

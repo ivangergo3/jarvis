@@ -5,11 +5,15 @@ export default defineConfig(globalIgnores(['!**/node_modules/']), {
   linterOptions: {noInlineConfig: true, reportUnusedDisableDirectives: 'error'},
   languageOptions: {parserOptions: {ecmaFeatures: {jsx: true}}},
   rules: {
-    'eqeqeq': 'error',
-    'no-restricted-syntax': ['error', {
-      selector: ':matches(CallExpression, NewExpression)[callee.name="Array"]',
-      message: 'Use an array literal or Array.from().',
-    }],
+    eqeqeq: 'error',
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector:
+          ':matches(CallExpression, NewExpression)[callee.name="Array"]',
+        message: 'Use an array literal or Array.from().',
+      },
+    ],
     'no-cond-assign': 'error',
     'no-debugger': 'error',
     'no-eval': 'error',
