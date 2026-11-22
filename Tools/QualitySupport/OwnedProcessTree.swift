@@ -23,9 +23,11 @@ enum OwnedProcessTree {
 
     static func inspect(_ pid: pid_t) throws -> proc_bsdinfo? {
         var info = proc_bsdinfo()
+        // For PROC_PIDTBSDINFO a nonzero argument includes exited, unreaped PIDs.
+        let includeZombies: UInt64 = 1
         // Synchronous C call; the typed buffer's lifetime and byte count are scoped to this call.
         let size = withUnsafeMutableBytes(of: &info) {
-            proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, $0.baseAddress, Int32($0.count))
+            proc_pidinfo(pid, PROC_PIDTBSDINFO, includeZombies, $0.baseAddress, Int32($0.count))
         }
         if size == MemoryLayout<proc_bsdinfo>.stride { return info }
         if kill(pid, 0) == -1 && errno == ESRCH { return nil }

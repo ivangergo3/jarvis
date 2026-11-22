@@ -156,7 +156,33 @@ struct QualitySupportTests {
         }
     }
 
+    @Test func ownedExitCanBeConfirmedBeforeChildIsReaped() throws {
+        // Foundation.Process automatically reaps its child. Use POSIX here to hold
+        // the exited fixture at the exact state reached during nested cleanup.
+        var pid: pid_t = 0
+        let executable = try #require(strdup("/usr/bin/true"))
+        defer { free(executable) }
+        var arguments: [UnsafeMutablePointer<CChar>?] = [executable, nil]
+        try #require(posix_spawn(&pid, executable, nil, nil, &arguments, nil) == 0)
+        defer { while waitpid(pid, nil, 0) == -1 && errno == EINTR {} }
+
+        var exitInfo = siginfo_t()
+        var result: Int32
+        repeat {
+            result = waitid(P_PID, id_t(pid), &exitInfo, WEXITED | WNOWAIT)
+        } while result == -1 && errno == EINTR
+        try #require(result == 0)
+
+        let info = try #require(try OwnedProcessTree.inspect(pid))
+        #expect(info.pbi_pid == UInt32(pid))
+        #expect(info.pbi_status == UInt32(SZOMB))
+        let child = OwnedProcessTree.Node(
+            pid: pid, seconds: info.pbi_start_tvsec, microseconds: info.pbi_start_tvusec)
+        try OwnedProcessTree.confirmExit(child, before: ContinuousClock().now)
+    }
+
     @Test func timeoutStopsNestedIsolatedProcessGroups() throws {
+
         let temporary = try TemporaryDirectory(prefix: "quality-nested-")
         let marker = temporary.url.appendingPathComponent("child.pid")
         let log = temporary.url.appendingPathComponent("process.log")
