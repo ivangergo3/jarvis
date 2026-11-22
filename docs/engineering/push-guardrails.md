@@ -25,10 +25,14 @@ inspection. Split an oversized change; no automatic exception or hidden exclusio
    blocked review cannot approve even with no findings. All actionable findings block; optional preferences should
    not be manufactured as findings. Unrelated suggestions go in `followUps`; review unknowns remain in `limitations`.
 4. Fix findings, commit and repeat. No evidence is reused across a changed
-   head/base/Swift or Xcode identity/SDK configuration. An unchanged verified candidate
+   head, base, Swift/Xcode/SDK identity or, for full scope, Node/pnpm version. An unchanged verified candidate
    can reuse its receipt. After two rounds that keep expanding the change, split
    out the smallest independently useful outcome and qualify its exact diff.
    Keep remaining defects with the affected work. Do not edit while checks run.
+   Full verification checks the detached checkout's Swift, SDK, Node and pnpm
+   identities before and after running the suites. The local hook checks refs and
+   cleanliness again after probing tool versions. Each check describes the checkout
+   at verification time. A later change requires a new prepare.
 5. Push one branch to origin. Pre-push refreshes main and verifies the outgoing
    SHA, clean tree, size, whitespace, added-secret scan and exact review/check receipt. Missing,
    failed, malformed or stale evidence blocks. Tags, branch deletion and direct
@@ -62,11 +66,23 @@ timeouts cannot create a receipt. With full Xcode, prepare additionally runs nat
 UI verification. CLT-only machines record that native UI is unavailable; required
 CI must supply it, never a fabricated local pass. CPU benchmarks stay advisory.
 
+For full-scope changes, the TypeScript phase installs from the complete frozen lockfile using the pinned Node and
+pnpm on PATH. It forces fresh build/typecheck tasks, exercises the compiled workspace
+fixture, runs the repository style checks and workspace package tests, then invokes Vitest discovery and execution
+directly. Every discovered case must have a matching passing assertion. The list in
+`Tools/required-vitest.json` also catches removal or skipping of required cases.
+The pre-push hook revalidates both reports under the exact candidate's attempt directory.
+Full-scope receipts require those reports. Documentation-only verification records that TypeScript was skipped and needs no Node toolchain.
+
 Receipts/reviewer output/logs stay under ignored `.build/push-gate/<head>/`; attempts
-have separate directories so retries preserve failed logs. Review and tests run
-against the detached candidate, with only the pinned formatter cache shared;
-successful worktrees are removed and nested test diagnostics retained. Failed
-candidate worktrees remain in their attempt directory: inspect the retained
+have separate directories so retries preserve failed logs. Pressing Control-C during
+preparation stops the active command and its owned workers before exiting. If its
+root already exited, the gate reports uncertain ownership and retains the worktree.
+Once the checks and final identity validation pass, an atomic rename publishes the receipt.
+An interrupt before that rename leaves the new receipt unpublished.
+Review and tests run against the detached candidate, sharing the pinned formatter
+and package-download caches. Successful worktrees are removed and nested test diagnostics retained. Failed
+candidate worktrees remain at the path printed by prepare. Full-scope worktrees use a private temporary directory outside the developer workspace, to isolate Node module resolution. Inspect the retained
 process/command diagnostics and confirm all workers stopped before explicitly
 removing an owned failed worktree with `git worktree remove`. Do not
 commit them or expose private context. Read diagnostics when blocked. The secret
@@ -96,3 +112,12 @@ not represented as GitHub human approvals.
   failure, candidate mutation and a successful review → tests → verify path.
   Test doubles never contact a model or production; one actual fresh review and
   full local run qualify this implementation before its first push.
+
+### TypeScript test evidence
+
+Run `pnpm test` while developing. On full preparation, the native gate invokes
+Vitest discovery and execution on the same detached checkout using its owned
+command runner. The attempt's private `vitest/` directory retains the JSON
+inventory and results, exit codes, report digests and logs. The required manifest
+comes from the verified Git commit. Every discovered case must pass, and a
+nonzero runner exit blocks the push even when the assertion report looks green.
