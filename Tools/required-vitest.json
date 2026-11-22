@@ -98,5 +98,17 @@
   {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "only a single original client ID in fully paginated bound history corroborates a turn"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "missing conflicting malformed or truncated history never authorizes a resend"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "revocation before during or after a history read suppresses all late evidence"
   }
 ]
