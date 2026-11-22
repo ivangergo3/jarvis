@@ -1,5 +1,5 @@
 import {execFileSync} from 'node:child_process';
-import {existsSync, readFileSync, realpathSync} from 'node:fs';
+import {existsSync, readFileSync, realpathSync, statSync} from 'node:fs';
 import path from 'node:path';
 
 const layers = new Map(
@@ -75,6 +75,23 @@ export function packageGraphErrors(root, projects) {
       ...manifest.optionalDependencies,
     };
     for (const [name, spec] of Object.entries(declared)) {
+      // A directory copied into the store with file: no longer realpaths to
+      // its source. Require workspace: links for local directory dependencies.
+      const localPath =
+        /^(?:file:|link:)(.*)$/.exec(spec)?.[1] ??
+        (/^(?:\.\.?\/|\/)/.test(spec) ? spec : undefined);
+      if (
+        localPath &&
+        statSync(path.resolve(project.path, localPath), {
+          throwIfNoEntry: false,
+        })?.isDirectory()
+      ) {
+        errors.push(
+          owner +
+            ': local directory dependencies must use the workspace protocol',
+        );
+        continue;
+      }
       // pnpm 10 can omit local-only edges from "list --depth=0". Its installed
       // package directory still resolves to the actual target for every name.
       const link = path.join(project.path, 'node_modules', name);

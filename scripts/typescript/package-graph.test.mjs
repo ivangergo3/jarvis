@@ -37,6 +37,7 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
     );
     return checkPackageGraph(root);
   }
+  writeFileSync(path.join(root, '.npmrc'), 'store-dir=.fixture-store\n');
   const workspace = "packages:\n  - 'apps/*'\n  - 'packages/*'\n";
   writeFileSync(path.join(root, 'pnpm-workspace.yaml'), workspace);
   manifest('.', 'fixture-root', {
@@ -73,6 +74,16 @@ test('the installed pnpm graph detects package direction, cycles and discovery d
     /packages\/providers: classified package missing/,
   );
   writeFileSync(path.join(root, 'pnpm-workspace.yaml'), workspace);
+  assert.deepEqual(resolve(), []);
+
+  manifest('apps/desktop', '@fixture/desktop', {
+    dependencies: {'@fixture/providers': 'file:../../packages/providers'},
+  });
+  assert.match(
+    resolve().join('\n'),
+    /local directory dependencies must use the workspace protocol/,
+  );
+  manifest('apps/desktop', '@fixture/desktop');
   assert.deepEqual(resolve(), []);
 
   // The installed package name matches the local provider, but this copy is
