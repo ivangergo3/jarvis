@@ -305,6 +305,20 @@ export function checkBoundaries(root) {
       file.endsWith('.mjs') ||
       (file.endsWith('.js') &&
         manifests.get(packageRoot(file)).type === 'module');
+    // A declaration erased by TypeScript cannot supply a local runtime loader.
+    for (const scope of parsed.scopeManager.scopes) {
+      for (const variable of scope.variables) {
+        if (
+          commonJSNames.has(variable.name) &&
+          variable.defs.some(
+            (def) =>
+              def.isVariableDefinition &&
+              nodeMap.get(def.name)?.flags & ts.NodeFlags.Ambient,
+          )
+        )
+          errors.push(file + ': do not redeclare ambient CommonJS globals');
+      }
+    }
     const globals = new Set();
     for (const ref of parsed.scopeManager.globalScope.through) {
       const name = ref.identifier.name;

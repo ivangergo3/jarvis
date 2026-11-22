@@ -224,6 +224,19 @@ test('workspace packages enforce their runtime, public entry and graph direction
   write('packages/contracts/src/export.js', 'export default {};');
   write('packages/contracts/package.json', JSON.stringify(contracts));
   assert.deepEqual(checked(), []);
+  write(
+    'packages/contracts/src/ambient.cts',
+    "declare const module: { require(id: string): unknown }; module.require('node:fs');",
+  );
+  assert.match(
+    checked().join('\n'),
+    /do not redeclare ambient CommonJS globals/,
+  );
+  write(
+    'packages/contracts/src/ambient.cts',
+    'function select(module: { require(id: string): unknown }) { return module.require("local"); }',
+  );
+  assert.deepEqual(checked(), []);
   const valid = "import type {Job} from '@jarvis/contracts';";
   for (const [owner, source, diagnostic] of [
     [
