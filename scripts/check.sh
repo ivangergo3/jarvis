@@ -2,14 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 swift --version
-./scripts/format.sh check
-./scripts/verify-quality-gates.sh
-bash ./scripts/verify-workspace-architecture.sh
-bash ./scripts/verify-app-architecture.sh
-swift run -Xswiftc -warnings-as-errors quality-gate skills
-swift run -Xswiftc -warnings-as-errors quality-gate test \
-    --swift-arg=-Xswiftc --swift-arg=-warnings-as-errors "$@"
-swift run -Xswiftc -warnings-as-errors quality-gate authority
-./build.sh
-bash scripts/verify-bundle.sh
-swift run -Xswiftc -warnings-as-errors quality-gate hover-fault "$@"
+swift build --jobs 2 -Xswiftc -warnings-as-errors --product quality-gate
+gate="$(swift build --show-bin-path)/quality-gate"
+bash scripts/verify-ci-result.sh
+bash scripts/verify-check-lanes.sh
+exec /bin/bash scripts/run-check-lanes.sh "$gate" "$@"
