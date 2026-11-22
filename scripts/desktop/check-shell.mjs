@@ -62,6 +62,42 @@ async function checkShell(state, profile, evidence) {
     await expect(
       page.getByText('Shell verification', {exact: true}),
     ).toBeVisible();
+    const session = page.getByRole('button', {name: /Shell verification/});
+    await expect(
+      page.getByRole('button', {name: 'Graph', exact: true}),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect
+      .poll(() =>
+        page
+          .locator('.team-reactor')
+          .evaluate((image) => image.complete && image.naturalWidth > 0),
+      )
+      .toBe(true);
+    await session.focus();
+    await page.keyboard.press('Enter');
+    await expect(session).toHaveAttribute('aria-pressed', 'true');
+    const endpointError = await session.evaluate((card) => {
+      const canvas = card.closest('.team-canvas');
+      const wire = canvas.querySelector('polyline.selected');
+      const endpoint = wire.points.getItem(wire.points.numberOfItems - 1);
+      const point = new DOMPoint(endpoint.x, endpoint.y).matrixTransform(
+        wire.getScreenCTM(),
+      );
+      const rect = card.getBoundingClientRect();
+      return Math.max(
+        Math.min(Math.abs(point.x - rect.left), Math.abs(point.x - rect.right)),
+        Math.abs(point.y - (rect.top + rect.height / 2)),
+      );
+    });
+    assert.ok(
+      endpointError <= 1,
+      'The highlighted connector must reach the selected card edge',
+    );
+    await page.getByRole('button', {name: 'Cards', exact: true}).click();
+    await expect(session).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.team-wires')).toHaveCount(0);
+    await page.getByRole('button', {name: 'Graph', exact: true}).click();
+    await expect(session).toHaveAttribute('aria-pressed', 'true');
     await page.screenshot({path: path.join(evidence, 'project.png')});
     const destinations = [
       'jarvis-preview://fixture/navigation-check',
