@@ -79,4 +79,20 @@ it('stops before reading account data after a profile or platform mismatch or in
     'initialize',
     'initialized',
   ]);
+
+  const late = fixture();
+  const readStarted = Promise.withResolvers();
+  const result = Promise.withResolvers();
+  const stop = new AbortController();
+  late.request = (message) => {
+    if (message.method === 'initialize') return Promise.resolve(hello);
+    readStarted.resolve();
+    return result.promise;
+  };
+  const pending = probeCodexWorker(late, pin, origin, stop.signal);
+  await readStarted.promise;
+  result.resolve({authToken: null, authMethod: null, requiresOpenaiAuth: true});
+  // The account observer resumes before abort. Its caller resumes afterwards.
+  queueMicrotask(() => stop.abort());
+  await expect(pending).resolves.toEqual({kind: 'cancelled'});
 });

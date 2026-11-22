@@ -71,11 +71,12 @@ export async function probeCodexWorker(
     if (!response.success || response.data.codexHome !== profile)
       return {kind: 'incompatible-handshake'} as const;
     await worker.notify({method: 'initialized'}, signal);
-    return await observeCodexAccount(
+    const observation = await observeCodexAccount(
       (message, token) => worker.request(message, token),
       expectedOrigin,
       signal,
     );
+    return signal.aborted ? ({kind: 'cancelled'} as const) : observation;
   } catch (error) {
     if (
       signal.aborted ||
