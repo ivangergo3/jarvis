@@ -66,6 +66,16 @@ test('public typecheck covers owned standalone tools and keeps package tasks', (
   project.files = ['scripts/demo.ts'];
   writeFileSync(config, JSON.stringify(project));
   assert.match(run().stderr, /TS2322/);
+  writeFileSync(
+    source,
+    Array.from(
+      {length: 2000},
+      (_, i) => `export const n${i}: number = 'wrong';`,
+    ).join('\n'),
+  );
+  const manyErrors = run();
+  assert.equal(manyErrors.status, 1);
+  assert.match(manyErrors.stderr, /demo\.ts\(2000,\d+\): error TS2322/);
   mkdirSync(path.join(root, '.private'));
   writeFileSync(
     path.join(root, '.private/private.ts'),

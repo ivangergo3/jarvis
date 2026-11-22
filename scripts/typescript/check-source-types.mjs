@@ -7,7 +7,7 @@ import {sourceFiles} from './source-files.mjs';
 
 // Package tasks own their native compiler projects. Everything else must be
 // checked by the root tool project, including new files that Git has not staged.
-export function checkSourceTypes() {
+function checkSourceTypes() {
   const root = process.cwd();
   const sources = new Set(sourceFiles().map((file) => path.resolve(file)));
   const files = new Set(
@@ -150,3 +150,7 @@ export function checkSourceTypes() {
   }
   return errors;
 }
+
+const errors = checkSourceTypes();
+for (const error of errors) console.error(error);
+process.exitCode = errors.length ? 1 : 0;

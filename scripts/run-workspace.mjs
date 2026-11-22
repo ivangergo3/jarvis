@@ -47,11 +47,9 @@ process.env.TURBO_TELEMETRY_DISABLED = '1';
 if (task === 'typecheck') {
   const status = run('turbo', ['run', 'typecheck', '--cache=local:rw']);
   if (status !== 0) process.exit(status);
-  const {checkSourceTypes} =
-    await import('./typescript/check-source-types.mjs');
-  const errors = checkSourceTypes();
-  for (const error of errors) console.error(error);
-  process.exit(errors.length ? 1 : 0);
+  process.exit(
+    run(process.execPath, ['scripts/typescript/check-source-types.mjs']),
+  );
 }
 
 // Turbo overlays cached files. Remove only the fixture's previous generated tree.
