@@ -17,6 +17,16 @@ test('ambiguous setup, provider refusals, unsent runs and verified stops stay di
     {state: 'failed', reason: 'execution_failed', workerExit: 'pending'},
     {state: 'terminal_unsent', setupFence: 'retained'},
     {
+      state: 'terminal_unsent',
+      setupFence: 'retained',
+      workerExit: 'verified_forced',
+    },
+    {
+      state: 'cancel_requested',
+      cutoff: 'established',
+      workerExit: 'unverified',
+    },
+    {
       state: 'interrupted',
       workerExit: 'pending',
       providerEffect: 'verified_interruption',

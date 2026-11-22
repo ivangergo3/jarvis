@@ -7,6 +7,7 @@ const WorkerExit = z.enum([
   'verified_forced',
   'verified_cooperative',
 ]);
+const workerExit = WorkerExit.optional();
 export const RunObservation = z.discriminatedUnion('state', [
   z.strictObject({
     state: z.enum([
@@ -17,22 +18,26 @@ export const RunObservation = z.discriminatedUnion('state', [
       'running',
       'waiting',
     ]),
+    workerExit,
   }),
   z.strictObject({
     state: z.literal('preparing_thread'),
     setupHandoff: z.enum(['not_sent', 'handed_off', 'possibly_handed_off']),
+    workerExit,
   }),
   z.strictObject({
     state: z.literal('cancel_requested'),
     cutoff: z.enum(['pending', 'established']),
+    workerExit,
   }),
   z.strictObject({
     state: z.literal('terminal_unsent'),
     setupFence: z.enum(['none', 'retained']),
+    workerExit,
   }),
   z.strictObject({
     state: z.literal('completed'),
-    workerExit: WorkerExit.optional(),
+    workerExit,
   }),
   z.strictObject({
     state: z.literal('interrupted'),
@@ -41,7 +46,7 @@ export const RunObservation = z.discriminatedUnion('state', [
   }),
   z.strictObject({
     state: z.literal('failed'),
-    workerExit: WorkerExit.optional(),
+    workerExit,
     reason: z.enum([
       'provider_refused',
       'execution_failed',
@@ -50,7 +55,7 @@ export const RunObservation = z.discriminatedUnion('state', [
   }),
   z.strictObject({
     state: z.literal('unknown'),
-    workerExit: WorkerExit.optional(),
+    workerExit,
     phase: z.enum(['thread_setup', 'turn_handoff', 'provider_effect']),
   }),
 ]);
