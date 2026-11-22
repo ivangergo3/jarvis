@@ -212,6 +212,25 @@ test('workspace packages enforce their runtime, public entry and graph direction
   assert.match(checked().join('\n'), /does not declare a public package root/);
   write('packages/contracts/package.json', JSON.stringify(contracts));
   assert.deepEqual(checked(), []);
+  symlinkSync(
+    path.join(root, 'packages/contracts'),
+    path.join(root, 'apps/client/node_modules/fs'),
+  );
+  write(
+    'apps/client/package.json',
+    JSON.stringify({
+      ...clientManifest,
+      dependencies: {
+        ...clientManifest.dependencies,
+        fs: 'workspace:@jarvis/contracts@*',
+      },
+    }),
+  );
+  write('apps/client/src/builtin.ts', "import 'fs';");
+  assert.match(checked().join('\n'), /unapproved external/);
+  write('apps/client/src/builtin.ts', "import '@jarvis/contracts';");
+  write('apps/client/package.json', JSON.stringify(clientManifest));
+  assert.deepEqual(checked(), []);
   const valid = "import type {Job} from '@jarvis/contracts';";
   for (const [owner, source, diagnostic] of [
     [

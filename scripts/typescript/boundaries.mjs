@@ -1,6 +1,6 @@
 import {execFileSync} from 'node:child_process';
 import {lstatSync, readFileSync, realpathSync} from 'node:fs';
-import {createRequire, findPackageJSON} from 'node:module';
+import {createRequire, findPackageJSON, isBuiltin} from 'node:module';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import ts from 'typescript';
@@ -185,6 +185,15 @@ export function checkBoundaries(root) {
       fail('noncanonical package import');
       return;
     }
+    if (
+      isTestFile(file) &&
+      ['node:test', 'node:assert/strict'].includes(specifier)
+    )
+      return;
+    if (isBuiltin(specifier)) {
+      if (externals[layer]) fail('unapproved external dependency');
+      return;
+    }
     const name = dependencyName(specifier);
     const manifest = manifests.get(owner);
     const declared = [
@@ -240,11 +249,6 @@ export function checkBoundaries(root) {
       fail('unknown workspace or indirect import');
       return;
     }
-    if (
-      isTestFile(file) &&
-      ['node:test', 'node:assert/strict'].includes(specifier)
-    )
-      return;
     if (externals[layer]) {
       if (
         !externals[layer].has(specifier) &&

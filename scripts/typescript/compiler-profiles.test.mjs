@@ -69,7 +69,22 @@ test('the effective project cannot redirect renderer imports or compile source f
   write(base, {compilerOptions: {...defaults, types: undefined}});
   assert.match(check('packages/domain').join('\n'), /ambient types/);
   write(base, {compilerOptions: {...defaults, lib: ['es2023', 'dom']}});
-  assert.match(check('packages/domain').join('\n'), /ECMAScript libraries/);
+  assert.match(check('packages/domain').join('\n'), /standard libraries/);
+  assert.deepEqual(check(), []);
+  write(base, {compilerOptions: {...defaults, lib: ['es2023', 'scripthost']}});
+  assert.match(check().join('\n'), /standard libraries/);
+  write('packages/providers/package.json', {
+    name: 'providers',
+    scripts: {typecheck},
+  });
+  write('packages/providers/tsconfig.json', {
+    extends: '../../' + base,
+    include: ['src'],
+  });
+  write(base, {compilerOptions: {...defaults, lib: ['es2023', 'dom']}});
+  assert.match(check('packages/providers').join('\n'), /standard libraries/);
+  write(base, {compilerOptions: defaults});
+  assert.deepEqual(check('packages/providers'), []);
   write(base, {compilerOptions: {...defaults, libReplacement: true}});
   assert.match(
     check('packages/domain').join('\n'),

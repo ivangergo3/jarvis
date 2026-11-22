@@ -92,11 +92,19 @@ export function checkCompilerProfiles(root, owner, files) {
   if (options.libReplacement)
     errors.push(relative + ': use the pinned compiler libraries');
   if (
-    layer === 'pure' &&
-    (!options.lib?.length ||
-      options.lib.some((lib) => !/^lib\.es[\w.]*\.d\.ts$/.test(lib)))
+    !options.lib?.length ||
+    options.lib.some(
+      (lib) =>
+        !/^lib\.(?:es[\w.]*|decorators(?:\.legacy)?)\.d\.ts$/.test(lib) &&
+        !(
+          layer === 'client' &&
+          /^lib\.dom(?:\.(?:asynciterable|iterable))?\.d\.ts$/.test(lib)
+        ),
+    )
   )
-    errors.push(relative + ': pure packages must specify ECMAScript libraries');
+    errors.push(
+      relative + ': standard libraries must match the package runtime',
+    );
   if (!preservesWorkspaceStrictness(options))
     errors.push(relative + ': preserve the workspace strict defaults');
   if (
