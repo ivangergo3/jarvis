@@ -26,5 +26,17 @@
   {
     "file": "packages/contracts/test/snapshot.vitest.mjs",
     "name": "snapshots page public records at a single owner-bound high-water mark"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "stops before account reads for signed-out, alternative or malformed login observations"
+  },
+  {
+    "file": "packages/providers/test/account.vitest.mjs",
+    "name": "reports missing or mismatched routing and transport errors without exposing worker output"
   }
 ]

@@ -86,6 +86,16 @@ importers:
         specifier: 4.6.7
         version: 4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)
 
+  packages/providers:
+    dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+
 packages:
 
   '@babel/code-frame@7.29.7':
