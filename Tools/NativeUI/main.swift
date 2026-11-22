@@ -5,6 +5,8 @@ import QualitySupport
 struct NativeGateSummary: Encodable {
     let passed: Bool
     let tests: Int
+    let discoveredTests: Int
+    let shard: Int?
 }
 
 let files = FileManager.default
@@ -66,6 +68,13 @@ func verifyProjectSources() throws {
 }
 
 do {
+    let shard: NativeUIReport.Shard?
+    switch Array(CommandLine.arguments.dropFirst()) {
+    case []: shard = nil
+    case ["--shard=1"]: shard = .interactions
+    case ["--shard=2"]: shard = .remaining
+    default: throw QualityFailure("Usage: native-ui-check [--shard=1|--shard=2]")
+    }
     try files.createDirectory(at: output, withIntermediateDirectories: true)
     defer {
         if files.fileExists(atPath: derived.path)
@@ -83,11 +92,16 @@ do {
     try run("/usr/bin/git", ["rev-parse", "HEAD"], log: "commit.log")
     try ProcessInfo.processInfo.operatingSystemVersionString.write(
         to: output.appendingPathComponent("os.txt"), atomically: true, encoding: .utf8)
-    let common = [
+    var common = [
         "-project", "Jarvis.xcodeproj", "-scheme", "NativeUI", "-configuration", "Release",
         "-destination", "platform=macOS", "-derivedDataPath", derived.path,
         "-parallel-testing-enabled", "NO",
     ]
+    if shard != nil {
+        // Build the Release fixture for the machine that actually executes the
+        // tests. Unsharded verification keeps its original architecture settings.
+        common += ["ONLY_ACTIVE_ARCH=YES", "ARCHS=$(NATIVE_ARCH_ACTUAL)"]
+    }
     try run("/usr/bin/xcodebuild", ["build-for-testing"] + common, log: "build.log", timeout: 600)
     let app = derived.appendingPathComponent("Build/Products/Release/JarvisVerification.app")
     let executable = app.appendingPathComponent("Contents/MacOS/JarvisVerification")
@@ -109,7 +123,7 @@ do {
     let result = output.appendingPathComponent("NativeUI.xcresult")
     try run(
         "/usr/bin/xcodebuild",
-        ["test-without-building"] + common + [
+        ["test-without-building"] + common + (shard?.xcodeFilters ?? []) + [
             "-resultBundlePath", result.path,
             "-maximum-test-execution-time-allowance", "90", "-test-timeouts-enabled", "YES",
         ], log: "test.log", timeout: 600)
@@ -125,13 +139,18 @@ do {
     guard let summary = try json("summary.json") as? [String: Any] else {
         throw QualityFailure("Missing native UI result summary.")
     }
+    let discovery = try json("discovery.json")
     let count = try NativeUIReport.validate(
-        discovery: json("discovery.json"), results: json("tests.json"),
-        summary: summary, required: Set(required))
+        discovery: discovery, results: json("tests.json"),
+        summary: summary, required: Set(required), shard: shard)
+    let fullCount = NativeUIReport.identifiers(in: discovery).count
     try Diagnostics.writeJSON(
-        NativeGateSummary(passed: true, tests: count),
-        to: output.appendingPathComponent("gate.json"))
-    print("Native UI verification passed: \(count) tests. Evidence: \(output.path)")
+        NativeGateSummary(
+            passed: true, tests: count, discoveredTests: fullCount, shard: shard?.rawValue),
+        to: output.appendingPathComponent(shard == nil ? "gate.json" : "shard-gate.json"))
+    print(
+        "Native UI verification passed: \(count) of \(fullCount) discovered tests. Evidence: \(output.path)"
+    )
 } catch {
     let result = output.appendingPathComponent("NativeUI.xcresult")
     if files.fileExists(atPath: result.path) {

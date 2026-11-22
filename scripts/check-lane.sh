@@ -9,16 +9,22 @@ stage() {
 }
 case "$lane" in
     core)
+        stage bash scripts/check-lane.sh static "$gate" "$@"
+        stage bash scripts/check-lane.sh unit "$gate" "$@"
+        ;;
+    static)
         stage ./scripts/format.sh check
         stage ./scripts/verify-quality-gates.sh
         stage bash scripts/verify-workspace-architecture.sh "$gate"
         stage bash scripts/verify-app-architecture.sh "$gate"
         stage "$gate" skills
+        ;;
+    unit)
         stage "$gate" test --swift-arg=-Xswiftc --swift-arg=-warnings-as-errors "$@" \
-            --swift-arg=--jobs --swift-arg=2
+            --swift-arg=--jobs "--swift-arg=${JARVIS_SWIFT_JOBS:-2}"
         ;;
     hover)
-        stage "$gate" hover-fault "$@" --swift-arg=--jobs --swift-arg=2
+        stage "$gate" hover-fault "$@" --swift-arg=--jobs "--swift-arg=${JARVIS_SWIFT_JOBS:-2}"
         ;;
     release)
         stage "$gate" authority

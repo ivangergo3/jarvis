@@ -92,8 +92,10 @@ merely to make a build green.
 ## Actual GitHub enforcement
 
 The stable job context is `macOS build and tests` from the GitHub Actions app.
-Workflow events include pull requests, pushes to main and `merge_group`; the
-last prevents a future merge queue from waiting on a check that never runs.
+The workflow verifies pull requests and merge groups before integration. A manual
+run can check an existing revision. Merging a green PR does not start the suite again.
+The Swift matrix runs static checks, the full unit suite, the hover regression
+probes and release packaging concurrently. Every selected job must pass.
 Workflow YAML alone cannot enforce required checks. Repository branch rules and
 a disposable failed-PR probe must be inspected separately; see the dated
 [verification record](verification-44.md) for the actual result and any

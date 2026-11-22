@@ -34,6 +34,12 @@ inventory, removed required tests, any failed/skipped test or inconsistent resul
 counts. Builds/tests have ten-minute command bounds; each UI test has a ninety-
 second limit. Test retries and parallel app instances are disabled.
 
+On pull requests, two independent Intel runners each build the Release fixture
+for their own architecture and enumerate the full suite. Each runner executes
+its assigned journeys and checks the exact set against discovery. New journeys
+run in shard 2 by default. Running `swift run native-ui-check` locally executes
+the entire suite in one session.
+
 Each run preserves evidence under `test-results/native-ui/<run UUID>/`:
 
 - The tested Release app and executable SHA-256 (`artifact.json`).
@@ -42,7 +48,8 @@ Each run preserves evidence under `test-results/native-ui/<run UUID>/`:
   attachments and app screenshots; screenshots alone cannot pass a test.
 - On failure, exported attachments and diagnostics where Xcode can extract them;
   the original result bundle is retained even if export fails.
-- Parsed result trees/summary and `gate.json` only after all checks pass.
+- Parsed result trees/summary and `gate.json` after a full run passes, or
+  `shard-gate.json` with the shard number and the executed and discovered counts.
 
 Open a retained result with `open <run-directory>/NativeUI.xcresult`. CI retains
 the synthetic evidence for seven days. Paths in raw Xcode logs are runner/local

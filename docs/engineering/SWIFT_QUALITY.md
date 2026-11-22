@@ -11,7 +11,7 @@ notification observer ownership; mechanical formatting is reviewed separately.
 ./scripts/format.sh bootstrap  # explicit first-time download/build of the pinned tool
 ./scripts/format.sh check      # non-mutating; findings fail
 ./scripts/format.sh fix        # explicitly rewrite owned Swift files
-./scripts/check.sh             # same gate invoked by CI
+./scripts/check.sh             # runs the same checks as the hosted Swift lanes
 ```
 
 The complete check runs formatting, negative/positive gate probes, fixture-based
@@ -32,7 +32,7 @@ width; literals may exceed that width when splitting would change their content.
 
 | Component | Selection |
 | --- | --- |
-| CI | Existing `macos-15-intel`, Xcode 16.4 (16F6), Swift 6.1.2 via `DEVELOPER_DIR` |
+| CI | Apple Silicon for scope, unit tests and hover probes. Intel for static checks, release packaging and native UI. Xcode 16.4 (16F6), Swift 6.1.2. |
 | Language | Swift 6 for SwiftPM and release build; includes full concurrency checking |
 | Formatter | Official swiftlang/swift-format 601.0.0 at ffbb3225ffda37b62c7283c70e87e8bc7e8e202a |
 | Formatter dependencies | Exact versions/revisions in `Tools/SwiftFormat/Package.resolved` |
