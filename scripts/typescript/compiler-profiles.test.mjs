@@ -121,6 +121,7 @@ test('the effective project cannot redirect renderer imports or compile source f
   assert.match(check().join('\n'), /strict defaults/);
   for (const override of [
     {skipLibCheck: true},
+    {skipDefaultLibCheck: true},
     {allowJs: true, checkJs: false},
   ]) {
     write(base, {compilerOptions: {...defaults, ...override}});

@@ -69,12 +69,13 @@ function moduleReference(node) {
     ) {
       const receiver = ts.skipOuterExpressions(callee.expression);
       if (!ts.isIdentifier(receiver) || receiver.text !== 'module') return;
-      const key = ts.isPropertyAccessExpression(callee)
-        ? callee.name.text
-        : ts.isStringLiteralLike(callee.argumentExpression)
-          ? callee.argumentExpression.text
-          : undefined;
-      if (key === 'require') return node.arguments[0] ?? node;
+      if (ts.isPropertyAccessExpression(callee)) {
+        if (callee.name.text !== 'require') return;
+      } else {
+        const key = ts.skipOuterExpressions(callee.argumentExpression);
+        if (!ts.isStringLiteralLike(key) || key.text !== 'require') return;
+      }
+      return node.arguments[0] ?? node;
     }
   }
 }
@@ -162,6 +163,8 @@ export function checkBoundaries(root) {
         !targets.size ||
         [...targets].some(
           (name) =>
+            (!/\.(?:[cm]?[jt]sx?|json)$/.test(name) &&
+              !(layer === 'client' && name.endsWith('.css'))) ||
             !ownedSource(root, folder, name, inventory) ||
             (isTestFile(path.relative(root, name)) && !isTestFile(file)),
         )

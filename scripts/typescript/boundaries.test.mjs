@@ -143,6 +143,11 @@ test('workspace packages enforce their runtime, public entry and graph direction
   assert.match(checked().join('\n'), /relative target must be tracked/);
   write('packages/contracts/src/local/index.js', 'export {};');
   assert.deepEqual(checked(), []);
+  write('packages/contracts/src/no-extension', 'module.exports = {};');
+  write('packages/contracts/src/check.cjs', "require('./no-extension');");
+  assert.match(checked().join('\n'), /relative target must be tracked/);
+  write('packages/contracts/src/check.cjs', "require('./local/index.js');");
+  assert.deepEqual(checked(), []);
   for (const [condition, source] of [
     ['require', "require('@jarvis/contracts');"],
     ['types', "import type {Job} from '@jarvis/contracts';"],
@@ -223,6 +228,7 @@ test('workspace packages enforce their runtime, public entry and graph direction
     ['apps/client', "require('electron');", 'unapproved external'],
     ['apps/client', "(require)('node:fs');", 'unapproved external'],
     ['apps/client', "(module).require(('node:fs'));", 'unapproved external'],
+    ['apps/client', "module[('require')]('node:fs');", 'unapproved external'],
     [
       'apps/client',
       "import type {Secret} from '@jarvis/contracts/src/private';",
