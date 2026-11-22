@@ -108,10 +108,7 @@ public struct PushGate {
         let base = try commit("origin/main")
         let head = try commit("HEAD")
         let scope = try scope(base: base, head: head)
-        let nodeToolchain =
-            scope == .full
-            ? try command(["/usr/bin/env", "node", "--version"]) + "\n"
-                + command(["/usr/bin/env", "pnpm", "--version"]) : ""
+        let nodeToolchain = scope == .full ? try nodeVersions() : ""
         return try Identity(
             base: base, head: head,
             toolchain: command(["/usr/bin/env", "swift", "--version"]),
@@ -122,6 +119,11 @@ public struct PushGate {
                 + "\nSDKROOT=" + (ProcessInfo.processInfo.environment["SDKROOT"] ?? "default"),
             nodeToolchain: nodeToolchain, checkoutRoot: root.resolvingSymlinksInPath().path)
     }
+    private func nodeVersions() throws -> String {
+        try command(["/usr/bin/env", "node", "--version"]) + "\n"
+            + command(["/usr/bin/env", "pnpm", "--version"])
+    }
+
     static func size(_ numstat: String) throws -> Size {
         var result = Size()
         for row in numstat.split(separator: "\0") {
@@ -202,7 +204,8 @@ public struct PushGate {
     }
 
     static func workspace(for attempt: UUID) -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent(
+        // The receipt must resolve this removed worktree even when a later push uses another TMPDIR.
+        URL(fileURLWithPath: "/tmp", isDirectory: true).appendingPathComponent(
             "jarvis-push-" + attempt.uuidString)
     }
     static func validate(_ receipt: Receipt, identity: Identity) throws {
@@ -395,6 +398,13 @@ public struct PushGate {
             throw QualityFailure(
                 "Local checks failed/timed out; inspect checks.log, no receipt written")
         }
+        let snapshot = PushGate(root: source, runner: runner)
+        func verifyNodeVersions() throws {
+            guard try snapshot.nodeVersions() == current.nodeToolchain else {
+                throw QualityFailure("The detached checkout selected different Node/pnpm versions")
+            }
+        }
+        try verifyNodeVersions()
         guard
             try runner(
                 Command(
@@ -408,6 +418,7 @@ public struct PushGate {
         try VitestEvidence.collect(
             at: output.appendingPathComponent("vitest"), source: source,
             revision: current.head, runner: runner)
+        try verifyNodeVersions()
         if current.nativeAvailable {
             guard
                 try runner(

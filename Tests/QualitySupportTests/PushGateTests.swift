@@ -199,7 +199,10 @@ struct PushGateTests {
                 || command.arguments == ["pnpm", "--version"]
             {
                 nodeProbes += 1
-                try "Fixture toolchain".write(to: log, atomically: true, encoding: .utf8)
+                let version =
+                    failure == "snapshot-toolchain" && command.directory != root
+                    ? "Different working directory toolchain" : "Fixture toolchain"
+                try version.write(to: log, atomically: true, encoding: .utf8)
                 return 0
             }
             if command.arguments == ["swift", "--version"] {
@@ -248,16 +251,30 @@ struct PushGateTests {
             }
             if command.arguments.starts(with: ["pnpm", "exec", "vitest"]) {
                 #expect(reviews == 1 && checks == 1 && typeScriptChecks == 1)
-                if command.arguments[3] == "list" {
-                    if failure == "discovery-exit" { return 1 }
-                    if failure != "missing-report" {
-                        try VitestEvidenceTests.writeVitest(
-                            at: log.deletingLastPathComponent(),
-                            candidate: command.directory, revision: git(["rev-parse", "HEAD"]))
-                    }
+                let listing = command.arguments[3] == "list"
+                if listing && failure == "discovery-exit" || !listing && failure == "vitest-exit" {
+                    return 1
+                }
+                if listing && failure == "missing-report"
+                    || !listing && failure == "execution-missing"
+                {
                     return 0
                 }
-                return failure == "vitest-exit" ? 1 : 0
+                let generated = try TemporaryDirectory(prefix: "synthetic-vitest-")
+                try VitestEvidenceTests.writeVitest(at: generated.url, candidate: command.directory)
+                let reports = log.deletingLastPathComponent()
+                func deliver(_ name: String) throws {
+                    try FileManager.default.copyItem(
+                        at: generated.url.appendingPathComponent(name),
+                        to: reports.appendingPathComponent(name))
+                }
+                try deliver(listing ? "vitest-discovery.json" : "vitest-results.json")
+                if listing && failure == "early-result" { try deliver("vitest-results.json") }
+                if !listing && failure == "changed-discovery" {
+                    try Data("[]".utf8).write(
+                        to: reports.appendingPathComponent("vitest-discovery.json"))
+                }
+                return 0
             }
             if command.executable == "/bin/bash" {
                 checks += 1
@@ -440,7 +457,8 @@ struct PushGateTests {
         for failure in [
             "review-exit", "review-timeout", "malformed", "findings", "tests", "mutation",
             "snapshot-mutation", "review-head", "snapshot-head", "incomplete", "typescript-exit",
-            "missing-report", "discovery-exit", "vitest-exit",
+            "missing-report", "discovery-exit", "vitest-exit", "execution-missing", "early-result",
+            "changed-discovery", "snapshot-toolchain",
         ] {
             let fixture = try Fixture()
             try fixture.setup()
@@ -565,8 +583,11 @@ struct PushGateTests {
             return try command.run(log: log, timeout: timeout)
         }
         let identity = try gate.identity()
+        var pushEnvironment = environment
+        pushEnvironment["TMPDIR"] = support.url.path
         let push = Command(
-            "/usr/bin/git", ["push", "origin", "topic"], directory: root, environment: environment)
+            "/usr/bin/git", ["push", "origin", "topic"], directory: root,
+            environment: pushEnvironment)
         let log = support.url.appendingPathComponent("hook.log")
         #expect(try push.run(log: log, timeout: 60) != 0)
         #expect(try Diagnostics.tail(of: log).contains("No review/test receipt"))

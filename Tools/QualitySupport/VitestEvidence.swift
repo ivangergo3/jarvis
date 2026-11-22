@@ -58,11 +58,19 @@ enum VitestEvidence {
         let results = reports.appendingPathComponent("vitest-results.json")
         var discovery: Int32?
         var execution: Int32?
+        var inventoryDigest: String?
+        var resultsDigest: String?
+        func reportDigest(_ url: URL) -> String? {
+            guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+                attributes[.type] as? FileAttributeType == .typeRegular,
+                let data = try? Data(contentsOf: url)
+            else { return nil }
+            return digest(data)
+        }
         func record() throws {
             let exits = Exits(
                 revision: revision, discovery: discovery, execution: execution,
-                discoverySHA256: (try? Data(contentsOf: inventory)).map(digest),
-                executionSHA256: (try? Data(contentsOf: results)).map(digest))
+                discoverySHA256: inventoryDigest, executionSHA256: resultsDigest)
             try Diagnostics.writeJSON(exits, to: reports.appendingPathComponent("process.json"))
         }
         try record()
@@ -73,9 +81,13 @@ enum VitestEvidence {
                     "pnpm", "exec", "vitest", "list", "--allowOnly=false",
                     "--json=" + inventory.path,
                 ], directory: source), reports.appendingPathComponent("discovery.log"), 300)
+        inventoryDigest = reportDigest(inventory)
         try record()
-        guard discovery == 0 else {
+        guard discovery == 0, inventoryDigest != nil else {
             throw QualityFailure("Vitest discovery failed; inspect discovery.log")
+        }
+        guard (try? FileManager.default.attributesOfItem(atPath: results.path)) == nil else {
+            throw QualityFailure("Vitest result already exists before execution")
         }
         execution = try runner(
             Command(
@@ -85,8 +97,9 @@ enum VitestEvidence {
                     "--maxWorkers=1", "--reporter=json", "--outputFile=" + results.path,
                 ], directory: source),
             reports.appendingPathComponent("execution.log"), 900)
+        resultsDigest = reportDigest(results)
         try record()
-        guard execution == 0 else {
+        guard execution == 0, resultsDigest != nil else {
             throw QualityFailure("Vitest execution failed; inspect execution.log")
         }
     }
