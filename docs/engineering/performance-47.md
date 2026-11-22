@@ -179,7 +179,7 @@ affected connections as well. Zero recorded rendering is not accepted as a pass.
 This detects accidentally reconnecting the rendered modifier to shared hover
 state, which publisher-only tests cannot prove. The existing native UI runner
 checks the required journey inventory and captures results/screenshots on PR,
-main push and merge-queue runs. Motion is disabled in this deterministic native
+merge-group and manual runs. Motion is disabled in this deterministic native
 journey; release animation/CPU measurements remain separate.
 
 `testPhysicalPointerLoadDoesNotInvalidateGraph` additionally moves XCTest's

@@ -9,6 +9,7 @@ verdict=$(awk '
     body { exit }
 ' .github/workflows/quality.yml)
 test -n "$verdict"
+export SWIFT_LANES=unit/hover/release/static NATIVE_SHARDS=1/2
 for scope in full docs ''; do
     for classifier in success failure skipped cancelled ''; do
         for swift in success failure skipped cancelled ''; do
@@ -28,5 +29,12 @@ for scope in full docs ''; do
             done
         done
     done
+done
+for missing in unit hover release static 1 2; do
+    if SCOPE_RESULT=success SCOPE=full SWIFT_RESULT=success NATIVE_RESULT=success TS_RESULT=success \
+        SWIFT_LANES="${SWIFT_LANES/$missing/}" NATIVE_SHARDS="${NATIVE_SHARDS/$missing/}" \
+        bash -e -c "$verdict" >/dev/null; then
+        echo "A full run passed without completion evidence for $missing." >&2; exit 1
+    fi
 done
 echo 'Verified full and docs-only CI aggregation, including missing and cancelled jobs.'
