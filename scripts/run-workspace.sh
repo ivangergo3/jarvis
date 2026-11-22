@@ -10,12 +10,15 @@ esac
 
 # Inherit the locked descriptor through the build and import, including on interruption.
 mkdir -p .build
-exec 9>>.build/typescript-workspace.lock
+exec 9<>.build/typescript-workspace.lock
 case "$(uname -s)" in
     Darwin) /usr/bin/lockf 9 ;;
     Linux) flock 9 ;;
     *) echo 'The local workspace commands currently support macOS and Linux with flock.' >&2; exit 2 ;;
 esac
+# Turbo's Node launcher forwards standard streams to its native process.
+# These three noninteractive tasks need no input, so its stdin can also hold the lock.
+exec 0<&9
 
 export TURBO_TELEMETRY_DISABLED=1
 if [[ $1 == typecheck ]]; then exec turbo run typecheck --cache=local:rw; fi
