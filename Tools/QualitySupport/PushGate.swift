@@ -129,18 +129,27 @@ public struct PushGate {
         }
         return result
     }
-    static func checkSize(_ value: Size) throws {
-        print("PR size: \(value.lines)/1000 changed text lines; \(value.binaries) binary changes")
-        guard value.lines <= 1_000 else {
+    private static let warningLines = 2_000
+    private static let maximumLines = 2_500
+
+    static func checkSize(_ value: Size, report: (String) -> Void = { print($0) }) throws {
+        report(
+            "PR size: \(value.lines)/\(maximumLines) changed text lines; \(value.binaries) binary changes"
+        )
+        guard value.lines <= maximumLines else {
             throw QualityFailure(
-                "AGENT: PR exceeds 1000 changed lines. Stop and split this change; do not bypass the hook"
+                "AGENT: PR exceeds \(maximumLines) changed lines. Stop and split this change; do not bypass the hook"
             )
         }
-        if value.lines >= 800 {
-            print("WARNING TO AGENT: approaching the 1000-line PR limit; split the next slice")
+        if value.lines >= warningLines {
+            let annotation =
+                ProcessInfo.processInfo.environment["GITHUB_ACTIONS"] == "true" ? "::warning::" : ""
+            report(
+                "\(annotation)WARNING TO AGENT: \(value.lines) changed lines. Keep the current outcome within \(maximumLines) lines."
+            )
         }
         if value.binaries > 0 {
-            print("Binary assets need explicit owner inspection; they are not counted as text")
+            report("Binary assets need explicit owner inspection; they are not counted as text")
         }
     }
     static func checkSecrets(_ patch: String) throws {

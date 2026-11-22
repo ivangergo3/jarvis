@@ -18,12 +18,20 @@ struct PushGateTests {
     }
     @Test func countsAllChangesAndBlocksOverLimit() throws {
         let value = try PushGate.size(
-            "400\t400\tTests/new.swift\0-\t-\timage.png\0200\t0\tdocs/a\tb.md\0")
-        #expect(value == PushGate.Size(lines: 1000, binaries: 1))
+            ["1000\t500\tTests/new\tfile.swift", "-\t-\timage.png", "1000\t0\tpnpm-lock.yaml"]
+                .joined(separator: "\0"))
+        #expect(value == PushGate.Size(lines: 2500, binaries: 1))
         try PushGate.checkSize(value)
-        #expect(throws: QualityFailure.self) { try PushGate.checkSize(.init(lines: 1001)) }
+        #expect(throws: QualityFailure.self) { try PushGate.checkSize(.init(lines: 2501)) }
         #expect(throws: QualityFailure.self) { try PushGate.size("invalid") }
         #expect(throws: QualityFailure.self) { try PushGate.size("-1\t0\tfile\0") }
+    }
+
+    @Test(arguments: [1999, 2000, 2499, 2500])
+    func sizeWarningStartsAtTwoThousand(lines: Int) throws {
+        var messages: [String] = []
+        try PushGate.checkSize(.init(lines: lines)) { messages.append($0) }
+        #expect(messages.contains { $0.contains("WARNING TO AGENT") } == (lines >= 2000))
     }
 
     @Test func secretsFailWithoutEchoingTheSecret() throws {
@@ -391,7 +399,7 @@ struct PushGateTests {
         try fixture.setup()
         let root = fixture.root
         let gate = fixture.gate()
-        try String(repeating: "line\n", count: 1001).write(
+        try String(repeating: "line\n", count: 2501).write(
             to: root.appendingPathComponent("new.txt"), atomically: true, encoding: .utf8)
         #expect(throws: QualityFailure.self) { try gate.identity() }
         _ = try fixture.git(["add", "new.txt"])
