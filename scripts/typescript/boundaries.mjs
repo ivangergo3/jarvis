@@ -24,6 +24,14 @@ const externals = {
   ]),
 };
 
+const desktopEntries = new Map([
+  [
+    'apps/desktop/src/main.mts',
+    new Set(['electron', 'node:fs', 'node:os', 'node:path', 'node:url']),
+  ],
+  ['apps/desktop/src/preload.cts', new Set(['electron'])],
+]);
+
 function packageRoot(file) {
   return /^(?:apps|packages)\//.test(file) ||
     file.startsWith('fixtures/workspace-library/')
@@ -120,8 +128,16 @@ export function checkBoundaries(root) {
   function check(specifier, file, location) {
     const owner = packageRoot(file);
     const layer = layers.get(owner);
+    const allowedExternals = desktopEntries.get(file) ?? externals[layer];
     const fail = (reason) => errors.push(location + ': ' + reason);
     if (specifier.startsWith('.')) {
+      if (desktopEntries.has(file)) {
+        fail(
+          'privileged Electron entry points cannot import local implementation',
+        );
+        return;
+      }
+
       const target = path.posix.join(path.posix.dirname(file), specifier);
       if (
         /[%?#\\]/.test(specifier) ||
@@ -159,6 +175,12 @@ export function checkBoundaries(root) {
         if (error.code !== 'MODULE_NOT_FOUND')
           fail('invalid relative module reference');
       }
+      for (const name of targets) {
+        if (desktopEntries.has(path.relative(root, name))) {
+          fail('privileged Electron entry points cannot be imported');
+          return;
+        }
+      }
       const folder = probe
         ? path.join(
             root,
@@ -193,7 +215,8 @@ export function checkBoundaries(root) {
     )
       return;
     if (isBuiltin(specifier)) {
-      if (externals[layer]) fail('unapproved external dependency');
+      if (allowedExternals && !allowedExternals.has(specifier))
+        fail('unapproved external dependency');
       return;
     }
     const name = dependencyName(specifier);
@@ -249,9 +272,9 @@ export function checkBoundaries(root) {
       fail('unknown workspace or indirect import');
       return;
     }
-    if (externals[layer]) {
+    if (allowedExternals) {
       if (
-        !externals[layer].has(specifier) &&
+        !allowedExternals.has(specifier) &&
         !(isTestFile(file) && specifier === 'vitest')
       ) {
         fail('unapproved external dependency');
