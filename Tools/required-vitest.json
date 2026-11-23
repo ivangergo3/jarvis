@@ -76,6 +76,14 @@
     "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
   },
   {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "Compose publishes only the explicit loopback DB and gateway bindings"
+  },
+  {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "database bootstrap validates the generated password before touching a volume"
+  },
+  {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "a missing packaged executable fails and removes its private profile"
   },
