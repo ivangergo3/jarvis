@@ -2,6 +2,8 @@
 
 A personal native SwiftUI macOS dashboard for Greg. Designed for full screen, with a cyan and gold reactor interface inspired by the Jarvis companion.
 
+The Swift app is the current daily-use version. To try the Electron rewrite alongside it and return to Swift, follow the [Mac preview guide](docs/engineering/desktop-preview.md).
+
 ## Engineering requirements
 
 [REQUIREMENTS.md](REQUIREMENTS.md) records the macOS and Swift guardrails, future Codex/voice boundaries, acceptance criteria and hardening order. These are target requirements, not a claim of current compliance. [AGENTS.md](AGENTS.md) points coding work to that baseline; linked engineering records describe implemented checks and remaining gaps.
@@ -53,7 +55,7 @@ follow [Build and verify](#build-and-verify) and [Automated quality checks](#aut
 
 ## Automated quality checks
 
-GitHub Actions runs **macOS build and tests** on every pull request, push/merge to `main`, merge-queue group and manual dispatch. It uses the standard `macos-15-intel` runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
+GitHub Actions runs **macOS build and tests** on pull requests, merge-queue groups and manual dispatch. Merging an already tested PR into `main` does not start a duplicate run. Documentation-only PRs run the scope and basic checks and still require independent review. It uses the standard `macos-15-intel` runner with Xcode 16.4 selected explicitly and builds with a macOS 14 deployment target.
 
 Run `./scripts/format.sh bootstrap` once to build the pinned official formatter, then `./scripts/check.sh` for the same formatting, Swift 6 concurrency probes, fixture tests and release build used in CI. `./scripts/format.sh check` checks without edits; `./scripts/format.sh fix` applies formatting explicitly. See [Swift quality gates](docs/engineering/SWIFT_QUALITY.md) for exact tool pins, the diagnostic baseline and validation limits. App targets and the release script use Swift 6; compiler warnings fail the check command. No additional correctness linter is installed.
 
