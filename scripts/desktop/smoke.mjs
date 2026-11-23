@@ -174,11 +174,12 @@ export async function runPackagedSmoke(
         for (const [prefix, key] of [
           ['JARVIS_SMOKE_WINDOW ', 'window'],
           ['JARVIS_SMOKE_DENIED ', 'denied'],
+          ['JARVIS_SMOKE_VISIBILITY ', 'visibility'],
         ]) {
           if (line.startsWith(prefix)) {
             state[key] = JSON.parse(line.slice(prefix.length));
-            if (key === 'denied' && checker?.connected)
-              checker.send({denied: state.denied}, (error) => {
+            if (key !== 'window' && checker?.connected)
+              checker.send({[key]: state[key]}, (error) => {
                 if (error) finished.reject(error);
               });
           }
