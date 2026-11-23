@@ -7,3 +7,5 @@ export {qualifyCodexTurnReceipt} from './turn-schema.js';
 export type {PendingTurnReceipt} from './turn-receipt.js';
 export {qualifyNewThreadReceipt} from './thread-setup.js';
 export type {NewThreadIntent} from './thread-setup.js';
+export {qualifyCodexRecovery} from './recovery-schemas.js';
+export type {CodexRecoveryReader} from './turn-recovery.js';
