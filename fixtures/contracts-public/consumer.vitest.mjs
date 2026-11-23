@@ -40,7 +40,11 @@ test('public contracts import in browser and Node consumers with branded destina
     writeFileSync(
       path.join(directory, 'consumer.mts'),
       [
-        "import {Command, ProjectId, RunTarget} from '@jarvis/contracts';",
+        "import {Command, ProjectId, Receipt, RunTarget} from '@jarvis/contracts';",
+        "type CancelObservation = Extract<Receipt, {operation:'run.cancel'}>['observation'];",
+        '// @ts-expect-error queued is not an accepted cancellation outcome',
+        "const invalidCancel: CancelObservation = {state:'queued'};",
+        "export const completedCancel: CancelObservation = {state:'completed'};",
         'export function owns(projectId: ProjectId, value: unknown): boolean {',
         '  return RunTarget.parse(value).projectId === projectId;',
         '}',

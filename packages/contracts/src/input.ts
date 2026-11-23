@@ -1,5 +1,6 @@
 import {z} from 'zod';
-import {Sequence} from './values.js';
+import {RequestTarget, Sequence, Title, utf8Bytes} from './values.js';
+import {batchLimit, eventLimit, parseWire} from './wire.js';
 
 const id = z.uuid().lowercase();
 export const AuthSessionId = id.brand<'AuthSessionId'>();
@@ -57,6 +58,126 @@ export const DraftInput = z
     'Duplicate content reference',
   );
 export type DraftInput = z.infer<typeof DraftInput>;
+
+export const LiveRequestTarget = RequestTarget.extend({
+  authSessionId: AuthSessionId,
+  channelId: id.brand<'WorkerChannelId'>(),
+});
+export type LiveRequestTarget = z.infer<typeof LiveRequestTarget>;
+export const PrivateAnswerRef = z.strictObject({
+  answerId: id.brand<'PrivateAnswerId'>(),
+  bytes: z.int().min(1).max(eventLimit),
+  sha256: Digest,
+});
+export type PrivateAnswerRef = z.infer<typeof PrivateAnswerRef>;
+const maxQuestions = 128;
+const maxOptions = 128;
+const privateText = z
+  .string()
+  .max(eventLimit)
+  .refine((value) => utf8Bytes(value) <= eventLimit);
+
+const Decision = z.enum(['allow_once', 'deny', 'cancel']);
+const QuestionId = id.brand<'QuestionId'>();
+const question = z
+  .strictObject({
+    questionId: QuestionId,
+    label: Title,
+    options: z
+      .array(z.strictObject({label: Title, description: privateText}))
+      .max(maxOptions),
+    allowText: z.boolean(),
+  })
+  .refine((value) => value.allowText || value.options.length > 0)
+  .refine(
+    (value) =>
+      new Set(value.options.map((option) => option.label)).size ===
+      value.options.length,
+  );
+
+export const Prompt = z
+  .discriminatedUnion('kind', [
+    z.strictObject({
+      kind: z.literal('approval'),
+      capability: z.enum(['command', 'file', 'permission']),
+      description: z.string().min(1).max(batchLimit),
+      decisions: z
+        .array(Decision)
+        .min(1)
+        .max(3)
+        .refine((values) => new Set(values).size === values.length),
+    }),
+    z.strictObject({
+      kind: z.literal('input'),
+      questions: z
+        .array(question)
+        .min(1)
+        .max(maxQuestions)
+        .refine(
+          (values) =>
+            new Set(values.map((value) => value.questionId)).size ===
+            values.length,
+        ),
+    }),
+  ])
+  .refine((value) => utf8Bytes(JSON.stringify(value)) <= batchLimit);
+export type Prompt = z.infer<typeof Prompt>;
+
+export const Answer = z
+  .discriminatedUnion('kind', [
+    z.strictObject({kind: z.literal('approval'), decision: Decision}),
+    z.strictObject({
+      kind: z.literal('input'),
+      answers: z
+        .array(
+          z.strictObject({
+            questionId: QuestionId,
+            text: privateText.refine((value) => value.length > 0),
+          }),
+        )
+        .min(1)
+        .max(maxQuestions)
+        .refine(
+          (values) =>
+            new Set(values.map((value) => value.questionId)).size ===
+            values.length,
+        ),
+    }),
+  ])
+  .refine((value) => utf8Bytes(JSON.stringify(value)) <= eventLimit);
+export type Answer = z.infer<typeof Answer>;
+
+/** Bound wire bytes and reject duplicate members before validating private data. */
+export function parsePrivatePrompt(wire: string) {
+  return Prompt.safeParse(parseWire(wire, batchLimit));
+}
+export function parsePrivateAnswer(wire: string) {
+  return Answer.safeParse(parseWire(wire, eventLimit));
+}
+
+/** The service verifies the live target and complete request content before claiming an answer. */
+export function matchesPrompt(prompt: Prompt, answer: Answer): boolean {
+  if (prompt.kind === 'approval')
+    return (
+      answer.kind === 'approval' && prompt.decisions.includes(answer.decision)
+    );
+  if (
+    answer.kind !== 'input' ||
+    answer.answers.length !== prompt.questions.length
+  )
+    return false;
+  const answers = new Map(
+    answer.answers.map((item) => [item.questionId, item.text]),
+  );
+  return prompt.questions.every((question) => {
+    const response = answers.get(question.questionId);
+    return (
+      response !== undefined &&
+      (question.allowText ||
+        question.options.some((option) => option.label === response))
+    );
+  });
+}
 
 export type AuthSessionId = z.infer<typeof AuthSessionId>;
 export type EpochId = z.infer<typeof EpochId>;
