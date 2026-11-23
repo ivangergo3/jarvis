@@ -5,3 +5,5 @@ export {mapRunNotification} from './run-notification.js';
 export type {CodexRunBinding} from './run-notification.js';
 export {qualifyCodexTurnReceipt} from './turn-schema.js';
 export type {PendingTurnReceipt} from './turn-receipt.js';
+export {qualifyNewThreadReceipt} from './thread-setup.js';
+export type {NewThreadIntent} from './thread-setup.js';
