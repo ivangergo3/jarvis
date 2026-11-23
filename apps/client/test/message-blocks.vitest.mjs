@@ -2,6 +2,14 @@ import {expect, it} from 'vitest';
 import {messageBlocks} from '../src/chat/message-blocks.ts';
 
 it('keeps the Swift grapheme boundaries of block markers, fences and table delimiters', () => {
+  const equivalent = '\u1fef';
+  expect(
+    messageBlocks([equivalent.repeat(3), 'inside', '```'].join('\n')),
+  ).toEqual([{kind: 'code', text: 'inside'}]);
+  expect(
+    messageBlocks('A|B\n---|---\n' + equivalent + 'x|y' + equivalent + '|z')[0]
+      .table.rows,
+  ).toEqual([['`x|y`', 'z']]);
   for (const extended of ['\u0301', '\uFE0F', '\u200D']) {
     for (const marker of ['> ', '# ', '- ', '12. ', '٤) ', '~~~']) {
       const line = marker + extended + 'not a delimiter';

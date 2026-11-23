@@ -25,7 +25,8 @@ const graphemes = new Intl.Segmenter(undefined, {granularity: 'grapheme'});
 
 // The last ASCII delimiter must be a complete Swift Character.
 function hasMarker(text: string, marker: string) {
-  if (!text.startsWith(marker)) return false;
+  if (text.slice(0, marker.length).normalize('NFC') !== marker.normalize('NFC'))
+    return false;
   if (text.length === marker.length || text.charCodeAt(marker.length) < 128)
     return true;
   return (
@@ -45,9 +46,9 @@ function cells(line: string): string[] | undefined {
     const char = chars[i] ?? '';
     if (char === '\\' && i + 1 < chars.length) {
       cell += char + chars[++i];
-    } else if (char === '`') {
+    } else if (char.normalize('NFC') === '`') {
       const start = i;
-      while (chars[i + 1] === '`') i++;
+      while (chars[i + 1]?.normalize('NFC') === '`') i++;
       const length = i + 1 - start;
       if (ticks === 0) ticks = length;
       else if (length === ticks) ticks = 0;
@@ -109,7 +110,7 @@ export function messageBlocks(source: string): Block[] {
       finishText();
       continue;
     }
-    const fence = trimmed.slice(0, 3);
+    const fence = trimmed.slice(0, 3).normalize('NFC');
     if ((fence === '```' || fence === '~~~') && hasMarker(trimmed, fence)) {
       finishText();
       list = undefined;
