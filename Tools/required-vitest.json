@@ -118,5 +118,13 @@
   {
     "file": "packages/providers/test/turn-recovery.vitest.mjs",
     "name": "revocation before during or after a history read suppresses all late evidence"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "malformed inputs and conflicting item identities cannot corroborate a send"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "a buffered result past the elapsed deadline is unknown even before timer delivery"
   }
 ]

@@ -10,11 +10,43 @@ const metadata = z.object({
 });
 const pageSize = 50;
 const maxPages = 32;
-const item = z.object({
-  id,
-  type: id,
-  clientId: z.string().max(512).nullish(),
+const detail = z.enum(['auto', 'low', 'high', 'original']).nullish();
+const offset = z.number().int().nonnegative();
+const textElement = z.object({
+  byteRange: z.object({start: offset, end: offset}),
+  placeholder: z.string().nullish(),
 });
+const remoteMedia = z
+  .object({url: z.string()})
+  .or(z.object({fileId: z.string()}));
+const contentPart = z.union([
+  z.object({
+    type: z.literal('text'),
+    text: z.string(),
+    text_elements: z.array(textElement).optional(),
+  }),
+  z.object({type: z.literal('image'), detail}).and(remoteMedia),
+  z.object({type: z.literal('audio')}).and(remoteMedia),
+  z.object({type: z.literal('localImage'), path: z.string(), detail}),
+  z.object({type: z.literal('localAudio'), path: z.string()}),
+  z.object({
+    type: z.enum(['skill', 'mention']),
+    name: z.string(),
+    path: z.string(),
+  }),
+]);
+const contents = z.array(contentPart);
+const item = z
+  .object({
+    id,
+    type: id,
+    clientId: z.string().max(512).nullish(),
+    content: z.unknown().optional(),
+  })
+  .refine(
+    (entry) =>
+      entry.type !== 'userMessage' || contents.safeParse(entry.content).success,
+  );
 const cursorValue = z.string().min(1).max(8192).nullish();
 const turnsPage = z.object({
   data: z
@@ -99,8 +131,10 @@ export async function findOriginalTurn(
     !z.uuidv4().safeParse(clientUserMessageId).success
   )
     return unknown;
+  const deadline = performance.now() + 10_000;
   const signal = AbortSignal.any([reader.signal, AbortSignal.timeout(10_000)]);
-  if (signal.aborted) return unknown;
+  const expired = () => signal.aborted || performance.now() >= deadline;
+  if (expired()) return unknown;
   const observers = new AbortController();
   const aborted = new Promise<void>((resolve) => {
     signal.addEventListener('abort', () => resolve(), {
@@ -111,10 +145,10 @@ export async function findOriginalTurn(
   // An unresponsive worker must not keep its caller waiting after revocation.
   let remaining = maxPages + 1;
   const read = async (request: HistoryRead) => {
-    signal.throwIfAborted();
+    if (expired()) throw new Error('History lookup expired');
     if (remaining-- <= 0) throw new Error('History limit reached');
     const result = await Promise.race([reader.read(request, signal), aborted]);
-    signal.throwIfAborted();
+    if (expired()) throw new Error('History lookup expired');
     return result;
   };
 
@@ -125,7 +159,7 @@ export async function findOriginalTurn(
         params: {threadId, includeTurns: false},
       }),
     );
-    if (signal.aborted || !record.success || record.data.thread.id !== threadId)
+    if (expired() || !record.success || record.data.thread.id !== threadId)
       return unknown;
     const turns = pages(async (cursor) =>
       turnsPage.parse(
@@ -161,8 +195,11 @@ export async function findOriginalTurn(
           }),
         ),
       );
+      const seenItems = new Set<string>();
       for await (const entry of items) {
-        if (entry.turnId !== turn.id) return unknown;
+        if (entry.turnId !== turn.id || seenItems.has(entry.item.id))
+          return unknown;
+        seenItems.add(entry.item.id);
         if (
           entry.item.type !== 'userMessage' ||
           entry.item.clientId !== clientUserMessageId
@@ -172,7 +209,7 @@ export async function findOriginalTurn(
         found = turn.id;
       }
     }
-    return found === undefined || signal.aborted
+    return found === undefined || expired()
       ? unknown
       : {kind: 'observed-turn', threadId, turnId: found};
   } catch {

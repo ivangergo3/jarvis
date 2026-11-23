@@ -1,4 +1,4 @@
-import {expect, test} from 'vitest';
+import {expect, test, vi} from 'vitest';
 import {findOriginalTurn} from '../src/turn-recovery.js';
 
 const clientId = 'c57d44c9-667c-405f-91b9-a4f54fd101a3';
@@ -11,7 +11,12 @@ const turnPage = (id, nextCursor = null) => ({
 function entry(turnId, type = 'userMessage', id = clientId) {
   return {
     turnId,
-    item: {id: 'i-' + turnId, type, clientId: id, content: 'private text'},
+    item: {
+      id: type + '-' + turnId,
+      type,
+      clientId: id,
+      content: [{type: 'text', text: 'private text'}],
+    },
   };
 }
 function fixture(pages, controller = new AbortController()) {
@@ -151,4 +156,58 @@ test('revocation before during or after a history read suppresses all late evide
   expect(
     await findOriginalTurn(revokedBeforeDelivery, threadId, clientId),
   ).toEqual({kind: 'unknown'});
+});
+
+test('malformed inputs and conflicting item identities cannot corroborate a send', async () => {
+  for (const content of [
+    undefined,
+    'text',
+    [42],
+    [{type: 'text'}],
+    [{type: 'image'}],
+  ]) {
+    const broken = entry('first');
+    broken.item.content = content;
+    expect(
+      await findOriginalTurn(
+        fixture([metadata, turnPage('first'), {data: [broken]}]),
+        threadId,
+        clientId,
+      ),
+    ).toEqual({kind: 'unknown'});
+  }
+  const conflicting = entry('first', 'userMessage', 'unrelated');
+  const reader = fixture([
+    metadata,
+    turnPage('first'),
+    {data: [conflicting], nextCursor: 'n'},
+    {data: [entry('first')]},
+  ]);
+  expect(await findOriginalTurn(reader, threadId, clientId)).toEqual({
+    kind: 'unknown',
+  });
+});
+
+test('a buffered result past the elapsed deadline is unknown even before timer delivery', async () => {
+  let time = 100;
+  const now = vi.spyOn(performance, 'now').mockImplementation(() => time);
+  try {
+    const reader = fixture([
+      metadata,
+      turnPage('first'),
+      {data: [entry('first')]},
+    ]);
+    const load = reader.read;
+    reader.read = async (request, signal) => {
+      const response = await load(request, signal);
+      if (request.method === 'thread/items/list') time += 10_001;
+      return response;
+    };
+    expect(await findOriginalTurn(reader, threadId, clientId)).toEqual({
+      kind: 'unknown',
+    });
+    expect(reader.requests).toHaveLength(3);
+  } finally {
+    now.mockRestore();
+  }
 });
