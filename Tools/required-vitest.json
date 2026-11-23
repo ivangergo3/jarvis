@@ -84,6 +84,26 @@
     "name": "database bootstrap validates the generated password before touching a volume"
   },
   {
+    "file": "packages/domain/test/close-workflow.vitest.mjs",
+    "name": "overlapping native gestures share one dialog and Cancel leaves work running"
+  },
+  {
+    "file": "packages/domain/test/close-workflow.vitest.mjs",
+    "name": "one affirmative close starts exactly one shutdown and later gestures recheck its original identity"
+  },
+  {
+    "file": "packages/domain/test/close-workflow.vitest.mjs",
+    "name": "every missing shutdown fact holds the window open until a newer complete snapshot"
+  },
+  {
+    "file": "packages/domain/test/close-workflow.vitest.mjs",
+    "name": "a late read or repeated close cannot overwrite current draft evidence before native exit"
+  },
+  {
+    "file": "packages/domain/test/close-workflow.vitest.mjs",
+    "name": "unavailable, malformed or foreign evidence cannot grant permission to quit"
+  },
+  {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "a missing packaged executable fails and removes its private profile"
   },
@@ -142,25 +162,5 @@
   {
     "file": "packages/contracts/test/commands.vitest.mjs",
     "name": "staging IDs encode their own nonwrapping sequence separately from general command UUIDs"
-  },
-  {
-    "file": "packages/domain/test/close-workflow.vitest.mjs",
-    "name": "overlapping native gestures share one dialog and Cancel leaves work running"
-  },
-  {
-    "file": "packages/domain/test/close-workflow.vitest.mjs",
-    "name": "one affirmative close starts exactly one shutdown and later gestures recheck its original identity"
-  },
-  {
-    "file": "packages/domain/test/close-workflow.vitest.mjs",
-    "name": "every missing shutdown fact holds the window open until a newer complete snapshot"
-  },
-  {
-    "file": "packages/domain/test/close-workflow.vitest.mjs",
-    "name": "a late read or repeated close cannot overwrite current draft evidence before native exit"
-  },
-  {
-    "file": "packages/domain/test/close-workflow.vitest.mjs",
-    "name": "unavailable, malformed or foreign evidence cannot grant permission to quit"
   }
 ]
