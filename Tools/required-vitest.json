@@ -246,5 +246,13 @@
   {
     "file": "packages/providers/test/stdio-preflight.vitest.mjs",
     "name": "a rejected binary, revoked handoff and revocation during a stalled reply issue no later request"
+  },
+  {
+    "file": "apps/client/test/message-blocks.vitest.mjs",
+    "name": "preserves existing whitespace, ordered list markers and table rows when block types change"
+  },
+  {
+    "file": "apps/client/test/message-blocks.vitest.mjs",
+    "name": "keeps the Swift grapheme boundaries of block markers, fences and table delimiters"
   }
 ]
