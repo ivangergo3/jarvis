@@ -72,19 +72,19 @@ it('a late read or repeated close cannot overwrite current draft evidence before
   shutdown.observe(saved);
   shutdown.observe({...saved, revision: 2});
   expect(shutdown.state.reasons).toEqual(['Saved text and image drafts']);
-  shutdown.observe({...saved, revision: 3, observed: null});
+  shutdown.observe({...saved, revision: 4, observed: null});
   expect(shutdown.state.reasons).toContain('Saved text and image drafts');
-  shutdown.observe({...saved, revision: 2});
+  shutdown.observe({...saved, revision: 3});
   expect(shutdown.request().action).toBe('recheck');
-  shutdown.observe({...saved, revision: 4});
+  shutdown.observe({...saved, revision: 5});
   expect(shutdown.request().action).toBe('allow');
   shutdown.observe({
     ...saved,
-    revision: 5,
+    revision: 6,
     observed: {...complete, draftsPersisted: false},
   });
   expect(shutdown.request().action).toBe('recheck');
-  shutdown.observe({...saved, revision: 6});
+  shutdown.observe({...saved, revision: 7});
   expect(shutdown.request().action).toBe('allow');
 });
 it('unavailable, malformed or foreign evidence cannot grant permission to quit', () => {
