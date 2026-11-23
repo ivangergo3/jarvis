@@ -4,6 +4,10 @@ import {findOriginalTurn} from '../src/turn-recovery.js';
 const clientId = 'c57d44c9-667c-405f-91b9-a4f54fd101a3';
 const threadId = 'thread-one';
 const metadata = {thread: {id: threadId}};
+const turnPage = (id, nextCursor = null) => ({
+  data: [{id, items: [], itemsView: 'notLoaded'}],
+  nextCursor,
+});
 function entry(turnId, type = 'userMessage', id = clientId) {
   return {
     turnId,
@@ -28,41 +32,70 @@ function fixture(pages, controller = new AbortController()) {
 test('only a single original client ID in fully paginated bound history corroborates a turn', async () => {
   const reader = fixture([
     metadata,
-    {
-      data: [
-        entry('other', 'userMessage', null),
-        entry('tool', 'agentMessage'),
-      ],
-      nextCursor: 'next',
-    },
-    {data: [entry('original')], nextCursor: null},
+    turnPage('other', 'next-turn'),
+    {data: [entry('other', 'userMessage', null)]},
+    turnPage('original'),
+    {data: [entry('original', 'agentMessage')], nextCursor: 'next-item'},
+    {data: [entry('original')]},
   ]);
   expect(await findOriginalTurn(reader, threadId, clientId)).toEqual({
     kind: 'observed-turn',
     threadId,
     turnId: 'original',
   });
-  expect(reader.requests).toEqual([
-    {method: 'thread/read', params: {threadId, includeTurns: false}},
-    ...[null, 'next'].map((cursor) => ({
-      method: 'thread/items/list',
-      params: {threadId, cursor, limit: 50, sortDirection: 'asc'},
-    })),
+  expect(reader.requests.map((r) => r.method)).toEqual([
+    'thread/read',
+    'thread/turns/list',
+    'thread/items/list',
+    'thread/turns/list',
+    'thread/items/list',
+    'thread/items/list',
   ]);
+  expect(reader.requests[0].params).toEqual({threadId, includeTurns: false});
+  for (const r of reader.requests.slice(1)) {
+    expect(r.params).toMatchObject({threadId, limit: 50, sortDirection: 'asc'});
+    if (r.method === 'thread/turns/list')
+      expect(r.params.itemsView).toBe('notLoaded');
+    else
+      expect(r.params.deferOutput).toEqual({
+        commandExecution: true,
+        mcpToolCall: true,
+      });
+  }
+  expect(reader.requests[3].params.cursor).toBe('next-turn');
+  expect(reader.requests[5].params).toMatchObject({
+    cursor: 'next-item',
+    turnId: 'original',
+  });
 });
 
 test('missing conflicting malformed or truncated history never authorizes a resend', async () => {
   const hit = {data: [entry('first')], nextCursor: 'after'};
   for (const pages of [
     [{thread: {id: 'foreign'}}],
-    [metadata, {data: [entry('wrong', 'agentMessage')]}],
-    [metadata, hit, {data: [entry('second')]}],
-    [metadata, hit, new Error('private detail')],
-    [metadata, hit, {data: [{turnId: null}]}],
-    [metadata, hit, {data: [], nextCursor: 'after'}],
+    [metadata, turnPage('wrong'), {data: [entry('wrong', 'agentMessage')]}],
+    [metadata, turnPage('first'), hit, {data: [entry('second')]}],
+    [metadata, turnPage('first'), hit, {data: [entry('first')]}],
+    [
+      metadata,
+      turnPage('first', 'next'),
+      {data: [entry('first')]},
+      turnPage('second'),
+      {data: [entry('second')]},
+    ],
+    [
+      metadata,
+      turnPage('first', 'next'),
+      {data: [entry('first')]},
+      turnPage('first'),
+    ],
+    [metadata, turnPage('first'), hit, new Error('private detail')],
+    [metadata, turnPage('first'), hit, {data: [{turnId: null}]}],
+    [metadata, turnPage('first'), hit, {data: [], nextCursor: 'after'}],
     [metadata, {data: Array.from({length: 51}, () => entry('wrong'))}],
     [
       metadata,
+      turnPage('first'),
       hit,
       ...Array.from({length: 31}, (_, i) => ({
         data: [],
@@ -110,6 +143,7 @@ test('revocation before during or after a history read suppresses all late evide
     signal: late.signal,
     read: async (request) => {
       if (request.method === 'thread/read') return metadata;
+      if (request.method === 'thread/turns/list') return turnPage('late');
       queueMicrotask(() => late.abort());
       return {data: [entry('late')]};
     },
