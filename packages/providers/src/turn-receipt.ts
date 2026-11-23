@@ -51,7 +51,6 @@ export async function acceptTurnReceipt(
     source.generationId !== pending.generationId
   )
     return {kind: 'ignored'};
-  if (signal.aborted) return {kind: 'unknown'};
   if (
     typeof frame !== 'object' ||
     !frame ||
@@ -59,11 +58,16 @@ export async function acceptTurnReceipt(
     frame.id !== pending.rpcId
   )
     return {kind: 'ignored'};
+  if (signal.aborted) return {kind: 'unknown'};
   const result = reply.safeParse(frame);
   if (!result.success) return {kind: 'unknown'};
   const turnId = result.data.result.turn.id;
+  const original = Object.freeze({
+    ...pending,
+    target: Object.freeze({...pending.target}),
+  });
   try {
-    const bound = await bindOriginal(pending, turnId, signal);
+    const bound = await bindOriginal(original, turnId, signal);
     if (!bound || signal.aborted) return {kind: 'unknown'};
   } catch {
     return {kind: 'unknown'};
@@ -71,10 +75,10 @@ export async function acceptTurnReceipt(
   return {
     kind: 'bound',
     binding: {
-      ownerId: pending.ownerId,
-      generationId: pending.generationId,
-      target: pending.target,
-      threadId: pending.threadId,
+      ownerId: original.ownerId,
+      generationId: original.generationId,
+      target: original.target,
+      threadId: original.threadId,
       turnId,
     },
   };

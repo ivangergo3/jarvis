@@ -25,8 +25,9 @@ it('binds the original turn before the existing notification mapper can expose i
     started.resolve();
     return persisted.promise;
   });
+  const mutable = {...intent, target: {...target}};
   const result = acceptTurnReceipt(
-    intent,
+    mutable,
     source,
     response,
     stop,
@@ -38,6 +39,9 @@ it('binds the original turn before the existing notification mapper can expose i
   await started.promise;
   expect(delivered).toBe(false);
   expect(confirm).toHaveBeenCalledWith(intent, 'turn-A', stop);
+  mutable.target.runId = 'run-B';
+  mutable.threadId = 'thread-B';
+  mutable.ownerId = 'owner-B';
   persisted.resolve(true);
   const {kind, binding} = await result;
   expect(kind).toBe('bound');
@@ -122,4 +126,13 @@ it('a conflicting binding, lost persistence response or revoked original run sta
     await acceptTurnReceipt(intent, source, response, owner.signal, confirm),
   ).toEqual({kind: 'unknown'});
   expect(confirm).toHaveBeenCalledTimes(1);
+  expect(
+    await acceptTurnReceipt(
+      intent,
+      source,
+      {...response, id: 'other'},
+      owner.signal,
+      confirm,
+    ),
+  ).toEqual({kind: 'ignored'});
 });
