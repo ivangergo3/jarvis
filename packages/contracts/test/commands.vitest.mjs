@@ -24,6 +24,11 @@ const submitted = {
 };
 test('submission refers to one frozen destination and the precise sealed editor revision', () => {
   expect(Command.parse(submitted)).toEqual(submitted);
+  for (const field of Object.keys(submitted)) {
+    const incomplete = {...submitted};
+    delete incomplete[field];
+    expect(Command.safeParse(incomplete).success, field).toBe(false);
+  }
   for (const invalid of [
     {...submitted, schemaVersion: 2},
     {...submitted, operation: 'run.future'},
@@ -66,6 +71,10 @@ test('submission refers to one frozen destination and the precise sealed editor 
     {...imageOnly, text: {...imageOnly.text, sha256: digest}},
   ])
     expect(DraftInput.safeParse(invalid).success).toBe(false);
+  const seventh = {...images[0], attachmentId: id(106), contentId: id(116)};
+  expect(
+    DraftInput.safeParse({...imageOnly, images: [...images, seventh]}).success,
+  ).toBe(false);
 });
 
 test('run control operations require the expected revision and make no new run or approval', () => {
