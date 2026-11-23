@@ -83,9 +83,7 @@ test('only a single original client ID in fully paginated bound history corrobor
 test('missing conflicting malformed or truncated history never authorizes a resend', async () => {
   const hit = {data: [entry('first')], nextCursor: 'after'};
   for (const pages of [
-    [{thread: {id: 'foreign'}}],
     [metadata, turnPage('wrong'), {data: [entry('wrong', 'agentMessage')]}],
-    [metadata, turnPage('first'), hit, {data: [entry('second')]}],
     [metadata, turnPage('first'), hit, {data: [entry('first')]}],
     [
       metadata,
@@ -93,12 +91,6 @@ test('missing conflicting malformed or truncated history never authorizes a rese
       {data: [entry('first')]},
       turnPage('second'),
       {data: [entry('second')]},
-    ],
-    [
-      metadata,
-      turnPage('first', 'next'),
-      {data: [entry('first')]},
-      turnPage('first'),
     ],
     [metadata, turnPage('first'), hit, new Error('private detail')],
     [metadata, turnPage('first'), hit, {data: [{turnId: null}]}],
@@ -141,6 +133,24 @@ test('missing conflicting malformed or truncated history never authorizes a rese
     await findOriginalTurn(invalid, threadId, 'similar-looking text'),
   ).toEqual({kind: 'unknown'});
   expect(invalid.requests).toHaveLength(0);
+});
+
+test('foreign thread, foreign item and repeated turn cannot corroborate a unique match', async () => {
+  const hit = {data: [entry('first')]};
+  for (const [pages, expectedReads] of [
+    [[{thread: {id: 'foreign', turns: []}}, turnPage('first'), hit], 1],
+    [[metadata, turnPage('first'), {data: [entry('foreign')]}], 3],
+    [
+      [metadata, turnPage('first', 'next'), hit, turnPage('first'), {data: []}],
+      4,
+    ],
+  ]) {
+    const reader = fixture(pages);
+    expect(await findOriginalTurn(reader, threadId, clientId)).toEqual({
+      kind: 'unknown',
+    });
+    expect(reader.requests).toHaveLength(expectedReads);
+  }
 });
 
 test('revocation before during or after a history read suppresses all late evidence', async () => {
