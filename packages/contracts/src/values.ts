@@ -44,6 +44,10 @@ export const Title = z
   .min(1)
   .max(256)
   .refine((value) => value.trim().length > 0);
+// Only project and session titles must round-trip through PostgreSQL text.
+export const RecordTitle = Title.refine(
+  (value) => !value.includes('\0') && !/\p{Surrogate}/u.test(value),
+);
 export const ProjectTarget = z.strictObject({projectId: ProjectId});
 export const SessionTarget = ProjectTarget.extend({sessionId: SessionId});
 export const RunTarget = SessionTarget.extend({runId: RunId});

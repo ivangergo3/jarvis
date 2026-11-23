@@ -274,5 +274,9 @@
   {
     "file": "packages/providers/test/thread-setup.vitest.mjs",
     "name": "durably binds only the exact idle new thread with its frozen checkout and permissions"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "project and session titles round-trip as PostgreSQL text"
   }
 ]
