@@ -202,6 +202,32 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  desktop:
+    name: Packaged Electron / macOS
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    runs-on: macos-15-intel
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          run_install: false
+      - name: Prepare the packaged app's workspace dependencies
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(node -p 'process.versions.node')" = "$(cat .nvmrc)"
+          test "pnpm@$(pnpm --version)" = "$(node -p 'require("./package.json").packageManager')"
+          node scripts/verify-vitest-links.mjs
+          pnpm install --frozen-lockfile
+          pnpm --filter '@jarvis/client^...' --filter '@jarvis/desktop^...' --if-present run build
       - name: Exercise the signed synthetic Electron preview
         env:
           JARVIS_SMOKE_EVIDENCE_DIR: ${{ runner.temp }}/jarvis-electron-smoke
@@ -227,7 +253,7 @@ jobs:
 
   quality:
     name: macOS build and tests
-    needs: [scope, swift, native, typescript]
+    needs: [scope, swift, native, typescript, desktop]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -242,13 +268,15 @@ jobs:
           SWIFT_LANES: ${{ needs.swift.outputs.unit }}/${{ needs.swift.outputs.hover }}/${{ needs.swift.outputs.release }}/${{ needs.swift.outputs.static }}
           NATIVE_SHARDS: ${{ needs.native.outputs.shard1 }}/${{ needs.native.outputs.shard2 }}
           TS_RESULT: ${{ needs.typescript.result }}
+          DESKTOP_RESULT: ${{ needs.desktop.result }}
         run: |
           if [[ "$SCOPE" == full ]]; then
             echo "Completed Swift lanes=$SWIFT_LANES, native shards=$NATIVE_SHARDS"
             [[ "$SWIFT_LANES" == unit/hover/release/static && "$NATIVE_SHARDS" == 1/2 ]] || exit 1
           fi
           printf 'Scope=%s (%s), Swift=%s, native UI=%s, TypeScript=%s\n' "$SCOPE" "$SCOPE_RESULT" "$SWIFT_RESULT" "$NATIVE_RESULT" "$TS_RESULT"
-          case "$SCOPE_RESULT/$SCOPE/$SWIFT_RESULT/$NATIVE_RESULT/$TS_RESULT" in
-            success/full/success/success/success|success/docs/skipped/skipped/skipped) exit 0 ;;
+          echo "Packaged Electron=$DESKTOP_RESULT"
+          case "$SCOPE_RESULT/$SCOPE/$SWIFT_RESULT/$NATIVE_RESULT/$TS_RESULT/$DESKTOP_RESULT" in
+            success/full/success/success/success/success|success/docs/skipped/skipped/skipped/skipped) exit 0 ;;
             *) exit 1 ;;
           esac
