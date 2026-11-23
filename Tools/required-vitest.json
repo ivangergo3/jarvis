@@ -8,6 +8,14 @@
     "name": "public contracts import in browser and Node consumers with branded destinations"
   },
   {
+    "file": "packages/providers/test/preflight.vitest.mjs",
+    "name": "pins the measured binary before a read-only handshake on the same worker"
+  },
+  {
+    "file": "packages/providers/test/preflight.vitest.mjs",
+    "name": "stops before reading account data after a profile or platform mismatch or interrupted handshake"
+  },
+  {
     "file": "packages/providers/test/account.vitest.mjs",
     "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
   },
@@ -46,6 +54,18 @@
   {
     "file": "packages/contracts/test/events.vitest.mjs",
     "name": "a project event has a project target; requests retain their originating run even when selection changes"
+  },
+  {
+    "file": "packages/providers/test/run-notification.vitest.mjs",
+    "name": "maps a finished assistant item to its original private destination and provider identity"
+  },
+  {
+    "file": "packages/providers/test/run-notification.vitest.mjs",
+    "name": "withholds questions, restricted content and oversized items without copying their private text"
+  },
+  {
+    "file": "packages/providers/test/run-notification.vitest.mjs",
+    "name": "maps confirmed turn status and keeps interruption separate from verified process cleanup"
   },
   {
     "file": "packages/contracts/test/events.vitest.mjs",
