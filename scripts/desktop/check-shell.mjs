@@ -102,6 +102,10 @@ async function checkShell(state, profile, evidence) {
     await page.getByRole('button', {name: 'Graph', exact: true}).click();
     await expect(session).toHaveAttribute('aria-pressed', 'true');
     await expect(session.locator('.team-port')).toBeVisible();
+    const heading = page.getByRole('heading', {name: 'Observatory'});
+    await heading.scrollIntoViewIfNeeded();
+    await expect(heading).toBeInViewport();
+    await page.screenshot({path: path.join(evidence, 'project.png')});
     const originalViewport = await page.evaluate(() => ({
       width: innerWidth,
       height: innerHeight,
@@ -154,7 +158,6 @@ async function checkShell(state, profile, evidence) {
       .poll(() => page.evaluate(() => document.scrollingElement.scrollTop))
       .toBeGreaterThan(wheel.start);
     await page.setViewportSize(originalViewport);
-    await page.screenshot({path: path.join(evidence, 'project.png')});
     const destinations = [
       'jarvis-preview://fixture/navigation-check',
       'https://jarvis-preview.invalid/navigation-check',
