@@ -16,11 +16,22 @@ import {
 import {useState} from 'react';
 import {createRoot} from 'react-dom/client';
 
+import {TeamGraph} from './team-graph';
 import './theme.css';
 
 const fixtureProject = queryOptions({
   queryKey: ['fixture', 'project'],
-  queryFn: () => ({title: 'Observatory', sessions: ['Shell verification']}),
+  queryFn: () => ({
+    title: 'Observatory',
+    sessions: [
+      {
+        id: 'fixture-session',
+        name: 'Shell verification',
+        detail: '',
+        status: 'Standby' as const,
+      },
+    ],
+  }),
   staleTime: Infinity,
 });
 
@@ -38,6 +49,7 @@ function Workspace() {
 }
 
 function Project() {
+  const [selectedId, select] = useState<string>();
   const [expanded, setExpanded] = useState(false);
   const project = useQuery(fixtureProject);
   if (!project.data) return <p>Loading fixture…</p>;
@@ -49,11 +61,11 @@ function Project() {
         Sessions
       </button>
       {expanded && (
-        <ul>
-          {project.data.sessions.map((title) => (
-            <li key={title}>{title}</li>
-          ))}
-        </ul>
+        <TeamGraph
+          cards={project.data.sessions}
+          {...(selectedId === undefined ? {} : {selectedId})}
+          onSelect={select}
+        />
       )}
     </section>
   );
