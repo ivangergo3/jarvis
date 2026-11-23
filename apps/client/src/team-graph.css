@@ -7,7 +7,7 @@
 .team-viewport {
   height: max(26rem, 62vh);
   overflow: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
   background: #081218;
 }
 .team-canvas {

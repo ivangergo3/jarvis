@@ -136,6 +136,23 @@ async function checkShell(state, profile, evidence) {
         }),
       )
       .toBe(true);
+    // Move a physical wheel over the scrollport after its own vertical range
+    // has been exhausted. The rest of the window must remain reachable.
+    const wheel = await page.locator('.team-viewport').evaluate((el) => {
+      el.scrollIntoView({block: 'start'});
+      el.scrollTop = el.scrollHeight;
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + Math.min(24, rect.width / 2);
+      const y = Math.max(0, rect.top) + 16;
+      if (!el.contains(document.elementFromPoint(x, y)))
+        throw new Error('Wheel target is hidden');
+      return {x, y, start: document.scrollingElement.scrollTop};
+    });
+    await page.mouse.move(wheel.x, wheel.y);
+    await page.mouse.wheel(0, 240);
+    await expect
+      .poll(() => page.evaluate(() => document.scrollingElement.scrollTop))
+      .toBeGreaterThan(wheel.start);
     await page.setViewportSize(originalViewport);
     await page.screenshot({path: path.join(evidence, 'project.png')});
     const destinations = [
