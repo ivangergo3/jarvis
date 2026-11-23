@@ -11,6 +11,20 @@ The final output line gives the absolute path to `Jarvis Preview.app`. Open that
 
 The window shows a synthetic workspace. Select **Observatory**, then **Sessions** to see **Shell verification**. Use **All projects** to return to the workspace. The preview uses bundle identifier `dev.greg.jarvis.preview` and its own `Jarvis Preview` application-support directory.
 
+### Return to the Swift app
+
+Close the preview and open the original **Jarvis.app** from Finder. If you built Swift from this checkout, its bundle is available from the repository root:
+
+```sh
+open ./build/Jarvis.app
+```
+
+If that path is missing, open the Swift copy you already use or build it with `./build.sh`. Swift's bundle identifier is `dev.greg.jarvis.missioncontrol`. Opening it requires no uninstaller, database reset, or history migration. Keep both app bundles and their data directories while trying the rewrite.
+
+The packaged preview currently uses synthetic conversations. Its screenshots and launch checks qualify that fixture. The switch to daily use requires an owner-authenticated task, recovery after reopening, a verified backup and restore of new-app data, and the visual and performance acceptance checks. Continue using Swift for live work until those pass. [Cutover acceptance](https://github.com/ivangergo3/jarvis/issues/137)
+
+### Verify a preview build
+
 The build uses an ad-hoc signature for local development. Developer ID distribution and notarization require separate qualification.
 
 Before printing the bundle path, packaging verifies its preview identity, host architecture and ad-hoc signature, including signed resources. Full GitHub checks run the same packaging command on Intel macOS.
