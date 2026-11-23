@@ -116,6 +116,14 @@
     "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
   },
   {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "submission refers to one frozen destination and the precise sealed editor revision"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "run control operations require the expected revision and make no new run or approval"
+  },
+  {
     "file": "packages/providers/test/stdio-preflight.vitest.mjs",
     "name": "uses only the pinned non-model handshake and correlates fragmented private RPC replies"
   },
