@@ -24,6 +24,11 @@ begin
     raise exception 'allowed rebinding to a different CLI session';
   exception when sqlstate 'JV409' then null; end;
 
+  begin
+    perform jarvis.bind_provider_run(o,p,s,gen_random_uuid(),gen_random_uuid(),'thread-A','turn-A');
+    raise exception 'a reconnect attached the same CLI turn to a second run';
+  exception when sqlstate 'JV409' then null; end;
+
   if jarvis.observe_provider_state(o,p,s,r,gen_random_uuid(),'thread-A','turn-A','running')
     or jarvis.observe_provider_item(o,p,s,r,g,'thread-A','turn-B','item','retained',bytes)
   then raise exception 'a foreign source produced a public event'; end if;

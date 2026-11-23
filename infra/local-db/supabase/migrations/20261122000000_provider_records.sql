@@ -18,7 +18,8 @@ create table jarvis.provider_runs (
   observation jsonb,
   revision bigint not null default 0 check (revision >= 0),
   primary key (owner_id, run_id),
-  unique (owner_id,project_id,session_id,generation_id,turn_id),
+  -- A reconnect does not turn an existing CLI turn into a second Jarvis run.
+  unique (owner_id,project_id,session_id,turn_id),
   foreign key (owner_id, project_id, session_id) references jarvis.cli_threads
 );
 create table jarvis.provider_items (
