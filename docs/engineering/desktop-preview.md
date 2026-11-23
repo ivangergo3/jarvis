@@ -18,3 +18,37 @@ Before printing the bundle path, packaging verifies its preview identity, host a
 Run `pnpm desktop:package --smoke` to exercise the signed bundle with Playwright. It opens the synthetic window, checks the renderer sandbox and preload bridge, visits Observatory and Sessions, tests blocked navigation, then closes the window. The result directory contains two screenshots and a JSON receipt. Set `JARVIS_SMOKE_EVIDENCE_DIR` to a new absolute output path if desired. GitHub retains these three files from its Intel run. If process cleanup cannot be verified, the command fails and prints the location of its retained diagnostic profile.
 
 Reopening the running preview from Finder or the Dock restores the existing project window. The packaged smoke minimizes the real window, delivers Electron’s activation event inside its synthetic profile, and checks native and renderer focus as well as the selected project.
+
+## On-device dictation adapter
+
+The Phase 1 target is a user-initiated microphone session that returns editable text to the original conversation draft. The current packaged preview has no microphone control.
+
+The existing Swift app uses AVFoundation to capture audio and Apple Speech to recognize it. For the Electron port, keep this macOS-specific capture and recognition in a bundled Swift helper. The TypeScript host owns its lifetime and the current renderer document. React owns the controls and editable draft. The helper has no reason to receive a Codex credential, a chat transcript, or a send-message capability. Audio samples stay between the capture engine and the on-device recognizer.
+
+Before recording for a selected language, check microphone and speech permissions, recognizer availability and local recognition support. Compare the recognizer’s effective BCP 47 locale with the requested locale before opening the microphone. macOS can substitute a different locale. Set the local-only flag on every recognition request. If a check fails, show the reason and keep typing available. The two Apple API checks are both necessary. [Recognizer capability](https://developer.apple.com/documentation/speech/sfspeechrecognizer/supportsondevicerecognition) · [Local recognition request](https://developer.apple.com/documentation/speech/sfspeechrecognitionrequest/requiresondevicerecognition)
+
+| Action | Expected result |
+| --- | --- |
+| Start | Bind a fresh recording ID to the current document, project and chat. Request permissions only after the user starts. Offer UK and US English, French and Hungarian, subject to local availability. |
+| Finish | Stop capture. Final text, or the latest partial after the existing three-second finish window, goes to the originating editable draft. Sending needs a separate user action. |
+| Cancel, navigate away, lose the renderer, sleep or close | Electron main invalidates the recording ID and stops the helper on loss of the originating document, including a renderer crash. Release the input tap, recognition task and capture engine. Ignore late results and permission callbacks. |
+| Helper exit, unavailable device or asset | End the recording with a visible status. Never retry using a network recognizer. |
+
+The following probe passed with Apple Swift 6.4.2 and the macOS 27.2 SDK targeting ARM64 macOS 14. Save it as `probe.swift` and run `xcrun swiftc -typecheck -target arm64-apple-macosx14.0 probe.swift`. This check does not exercise recognition or determine installed language availability. Planned automated acceptance uses a fake recognizer for cancellation, delayed results and cross-chat events. Packaged permission prompts, audio input, supported languages and termination of capture require a separate hands-on Mac check.
+
+```swift
+import AVFoundation
+import Speech
+
+@available(macOS 14, *)
+func localRequest(_ identifier: String) -> SFSpeechAudioBufferRecognitionRequest? {
+    guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: identifier)),
+        recognizer.locale.identifier(.bcp47) == Locale(identifier: identifier).identifier(.bcp47),
+        recognizer.isAvailable, recognizer.supportsOnDeviceRecognition
+    else { return nil }
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.requiresOnDeviceRecognition = true
+    request.shouldReportPartialResults = true
+    return request
+}
+```
