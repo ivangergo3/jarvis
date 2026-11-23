@@ -9,7 +9,15 @@ import {
   Title,
   Version,
 } from './values.js';
-import {AuthSessionId, ContentId, DraftInput, EpochId} from './input.js';
+import {
+  PrivateAnswerRef,
+  AuthSessionId,
+  ContentId,
+  Digest,
+  DraftInput,
+  EpochId,
+  LiveRequestTarget,
+} from './input.js';
 
 const header = {
   schemaVersion: Version,
@@ -42,6 +50,11 @@ const registration = z.strictObject({
   selectionId: z.uuid().lowercase(),
   expectedRevision: Cursor,
 });
+const commandFingerprint = z.strictObject({
+  originalSessionId: AuthSessionId,
+  originalControllerEpoch: EpochId,
+  fingerprint: Digest,
+});
 const removal = SessionTarget.extend({
   entryId: z.uuid().lowercase(),
   entryRevision: Sequence,
@@ -53,51 +66,115 @@ const runControls = z.enum([
   'run.settle_unsent',
   'run.reconcile',
 ]);
-export const Command = z.discriminatedUnion('operation', [
-  z.strictObject({
-    ...header,
-    operation: z.literal('project.create'),
-    target: noTarget,
-    payload: z.strictObject({title: Title}),
+// An original command may never have arrived. Its operation and original admission
+// epoch must be recoverable from this packet without reversing the fingerprint.
+const retirement = z.discriminatedUnion('originalOperation', [
+  commandFingerprint.extend({
+    originalOperation: z.literal('project.create'),
+    destination: noTarget,
   }),
-  z.strictObject({
-    ...header,
-    operation: z.literal('project.register_repository'),
-    target: ProjectTarget,
-    payload: registration,
+  commandFingerprint.extend({
+    originalOperation: z.enum([
+      'session.create',
+      'project.register_repository',
+    ]),
+    destination: ProjectTarget,
   }),
-  z.strictObject({
-    ...header,
-    operation: z.literal('session.create'),
-    target: ProjectTarget,
-    payload: z.strictObject({title: Title}),
+  commandFingerprint.extend({
+    originalOperation: z.literal('run.submit'),
+    destination: FrozenDestination,
   }),
-  z.strictObject({
-    ...header,
-    operation: z.literal('run.submit'),
-    target: FrozenDestination,
-    payload: DraftInput,
+  commandFingerprint.extend({
+    originalOperation: runControls.or(
+      z.literal('run.acknowledge_unknown_effect'),
+    ),
+    destination: RunRevisionTarget,
   }),
-  z.strictObject({
-    ...header,
-    operation: runControls,
-    target: RunRevisionTarget,
+  commandFingerprint.extend({
+    originalOperation: z.literal('request.answer'),
+    destination: LiveRequestTarget,
   }),
-  z.strictObject({
-    ...header,
-    operation: z.literal('run.acknowledge_unknown_effect'),
-    target: RunRevisionTarget,
-    payload: z.strictObject({
-      repositoryId: z.uuid().lowercase(),
-      fenceRevision: Sequence,
-    }),
+  commandFingerprint.extend({
+    originalOperation: z.literal('history.remove_content'),
+    destination: removal,
   }),
-  z.strictObject({
-    ...header,
-    operation: z.literal('history.remove_content'),
-    target: removal,
+  commandFingerprint.extend({
+    originalOperation: z.literal('command.retire'),
+    destination: z.strictObject({originalCommandId: CommandId}),
   }),
 ]);
+
+export const Command = z
+  .discriminatedUnion('operation', [
+    z.strictObject({
+      ...header,
+      operation: z.literal('project.create'),
+      target: noTarget,
+      payload: z.strictObject({title: Title}),
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('project.register_repository'),
+      target: ProjectTarget,
+      payload: registration,
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('session.create'),
+      target: ProjectTarget,
+      payload: z.strictObject({title: Title}),
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('run.submit'),
+      target: FrozenDestination,
+      payload: DraftInput,
+    }),
+    z.strictObject({
+      ...header,
+      operation: runControls,
+      target: RunRevisionTarget,
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('run.acknowledge_unknown_effect'),
+      target: RunRevisionTarget,
+      payload: z.strictObject({
+        repositoryId: z.uuid().lowercase(),
+        fenceRevision: Sequence,
+      }),
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('request.answer'),
+      target: LiveRequestTarget,
+      payload: PrivateAnswerRef,
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('history.remove_content'),
+      target: removal,
+    }),
+    z.strictObject({
+      ...header,
+      operation: z.literal('command.retire'),
+      target: z.strictObject({originalCommandId: CommandId}),
+      payload: retirement,
+    }),
+  ])
+  .refine((command) => {
+    if (command.operation === 'request.answer')
+      return command.target.authSessionId === command.originatingSessionId;
+    if (command.operation === 'command.retire')
+      return (
+        command.commandId !== command.target.originalCommandId &&
+        command.originatingSessionId !== command.payload.originalSessionId &&
+        (command.payload.originalOperation !== 'request.answer' ||
+          command.payload.originalSessionId ===
+            command.payload.destination.authSessionId)
+      );
+    return true;
+  }, 'The command is not bound to its original session or retirement identity');
 export type Command = z.infer<typeof Command>;
 
 export type RunRevisionTarget = z.infer<typeof RunRevisionTarget>;
