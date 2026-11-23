@@ -12,7 +12,7 @@ export interface ShutdownSnapshot {
   readonly shutdownId: string;
   /** Monotonic version of the observed facts, assigned by the trusted supervisor at capture. */
   readonly revision: number;
-  readonly observed: ShutdownEvidence;
+  readonly observed: ShutdownEvidence | null;
 }
 const facts = {
   editsFrozen: 'Frozen editor revision',
@@ -92,21 +92,29 @@ export class DesktopShutdown {
     return {action: 'start', shutdownId};
   }
 
-  /** Ignore out-of-order and unrelated observations. A complete receipt from
-   * the trusted supervisor is terminal for its immutable shutdown and cutoff. */
+  /** Ignore out-of-order and unrelated observations. Until the actual native
+   * exit, even a complete observation may be superseded by newer evidence. */
   observe(snapshot: ShutdownSnapshot): void {
     const state = this.#state;
     if (
-      (state.phase !== 'stopping' && state.phase !== 'unresolved') ||
+      !('id' in state) ||
       snapshot.shutdownId !== state.id ||
       !Number.isSafeInteger(snapshot.revision) ||
       snapshot.revision <= this.#revision
     )
       return;
-    const missing = keys
-      .filter((key) => snapshot.observed?.[key] !== true)
-      .map((key) => facts[key]);
     this.#revision = snapshot.revision;
+    const missing =
+      snapshot.observed === null
+        ? [
+            ...new Set([
+              ...(state.phase === 'unresolved' ? state.reasons : []),
+              'Shutdown evidence is unavailable',
+            ]),
+          ]
+        : keys
+            .filter((key) => snapshot.observed?.[key] !== true)
+            .map((key) => facts[key]);
     this.#state = missing.length
       ? Object.freeze({
           phase: 'unresolved',
@@ -114,22 +122,5 @@ export class DesktopShutdown {
           reasons: Object.freeze(missing),
         })
       : Object.freeze({phase: 'verified', id: state.id});
-  }
-
-  unavailable(shutdownId: string): void {
-    const state = this.#state;
-    if (
-      (state.phase !== 'stopping' && state.phase !== 'unresolved') ||
-      state.id !== shutdownId
-    )
-      return;
-    const reason = 'Shutdown evidence is unavailable';
-    const known = state.phase === 'unresolved' ? state.reasons : [];
-    if (known.includes(reason)) return;
-    this.#state = Object.freeze({
-      phase: 'unresolved',
-      id: shutdownId,
-      reasons: Object.freeze([...known, reason]),
-    });
   }
 }

@@ -61,7 +61,7 @@ it('every missing shutdown fact holds the window open until a newer complete sna
     expect(shutdown.request().action).toBe('allow');
   }
 });
-it('a late read or repeated close cannot lose a newer draft failure or reopen a verified shutdown', () => {
+it('a late read or repeated close cannot overwrite current draft evidence before native exit', () => {
   const shutdown = started();
   const saved = {shutdownId: id, revision: 1, observed: complete};
   shutdown.observe({
@@ -72,19 +72,27 @@ it('a late read or repeated close cannot lose a newer draft failure or reopen a 
   shutdown.observe(saved);
   shutdown.observe({...saved, revision: 2});
   expect(shutdown.state.reasons).toEqual(['Saved text and image drafts']);
-  shutdown.unavailable(id);
+  shutdown.observe({...saved, revision: 3, observed: null});
   expect(shutdown.state.reasons).toContain('Saved text and image drafts');
-  shutdown.observe({...saved, revision: 3});
-  shutdown.unavailable(id);
-  shutdown.observe({...saved, revision: 4, observed: {}});
-  expect(shutdown.state.phase).toBe('verified');
+  shutdown.observe({...saved, revision: 2});
+  expect(shutdown.request().action).toBe('recheck');
+  shutdown.observe({...saved, revision: 4});
+  expect(shutdown.request().action).toBe('allow');
+  shutdown.observe({
+    ...saved,
+    revision: 5,
+    observed: {...complete, draftsPersisted: false},
+  });
+  expect(shutdown.request().action).toBe('recheck');
+  shutdown.observe({...saved, revision: 6});
+  expect(shutdown.request().action).toBe('allow');
 });
 it('unavailable, malformed or foreign evidence cannot grant permission to quit', () => {
   const shutdown = started();
-  shutdown.unavailable(foreign);
+  shutdown.observe({shutdownId: foreign, revision: 400, observed: null});
   expect(shutdown.state.phase).toBe('stopping');
-  shutdown.unavailable(id);
-  shutdown.unavailable(id);
+  shutdown.observe({shutdownId: id, revision: 0, observed: null});
+  shutdown.observe({shutdownId: id, revision: 0, observed: null});
   expect(shutdown.state.reasons).toEqual(['Shutdown evidence is unavailable']);
   for (const revision of [NaN, -1, Number.MAX_SAFE_INTEGER + 1, 0.5])
     shutdown.observe({shutdownId: id, revision, observed: complete});

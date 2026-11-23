@@ -129,7 +129,7 @@
   },
   {
     "file": "packages/domain/test/close-workflow.vitest.mjs",
-    "name": "a late read or repeated close cannot lose a newer draft failure or reopen a verified shutdown"
+    "name": "a late read or repeated close cannot overwrite current draft evidence before native exit"
   },
   {
     "file": "packages/domain/test/close-workflow.vitest.mjs",
