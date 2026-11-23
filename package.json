@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@electron/packager": "20.3.0",
+    "@jarvis/contracts": "workspace:*",
     "@jarvis/workspace-fixture": "workspace:*",
     "@playwright/test": "1.65.1",
     "eslint": "10.15.0",

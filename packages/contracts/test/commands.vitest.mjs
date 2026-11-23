@@ -57,6 +57,26 @@ const stamp = {
   recordedAt: '2026-10-01T12:00:00.000Z',
 };
 
+test('project and session titles round-trip as PostgreSQL text', () => {
+  for (const [operation, target] of [
+    ['project.create', {}],
+    ['session.create', project],
+  ]) {
+    const command = (title) => ({
+      ...header,
+      operation,
+      target,
+      payload: {title},
+    });
+    for (const title of ['Roadmap 🗺️', '東京', 'e\u0301']) {
+      expect(Command.parse(command(title)).payload.title).toBe(title);
+    }
+    for (const title of ['Roadmap\0Draft', '\ud800', '\udfff']) {
+      expect(Command.safeParse(command(title)).success).toBe(false);
+    }
+  }
+});
+
 test('submission refers to one frozen destination and the precise sealed editor revision', () => {
   expect(Command.parse(submitted)).toEqual(submitted);
   for (const field of Object.keys(submitted)) {
