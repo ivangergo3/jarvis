@@ -154,6 +154,7 @@ test('controller recovery fences one epoch and reads bounded receipt ledgers', (
     ...header,
     ownerId: id(13),
     through: 'fixed-inventory',
+    after: null,
     ledgers: [{epoch: id(12), highWater: '4'}],
     next: null,
   };

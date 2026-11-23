@@ -195,18 +195,17 @@ export const ReceiptLedger = z.strictObject({
 });
 export const ClosedEpochPage = z
   .strictObject({
-    ...header,
-    ownerId: OwnerId,
+    ...listing,
     through: opaque,
     ledgers: z.array(ReceiptLedger).max(100),
-    next: opaque.nullable(),
   })
   .refine(
     (value) =>
       wireBytes(value) <= 1024 * 1024 &&
       new Set(value.ledgers.map((row) => row.epoch)).size ===
         value.ledgers.length &&
-      (value.next === null || value.ledgers.length > 0),
+      (value.next === null ||
+        (value.next !== value.after && value.ledgers.length > 0)),
   );
 export type ClosedEpochPage = z.infer<typeof ClosedEpochPage>;
 

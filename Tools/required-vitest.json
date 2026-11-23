@@ -206,5 +206,9 @@
   {
     "file": "packages/contracts/test/read-page.vitest.mjs",
     "name": "recovery pages check the original wire byte budget and requested scope"
+  },
+  {
+    "file": "packages/contracts/test/read-page.vitest.mjs",
+    "name": "a delayed terminal epoch inventory page cannot complete an earlier request"
   }
 ]

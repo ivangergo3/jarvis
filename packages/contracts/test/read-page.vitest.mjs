@@ -65,7 +65,7 @@ test('recovery pages check the original wire byte budget and requested scope', (
     ],
     [
       {operation: 'controller.closed_epochs', through: 'closed-1', page},
-      {...header, through: 'closed-1', ledgers: [], next: null},
+      {...header, through: 'closed-1', after: null, ledgers: [], next: null},
       {through: 'closed-2'},
     ],
   ];
@@ -81,4 +81,36 @@ test('recovery pages check the original wire byte budget and requested scope', (
       parseReadPage(wire, ownerId, {...request, ...different}),
     ).toBeUndefined();
   }
+});
+
+test('a delayed terminal epoch inventory page cannot complete an earlier request', () => {
+  const read = {
+    schemaVersion: 1,
+    operation: 'controller.closed_epochs',
+    through: 'inventory',
+    page: {after: 'second', limit: 1},
+  };
+  const terminal = {
+    ...header,
+    through: read.through,
+    after: 'third',
+    ledgers: [{epoch: id(9), highWater: '4'}],
+    next: null,
+  };
+  expect(
+    parseReadPage(JSON.stringify(terminal), ownerId, read),
+  ).toBeUndefined();
+  expect(
+    parseReadPage(JSON.stringify(terminal), ownerId, {
+      ...read,
+      page: {...read.page, after: 'third'},
+    }),
+  ).toEqual(terminal);
+  expect(
+    parseReadPage(
+      JSON.stringify({...terminal, after: 'second', next: 'second'}),
+      ownerId,
+      read,
+    ),
+  ).toBeUndefined();
 });

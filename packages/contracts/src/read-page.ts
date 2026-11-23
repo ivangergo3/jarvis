@@ -63,8 +63,8 @@ export function parseReadPage(
         ClosedEpochPage,
         (page) =>
           page.through === request.through &&
-          page.ledgers.length <= request.page.limit &&
-          (page.next === null || page.next !== request.page.after),
+          page.after === request.page.after &&
+          page.ledgers.length <= request.page.limit,
       );
     case 'controller.receipts':
       return scoped(
