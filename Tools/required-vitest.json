@@ -124,6 +124,10 @@
     "name": "run control operations require the expected revision and make no new run or approval"
   },
   {
+    "file": "apps/client/test/team-graph-layout.vitest.mjs",
+    "name": "routes every connector to its own card in compact and scrollable team layouts"
+  },
+  {
     "file": "packages/providers/test/turn-receipt.vitest.mjs",
     "name": "binds the original turn before the existing notification mapper can expose its output"
   },
