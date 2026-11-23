@@ -56,13 +56,17 @@ export async function inspectCodexStdio(
       });
   });
 
+  function closed() {
+    const input = stream.stdout;
+    return (
+      input.errored !== null ||
+      input.destroyed ||
+      input.readableEnded ||
+      input.closed
+    );
+  }
   function ensureCurrent() {
-    if (
-      signal.aborted ||
-      performance.now() >= deadline ||
-      stream.stdout.destroyed ||
-      stream.stdout.readableEnded
-    )
+    if (signal.aborted || performance.now() >= deadline || closed())
       throw failure;
   }
   function fail() {
@@ -123,12 +127,7 @@ export async function inspectCodexStdio(
   function listen() {
     if (attached) return;
     const input = stream.stdout;
-    if (
-      input.destroyed ||
-      input.readableEnded ||
-      input.readableEncoding ||
-      input.readableLength !== 0
-    )
+    if (closed() || input.readableEncoding || input.readableLength !== 0)
       throw failure;
     attached = true;
     input.on('error', fail);
@@ -179,7 +178,7 @@ export async function inspectCodexStdio(
     if (
       signal.aborted ||
       performance.now() >= deadline ||
-      (attached && (stream.stdout.destroyed || stream.stdout.readableEnded)) ||
+      (attached && closed()) ||
       length !== 0
     )
       return {kind: 'unavailable'} as const;

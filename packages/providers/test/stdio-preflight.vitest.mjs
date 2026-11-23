@@ -55,6 +55,23 @@ it('uses only the pinned non-model handshake and correlates fragmented private R
   expect(stream.stdout.listenerCount('data')).toBe(0);
 });
 it('oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed', async () => {
+  const failed = exchange(() => {});
+  failed.stdout = new PassThrough({
+    autoDestroy: false,
+    transform(_chunk, _encoding, callback) {
+      callback(new Error('private synthetic error'));
+    },
+  });
+  const errored = new Promise((resolve) =>
+    failed.stdout.once('error', resolve),
+  );
+  failed.stdout.write('fixture');
+  await errored;
+  expect(failed.stdout.destroyed).toBe(false);
+  expect(failed.stdout.errored).toBeInstanceOf(Error);
+  expect(await inspect(failed)).toEqual({kind: 'unavailable'});
+  expect(failed.frames).toHaveLength(0);
+  failed.stdout.destroy();
   const alreadyEnded = exchange(() => {});
   alreadyEnded.stdout.push(null);
   expect(await inspect(alreadyEnded)).toEqual({kind: 'unavailable'});
