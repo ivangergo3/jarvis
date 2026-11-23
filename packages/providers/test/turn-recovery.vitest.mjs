@@ -1,9 +1,14 @@
 import {expect, test, vi} from 'vitest';
-import {findOriginalTurn} from '../src/turn-recovery.js';
+import {scanOriginalTurn} from '../src/turn-recovery.js';
+import {qualifyCodexRecovery} from '../src/index.js';
+
+// These cases exercise correlation after response schema qualification.
+const findOriginalTurn = (reader, threadId, clientId) =>
+  scanOriginalTurn(reader, threadId, clientId, () => true);
 
 const clientId = 'c57d44c9-667c-405f-91b9-a4f54fd101a3';
 const threadId = 'thread-one';
-const metadata = {thread: {id: threadId}};
+const metadata = {thread: {id: threadId, turns: []}};
 const turnPage = (id, nextCursor = null) => ({
   data: [{id, items: [], itemsView: 'notLoaded', status: 'completed'}],
   nextCursor,
@@ -176,6 +181,45 @@ test('revocation before during or after a history read suppresses all late evide
 });
 
 test('malformed inputs and conflicting item identities cannot corroborate a send', async () => {
+  expect(qualifyCodexRecovery({})).toBeUndefined();
+  const forged = Buffer.from('{"type":"object"}');
+  expect(
+    qualifyCodexRecovery({
+      'thread/read': forged,
+      'thread/turns/list': forged,
+      'thread/items/list': forged,
+    }),
+  ).toBeUndefined();
+  for (const invalidMethod of [
+    'thread/read',
+    'thread/turns/list',
+    'thread/items/list',
+  ]) {
+    const reader = fixture([
+      metadata,
+      turnPage('first'),
+      {data: [entry('first')]},
+    ]);
+    expect(
+      await scanOriginalTurn(
+        reader,
+        threadId,
+        clientId,
+        (method) => method !== invalidMethod,
+      ),
+    ).toEqual({kind: 'unknown'});
+  }
+  expect(
+    await findOriginalTurn(
+      fixture([
+        {thread: {id: threadId}},
+        turnPage('first'),
+        {data: [entry('first')]},
+      ]),
+      threadId,
+      clientId,
+    ),
+  ).toEqual({kind: 'unknown'});
   for (const status of [undefined, 'unexpected', null]) {
     const turn = turnPage('first');
     if (status === undefined) delete turn.data[0].status;

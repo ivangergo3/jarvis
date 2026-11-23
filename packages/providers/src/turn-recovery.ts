@@ -6,7 +6,7 @@ const id = z
   .max(512)
   .regex(/^[^\s\p{C}]+$/u);
 const metadata = z.object({
-  thread: z.object({id, turns: z.tuple([]).optional()}),
+  thread: z.object({id, turns: z.tuple([])}),
 });
 const pageSize = 50;
 const maxPages = 32;
@@ -145,10 +145,11 @@ async function* pages<T>(
 
 /** Corroborate a previously persisted send. Even complete history without a
  * match is inconclusive. This lookup cannot resume, resend or complete work. */
-export async function findOriginalTurn(
+export async function scanOriginalTurn(
   reader: CodexRecoveryReader,
   threadId: string,
   clientUserMessageId: string,
+  validate: (method: HistoryRead['method'], response: unknown) => boolean,
 ): Promise<Evidence> {
   const unknown = {kind: 'unknown'} as const;
   if (
@@ -173,7 +174,8 @@ export async function findOriginalTurn(
     if (expired()) throw new Error('History lookup expired');
     if (remaining-- <= 0) throw new Error('History limit reached');
     const result = await Promise.race([reader.read(request, signal), aborted]);
-    if (expired()) throw new Error('History lookup expired');
+    if (expired() || !validate(request.method, result))
+      throw new Error('Unqualified history reply');
     return result;
   };
 

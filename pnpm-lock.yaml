@@ -94,6 +94,9 @@ importers:
       '@jarvis/contracts':
         specifier: workspace:*
         version: link:../contracts
+      ajv:
+        specifier: 6.15.0
+        version: 6.15.0
       zod:
         specifier: 4.6.7
         version: 4.6.7(patch_hash=1cfad9924e0922991a73e8240eb0aa056f843bc268253cec1d4600ec2b82b780)
