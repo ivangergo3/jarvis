@@ -1,0 +1,87 @@
+# Raw service requests can contain signed URLs. Operator diagnostics are kept separately.
+x-jarvis-logging: &jarvis-logging {driver: none}
+
+services:
+  db:
+    logging: *jarvis-logging
+    # Supabase Postgres 17.12.0.000
+    image: public.ecr.aws/supabase/postgres@sha256:8630950b489ecc70563300180287a98c192a4a48f5ae00b4febdaeea1abe85de
+    entrypoint: ['/bin/sh', '/opt/jarvis/start-postgres.sh']
+    # Apply to both the temporary initialization server and the final postmaster.
+    command: ['postgres', '-D', '/etc/postgresql', '-c', 'logging_collector=off', '-c', 'log_destination=stderr', '-c', 'log_statement=none', '-c', 'log_min_error_statement=panic', '-c', 'log_min_duration_statement=-1']
+    ports:
+      - '127.0.0.1:${JARVIS_DB_PORT:?}:5432'
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${JARVIS_DB_PASSWORD:?}
+      JARVIS_AUTH_PASSWORD: ${JARVIS_AUTH_PASSWORD:?}
+      JWT_SECRET: ${JARVIS_JWT_SECRET:?}
+      JWT_EXP: 3600
+    volumes:
+      - ./start-postgres.sh:/opt/jarvis/start-postgres.sh:ro
+      - pgdata:/var/lib/postgresql/data
+      - pgconfig:/etc/postgresql-custom
+      - ./roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-jarvis-roles.sql:ro
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres', '-d', 'postgres']
+      interval: 2s
+      timeout: 5s
+      retries: 60
+
+  auth:
+    logging: *jarvis-logging
+    # Supabase Auth v2.198.0
+    image: public.ecr.aws/supabase/gotrue@sha256:ba8c0c82c574756c835c696df2a2c698020cc408a42034013d3712e34de7964d
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://127.0.0.1:${JARVIS_API_PORT:?}/auth/v1
+      GOTRUE_SITE_URL: http://127.0.0.1:${JARVIS_API_PORT:?}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin@db:5432/postgres
+      PGPASSWORD: ${JARVIS_AUTH_PASSWORD:?}
+      GOTRUE_JWT_SECRET: ${JARVIS_JWT_SECRET:?}
+      GOTRUE_JWT_ISSUER: http://127.0.0.1:${JARVIS_API_PORT:?}/auth/v1
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_DISABLE_SIGNUP: 'true'
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: 'false'
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:9999/health']
+      interval: 2s
+      timeout: 5s
+      retries: 60
+
+  gateway:
+    logging: *jarvis-logging
+    # Kong 2.8.1. Only the local Auth route is published.
+    image: public.ecr.aws/supabase/kong@sha256:1b53405d8680a09d6f44494b7990bf7da2ea43f84a258c59717d4539abf09f6d
+    depends_on:
+      auth: {condition: service_healthy}
+    ports:
+      - '127.0.0.1:${JARVIS_API_PORT:?}:8000'
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /etc/kong/jarvis.yaml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 'off'
+      # Nginx includes the full request URI in proxy log entries.
+      KONG_PROXY_ACCESS_LOG: /dev/null
+      KONG_PROXY_ERROR_LOG: /dev/null
+    volumes:
+      - ./gateway.yaml:/etc/kong/jarvis.yaml:ro
+
+volumes:
+  pgdata:
+    labels: {org.jarvis.instance: '${JARVIS_PROJECT:?}'}
+  pgconfig:
+    labels: {org.jarvis.instance: '${JARVIS_PROJECT:?}'}
+
+networks:
+  default:
+    labels: {org.jarvis.instance: '${JARVIS_PROJECT:?}'}

@@ -8,12 +8,12 @@
     "name": "public contracts import in browser and Node consumers with branded destinations"
   },
   {
-    "file": "apps/client/test/message-blocks.vitest.mjs",
-    "name": "preserves existing whitespace, ordered list markers and table rows when block types change"
+    "file": "packages/providers/test/preflight.vitest.mjs",
+    "name": "pins the measured binary before a read-only handshake on the same worker"
   },
   {
-    "file": "apps/client/test/message-blocks.vitest.mjs",
-    "name": "keeps the Swift grapheme boundaries of block markers, fences and table delimiters"
+    "file": "packages/providers/test/preflight.vitest.mjs",
+    "name": "stops before reading account data after a profile or platform mismatch or interrupted handshake"
   },
   {
     "file": "packages/providers/test/account.vitest.mjs",
@@ -76,6 +76,14 @@
     "name": "a replay batch rejects reordered, duplicated and foreign-owner events above the safe integer range"
   },
   {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "Compose publishes only the explicit loopback DB and gateway bindings"
+  },
+  {
+    "file": "fixtures/local-supabase/service-definition.vitest.mjs",
+    "name": "database bootstrap validates the generated password before touching a volume"
+  },
+  {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "a missing packaged executable fails and removes its private profile"
   },
@@ -106,5 +114,25 @@
   {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "submission refers to one frozen destination and the precise sealed editor revision"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "run control operations require the expected revision and make no new run or approval"
+  },
+  {
+    "file": "apps/client/test/team-graph-layout.vitest.mjs",
+    "name": "routes every connector to its own card in compact and scrollable team layouts"
+  },
+  {
+    "file": "apps/client/test/message-blocks.vitest.mjs",
+    "name": "preserves existing whitespace, ordered list markers and table rows when block types change"
+  },
+  {
+    "file": "apps/client/test/message-blocks.vitest.mjs",
+    "name": "keeps the Swift grapheme boundaries of block markers, fences and table delimiters"
   }
 ]
