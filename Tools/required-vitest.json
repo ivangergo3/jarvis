@@ -114,5 +114,17 @@
   {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
+  },
+  {
+    "file": "packages/providers/test/turn-receipt.vitest.mjs",
+    "name": "binds the original turn before the existing notification mapper can expose its output"
+  },
+  {
+    "file": "packages/providers/test/turn-receipt.vitest.mjs",
+    "name": "foreign channels, numeric or replayed RPC identities and malformed matching replies cannot bind a run"
+  },
+  {
+    "file": "packages/providers/test/turn-receipt.vitest.mjs",
+    "name": "a conflicting binding, lost persistence response or revoked original run stays uncertain"
   }
 ]
