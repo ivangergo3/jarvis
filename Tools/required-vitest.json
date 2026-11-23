@@ -8,6 +8,14 @@
     "name": "public contracts import in browser and Node consumers with branded destinations"
   },
   {
+    "file": "packages/providers/test/preflight.vitest.mjs",
+    "name": "pins the measured binary before a read-only handshake on the same worker"
+  },
+  {
+    "file": "packages/providers/test/preflight.vitest.mjs",
+    "name": "stops before reading account data after a profile or platform mismatch or interrupted handshake"
+  },
+  {
     "file": "packages/providers/test/account.vitest.mjs",
     "name": "reads ChatGPT identity and workspace from the same account response without requesting credentials"
   },
