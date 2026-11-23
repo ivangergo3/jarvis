@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "@jarvis/contracts": "workspace:*",
+    "ajv": "6.15.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@openai/codex": "0.171.0-alpha.13",
     "@types/node": "24.19.2"
   }
 }

@@ -162,5 +162,29 @@
   {
     "file": "packages/contracts/test/commands.vitest.mjs",
     "name": "staging IDs encode their own nonwrapping sequence separately from general command UUIDs"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "only a single original client ID in fully paginated bound history corroborates a turn"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "missing conflicting malformed or truncated history never authorizes a resend"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "revocation before during or after a history read suppresses all late evidence"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "malformed inputs and conflicting item identities cannot corroborate a send"
+  },
+  {
+    "file": "packages/providers/test/turn-recovery.vitest.mjs",
+    "name": "a buffered result past the elapsed deadline is unknown even before timer delivery"
+  },
+  {
+    "file": "packages/providers/test/pinned-recovery.vitest.mjs",
+    "name": "the pinned offline CLI schema qualifies real responses and rejects incomplete recovery evidence"
   }
 ]
