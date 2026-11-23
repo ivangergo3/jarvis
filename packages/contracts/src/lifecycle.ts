@@ -8,23 +8,7 @@ const WorkerExit = z.enum([
   'verified_cooperative',
 ]);
 const workerExit = WorkerExit.optional();
-export const RunObservation = z.discriminatedUnion('state', [
-  z.strictObject({
-    state: z.enum([
-      'queued',
-      'reserved_for_start',
-      'parked_unsent',
-      'dispatching',
-      'running',
-      'waiting',
-    ]),
-    workerExit,
-  }),
-  z.strictObject({
-    state: z.literal('preparing_thread'),
-    setupHandoff: z.enum(['not_sent', 'handed_off', 'possibly_handed_off']),
-    workerExit,
-  }),
+export const CancellationObservation = z.discriminatedUnion('state', [
   z.strictObject({
     state: z.literal('cancel_requested'),
     cutoff: z.enum(['pending', 'established']),
@@ -58,6 +42,25 @@ export const RunObservation = z.discriminatedUnion('state', [
     workerExit,
     phase: z.enum(['thread_setup', 'turn_handoff', 'provider_effect']),
   }),
+]);
+export const RunObservation = z.discriminatedUnion('state', [
+  z.strictObject({
+    state: z.enum([
+      'queued',
+      'reserved_for_start',
+      'parked_unsent',
+      'dispatching',
+      'running',
+      'waiting',
+    ]),
+    workerExit,
+  }),
+  z.strictObject({
+    state: z.literal('preparing_thread'),
+    setupHandoff: z.enum(['not_sent', 'handed_off', 'possibly_handed_off']),
+    workerExit,
+  }),
+  ...CancellationObservation.options,
 ]);
 export type RunObservation = z.infer<typeof RunObservation>;
 

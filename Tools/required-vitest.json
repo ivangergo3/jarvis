@@ -132,6 +132,18 @@
     "name": "persisted output exposes only scoped content references and command receipts preserve refusal"
   },
   {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "a decision binds to its original authorization session, channel, revision and offered option"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "durable local receipts and transient responses have distinct wire shapes"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "staging IDs encode their own nonwrapping sequence separately from general command UUIDs"
+  },
+  {
     "file": "packages/providers/test/turn-recovery.vitest.mjs",
     "name": "only a single original client ID in fully paginated bound history corroborates a turn"
   },
