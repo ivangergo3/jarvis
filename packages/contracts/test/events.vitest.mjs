@@ -316,3 +316,82 @@ test('a replay batch rejects reordered, duplicated and foreign-owner events abov
     });
   }
 });
+
+test('persisted output exposes only scoped content references and command receipts preserve refusal', () => {
+  const contentId = id(11);
+  const ref = {contentId, bytes: 12, sha256: '7'.repeat(64)};
+  const output = {
+    ...envelope,
+    kind: 'run.output',
+    target: run,
+    payload: {
+      entryId: id(12),
+      entryRevision: '2',
+      content: {kind: 'retained_text', ref},
+    },
+  };
+  for (const content of [
+    output.payload.content,
+    {
+      kind: 'retained_image',
+      ref: {...ref, attachmentId: id(13), mime: 'image/png'},
+    },
+    {kind: 'removed', contentId},
+    {kind: 'truncated', retainedBytes: 12, cause: 'owner_limit'},
+  ]) {
+    const row = {...output, payload: {...output.payload, content}};
+    expect(decodeEvent(row)).toEqual({status: 'ok', event: row});
+  }
+  for (const invalid of [
+    {...output, target: session},
+    {...output, payload: {...output.payload, entryRevision: '0'}},
+    {...output, payload: {...output.payload, text: 'private'}},
+    {
+      ...output,
+      payload: {
+        ...output.payload,
+        content: {kind: 'retained_text', ref: {...ref, text: 'private'}},
+      },
+    },
+  ])
+    expect(decodeEvent(invalid).status).toBe('malformed');
+  const ledger = {
+    ...envelope,
+    kind: 'command.recorded',
+    target: {commandId: id(14)},
+    payload: {status: 'definitively_refused'},
+  };
+  const stream = {
+    ownerId: envelope.ownerId,
+    after: String(BigInt(envelope.sequence) - 1n),
+  };
+  for (const version of [1, 2]) {
+    const unknown = {...ledger, schemaVersion: version, kind: 'future'};
+    expect(decodeEvent(unknown).status).toBe('malformed');
+    expect(
+      readEventBatch(
+        {schemaVersion: version, ...stream, events: [unknown]},
+        stream,
+      ).status,
+    ).toBe('malformed');
+  }
+  expect(decodeEvent({...ledger, schemaVersion: 2}).status).toBe(
+    'unsupported_version',
+  );
+  const staged = '00000000-0000-8000-8000-000000000001';
+  for (const commandId of [id(14), staged])
+    for (const status of [
+      'accepted',
+      'definitively_refused',
+      'retired_unsent',
+    ]) {
+      const row = {...ledger, target: {commandId}, payload: {status}};
+      expect(decodeEvent(row)).toEqual({status: 'ok', event: row});
+    }
+  for (const invalid of [
+    {...ledger, target: {commandId: '00000000-0000-8000-8000-000000000000'}},
+    {...ledger, payload: {status: 'guess'}},
+    {...ledger, payload: {...ledger.payload, reason: 'private'}},
+  ])
+    expect(decodeEvent(invalid).status).toBe('malformed');
+});
