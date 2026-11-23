@@ -128,6 +128,10 @@
     "name": "routes every connector to its own card in compact and scrollable team layouts"
   },
   {
+    "file": "packages/contracts/test/events.vitest.mjs",
+    "name": "persisted output exposes only scoped content references and command receipts preserve refusal"
+  },
+  {
     "file": "packages/providers/test/turn-recovery.vitest.mjs",
     "name": "only a single original client ID in fully paginated bound history corroborates a turn"
   },
