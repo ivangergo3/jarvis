@@ -36,6 +36,7 @@ type BindingResult =
  * channel and generation and accept only an identical replay. A thrown
  * write or revocation leaves the caller uncertain even if a write landed. */
 export async function acceptTurnReceipt(
+  checkResponse: (response: unknown) => boolean,
   pending: PendingTurnReceipt,
   source: Pick<PendingTurnReceipt, 'channelId' | 'generationId'>,
   frame: unknown,
@@ -59,6 +60,8 @@ export async function acceptTurnReceipt(
   )
     return {kind: 'ignored'};
   if (signal.aborted) return {kind: 'unknown'};
+  if (!('result' in frame) || !checkResponse(frame.result))
+    return {kind: 'unknown'};
   const result = reply.safeParse(frame);
   if (!result.success) return {kind: 'unknown'};
   const turnId = result.data.result.turn.id;

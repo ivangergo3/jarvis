@@ -1,5 +1,14 @@
 import {expect, it, vi} from 'vitest';
-import {acceptTurnReceipt, mapRunNotification} from '../src/index.ts';
+import {mapRunNotification, qualifyCodexTurnReceipt} from '../src/index.ts';
+import {acceptTurnReceipt as bindValidatedResponse} from '../src/turn-receipt.ts';
+
+// Unit fixtures exercise correlation separately from the pinned CLI schema.
+const acceptTurnReceipt = bindValidatedResponse.bind(
+  undefined,
+  (value) =>
+    Array.isArray(value?.turn?.items) &&
+    value.turn.items.every((item) => item && typeof item.id === 'string'),
+);
 
 const target = {projectId: 'project-A', sessionId: 'session-A', runId: 'run-A'};
 const source = {channelId: 'channel-A', generationId: 'worker-A'};
@@ -69,6 +78,7 @@ it('binds the original turn before the existing notification mapper can expose i
   ).toEqual({kind: 'ignored'});
 });
 it('foreign channels, numeric or replayed RPC identities and malformed matching replies cannot bind a run', async () => {
+  expect(qualifyCodexTurnReceipt(Buffer.from('{}'))).toBeUndefined();
   const confirm = vi.fn(async () => true);
   for (const changed of [
     {...source, channelId: 'B'},
@@ -89,6 +99,7 @@ it('foreign channels, numeric or replayed RPC identities and malformed matching 
     ).toEqual({kind: 'ignored'});
   for (const bad of [
     {error: {message: 'private'}},
+    {result: {turn: {...response.result.turn, items: [null]}}},
     {...response, method: 'turn/started'},
     {result: {turn: {id: 'turn-A', status: 'unknown', items: []}}},
     {result: {turn: {id: 'turn-A', status: 'completed'}}},
