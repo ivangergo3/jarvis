@@ -262,7 +262,7 @@ test('a decision binds to its original authorization session, channel, revision 
   expect(
     Prompt.safeParse({
       ...question,
-      questions: Array(129).fill(question.questions[0]),
+      questions: Array.from({length: 129}, () => question.questions[0]),
     }).success,
   ).toBe(false);
   expect(matchesPrompt(question, reply('Tomorrow'))).toBe(false);
