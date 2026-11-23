@@ -254,5 +254,25 @@
   {
     "file": "apps/client/test/message-blocks.vitest.mjs",
     "name": "keeps the Swift grapheme boundaries of block markers, fences and table delimiters"
+  },
+  {
+    "file": "packages/providers/test/turn-receipt.vitest.mjs",
+    "name": "binds the original turn before the existing notification mapper can expose its output"
+  },
+  {
+    "file": "packages/providers/test/turn-receipt.vitest.mjs",
+    "name": "foreign channels, numeric or replayed RPC identities and malformed matching replies cannot bind a run"
+  },
+  {
+    "file": "packages/providers/test/turn-receipt.vitest.mjs",
+    "name": "a conflicting binding, lost persistence response or revoked original run stays uncertain"
+  },
+  {
+    "file": "packages/providers/test/pinned-receipt.vitest.mjs",
+    "name": "the qualified turn receipt validates every item using the real pinned offline CLI schema"
+  },
+  {
+    "file": "packages/providers/test/thread-setup.vitest.mjs",
+    "name": "durably binds only the exact idle new thread with its frozen checkout and permissions"
   }
 ]
