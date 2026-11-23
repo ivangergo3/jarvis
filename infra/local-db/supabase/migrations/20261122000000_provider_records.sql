@@ -236,7 +236,10 @@ begin
       and c.byte_offset=requested-(requested % 32768)
     where (i.owner_id,x.project_id,x.session_id,i.entry_id,i.revision,i.content_id)=(o,p,s,entry,rev,cid)
       and i.disposition='retained' and requested>=0
-      and (requested<i.byte_count and c.body is not null or requested=0 and i.byte_count=0);
+      and (requested<i.byte_count and c.body is not null or requested=0 and i.byte_count=0)
+    -- Serialize this grant with withholding. An outdated REPEATABLE READ snapshot
+    -- receives serialization_failure when the authoritative item has changed.
+    for share of i;
 end;
 $$;
 revoke all on function jarvis.read_history_part(uuid,uuid,uuid,uuid,bigint,uuid,integer)

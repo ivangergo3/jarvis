@@ -19,7 +19,7 @@ begin
       and i.item_id='persisted-item' and c.body=convert_to('private retained text','UTF8'))
     or not exists (select 1 from jarvis.events where envelope->>'kind'='run.output'
       and envelope->'payload'->'content'->'ref'->>'sha256'=encode(sha256(convert_to('private retained text','UTF8')),'hex'))
-    or exists(select 1 from jarvis.events where position('private retained text' in envelope::text)>0)
+    or exists(select 1 from jarvis.events where envelope::text ~ 'private retained text|persisted-thread|persisted-turn|persisted-item')
   then raise exception 'durable provider binding, output ref or retained bytes failed'; end if;
 end;
 $$;

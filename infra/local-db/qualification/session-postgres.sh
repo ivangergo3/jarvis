@@ -3,6 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 bin=$(pg_config --bindir)
+export PATH="$bin:$PATH"
+if (($#==0)); then set -- bash infra/local-db/qualification/provider-postgres.sh; fi
 [[ -x "$bin/initdb" && -x "$bin/pg_ctl" ]] || { echo 'PostgreSQL server tools are required.' >&2; exit 1; }
 scratch=$(mktemp -d /tmp/jarvis-session-pg.XXXXXX)
 cluster="$scratch/data"
