@@ -44,7 +44,11 @@ async function startShell() {
   for (const entry of readdirSync(path.join(root, 'assets'), {
     withFileTypes: true,
   })) {
-    if (entry.isFile() && /\.(css|js)$/.test(entry.name)) {
+    if (
+      entry.isFile() &&
+      (/\.(css|js)$/.test(entry.name) ||
+        /^reactor-[\w-]+\.png$/.test(entry.name))
+    ) {
       files.set('/assets/' + entry.name, path.join(root, 'assets', entry.name));
     }
   }
