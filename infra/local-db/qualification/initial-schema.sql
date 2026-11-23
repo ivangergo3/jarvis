@@ -22,7 +22,7 @@ begin
   ) then raise exception 'unexpected Jarvis schema owner or client grants'; end if;
 
   if (select count(*) from pg_class where relnamespace = 'jarvis'::regnamespace
-      and relname in ('installation','projects') and relrowsecurity) <> 2
+      and relname in ('installation','projects') and relrowsecurity and relowner = 'postgres'::regrole) <> 2
     or (select count(*) from jarvis.installation where singleton and installation_id is not null) <> 1
   then raise exception 'missing row isolation or installation identity'; end if;
   begin

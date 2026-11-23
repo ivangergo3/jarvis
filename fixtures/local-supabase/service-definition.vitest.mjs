@@ -44,6 +44,10 @@ test('Compose publishes only the explicit loopback DB and gateway bindings', () 
     '-D',
     '/etc/postgresql',
     '-c',
+    'logging_collector=off',
+    '-c',
+    'log_destination=stderr',
+    '-c',
     'log_statement=none',
     '-c',
     'log_min_error_statement=panic',
@@ -67,6 +71,7 @@ test('Compose publishes only the explicit loopback DB and gateway bindings', () 
     assert.ok(
       service.image.startsWith('public.ecr.aws/supabase/' + image + '@'),
     );
+    assert.deepEqual(service.logging, {driver: 'none'});
     assert.equal(service.network_mode, undefined);
     assert.match(service.image, /@sha256:[a-f0-9]{64}$/);
   }
