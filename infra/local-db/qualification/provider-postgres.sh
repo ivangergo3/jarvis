@@ -16,7 +16,7 @@ case "$1" in
         -c 'select envelope from jarvis.events order by sequence' -c 'commit'
     done > "$ledger"
     pnpm --filter @jarvis/contracts run build
-    pnpm --filter @jarvis/contracts exec node --input-type=module - "$ledger" < infra/local-db/qualification/decode-replay.mjs ;;
+    node infra/local-db/qualification/decode-replay.mjs "$ledger" ;;
   unavailable)
     if "${sql[@]}" -c 'select 1' >/dev/null 2>&1; then
       echo 'Fixture unexpectedly reachable after stop.' >&2; exit 1

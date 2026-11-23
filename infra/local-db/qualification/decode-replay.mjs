@@ -1,4 +1,3 @@
-// session-postgres.sh runs this module in the built public-contract package.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {decodeEvent, readEventBatch} from '@jarvis/contracts';
