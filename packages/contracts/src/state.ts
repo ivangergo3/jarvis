@@ -11,7 +11,7 @@ import {
   SessionTarget,
   SnapshotId,
   Timestamp,
-  Title,
+  RecordTitle,
   wireBytes,
   wireVersion,
 } from './values.js';
@@ -28,12 +28,12 @@ import {
 export const ProjectRecord = z.strictObject({
   kind: z.literal('project'),
   target: ProjectTarget,
-  title: Title,
+  title: RecordTitle,
 });
 export const SessionRecord = z.strictObject({
   kind: z.literal('session'),
   target: SessionTarget,
-  title: Title,
+  title: RecordTitle,
   binding: SessionBinding,
 });
 export type ProjectRecord = z.infer<typeof ProjectRecord>;

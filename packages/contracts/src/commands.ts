@@ -6,7 +6,7 @@ import {
   RunTarget,
   Sequence,
   SessionTarget,
-  Title,
+  RecordTitle,
   Version,
 } from './values.js';
 import {
@@ -110,7 +110,7 @@ export const Command = z
       ...header,
       operation: z.literal('project.create'),
       target: noTarget,
-      payload: z.strictObject({title: Title}),
+      payload: z.strictObject({title: RecordTitle}),
     }),
     z.strictObject({
       ...header,
@@ -122,7 +122,7 @@ export const Command = z
       ...header,
       operation: z.literal('session.create'),
       target: ProjectTarget,
-      payload: z.strictObject({title: Title}),
+      payload: z.strictObject({title: RecordTitle}),
     }),
     z.strictObject({
       ...header,

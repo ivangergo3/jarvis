@@ -246,5 +246,9 @@
   {
     "file": "packages/providers/test/stdio-preflight.vitest.mjs",
     "name": "a rejected binary, revoked handoff and revocation during a stalled reply issue no later request"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "project and session titles round-trip as PostgreSQL text"
   }
 ]
