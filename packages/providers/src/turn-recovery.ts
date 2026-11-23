@@ -36,16 +36,40 @@ const contentPart = z.union([
   }),
 ]);
 const contents = z.array(contentPart);
+// Discriminators in the pinned Codex v2 ThreadItem schema. A future item
+// variant may carry a different relationship to the sought client ID.
+const itemType = z.enum([
+  'userMessage',
+  'hookPrompt',
+  'agentMessage',
+  'functionCallOutput',
+  'plan',
+  'reasoning',
+  'commandExecution',
+  'fileChange',
+  'mcpToolCall',
+  'dynamicToolCall',
+  'collabAgentToolCall',
+  'subAgentActivity',
+  'webSearch',
+  'imageView',
+  'sleep',
+  'imageGeneration',
+  'enteredReviewMode',
+  'exitedReviewMode',
+  'contextCompaction',
+]);
 const item = z
   .object({
     id,
-    type: id,
+    type: itemType,
     clientId: z.string().max(512).nullish(),
     content: z.unknown().optional(),
   })
-  .refine(
-    (entry) =>
-      entry.type !== 'userMessage' || contents.safeParse(entry.content).success,
+  .refine((entry) =>
+    entry.type === 'userMessage'
+      ? contents.safeParse(entry.content).success
+      : entry.clientId === undefined,
   );
 const cursorValue = z.string().min(1).max(8192).nullish();
 const turnsPage = z.object({
@@ -53,6 +77,7 @@ const turnsPage = z.object({
     .array(
       z.object({
         id,
+        status: z.enum(['completed', 'interrupted', 'failed', 'inProgress']),
         items: z.tuple([]),
         itemsView: z.literal('notLoaded').optional(),
       }),

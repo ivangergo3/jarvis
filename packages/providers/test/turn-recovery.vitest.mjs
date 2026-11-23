@@ -5,7 +5,7 @@ const clientId = 'c57d44c9-667c-405f-91b9-a4f54fd101a3';
 const threadId = 'thread-one';
 const metadata = {thread: {id: threadId}};
 const turnPage = (id, nextCursor = null) => ({
-  data: [{id, items: [], itemsView: 'notLoaded'}],
+  data: [{id, items: [], itemsView: 'notLoaded', status: 'completed'}],
   nextCursor,
 });
 function entry(turnId, type = 'userMessage', id = clientId) {
@@ -14,8 +14,9 @@ function entry(turnId, type = 'userMessage', id = clientId) {
     item: {
       id: type + '-' + turnId,
       type,
-      clientId: id,
-      content: [{type: 'text', text: 'private text'}],
+      ...(type === 'userMessage'
+        ? {clientId: id, content: [{type: 'text', text: 'private text'}]}
+        : {text: 'fixture'}),
     },
   };
 }
@@ -115,6 +116,22 @@ test('missing conflicting malformed or truncated history never authorizes a rese
     expect(reader.requests.length).toBeLessThanOrEqual(33);
   }
   const invalid = fixture([]);
+  const cycle = fixture([
+    metadata,
+    turnPage('first'),
+    hit,
+    {data: [], nextCursor: 'after'},
+    {data: []},
+  ]);
+  expect(await findOriginalTurn(cycle, threadId, clientId)).toEqual({
+    kind: 'unknown',
+  });
+  expect(cycle.requests.map((r) => r.params.cursor)).toEqual([
+    undefined,
+    null,
+    null,
+    'after',
+  ]);
   expect(
     await findOriginalTurn(invalid, threadId, 'similar-looking text'),
   ).toEqual({kind: 'unknown'});
@@ -159,6 +176,41 @@ test('revocation before during or after a history read suppresses all late evide
 });
 
 test('malformed inputs and conflicting item identities cannot corroborate a send', async () => {
+  for (const status of [undefined, 'unexpected', null]) {
+    const turn = turnPage('first');
+    if (status === undefined) delete turn.data[0].status;
+    else turn.data[0].status = status;
+    expect(
+      await findOriginalTurn(
+        fixture([metadata, turn, {data: [entry('first')]}]),
+        threadId,
+        clientId,
+      ),
+    ).toEqual({kind: 'unknown'});
+  }
+  for (const type of ['futureItem', 'agentMessage']) {
+    const collision = entry('first', type);
+    collision.item.clientId = clientId;
+    expect(
+      await findOriginalTurn(
+        fixture([
+          metadata,
+          turnPage('first'),
+          {data: [collision, entry('first')]},
+        ]),
+        threadId,
+        clientId,
+      ),
+    ).toEqual({kind: 'unknown'});
+  }
+  const future = entry('first', 'futureItem');
+  expect(
+    await findOriginalTurn(
+      fixture([metadata, turnPage('first'), {data: [future, entry('first')]}]),
+      threadId,
+      clientId,
+    ),
+  ).toEqual({kind: 'unknown'});
   for (const content of [
     undefined,
     'text',
@@ -189,6 +241,32 @@ test('malformed inputs and conflicting item identities cannot corroborate a send
 });
 
 test('a buffered result past the elapsed deadline is unknown even before timer delivery', async () => {
+  const deadline = new AbortController();
+  const timeout = vi
+    .spyOn(AbortSignal, 'timeout')
+    .mockReturnValueOnce(deadline.signal);
+  try {
+    const started = Promise.withResolvers();
+    const parent = new AbortController();
+    const waiting = findOriginalTurn(
+      {
+        signal: parent.signal,
+        async read() {
+          started.resolve();
+          return new Promise(() => {});
+        },
+      },
+      threadId,
+      clientId,
+    );
+    await started.promise;
+    expect(timeout).toHaveBeenCalledWith(10_000);
+    deadline.abort();
+    expect(await waiting).toEqual({kind: 'unknown'});
+    expect(parent.signal.aborted).toBe(false);
+  } finally {
+    timeout.mockRestore();
+  }
   let time = 100;
   const now = vi.spyOn(performance, 'now').mockImplementation(() => time);
   try {
