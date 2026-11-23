@@ -137,6 +137,10 @@
   },
   {
     "file": "packages/contracts/test/commands.vitest.mjs",
+    "name": "project and session titles round-trip as PostgreSQL text"
+  },
+  {
+    "file": "packages/contracts/test/commands.vitest.mjs",
     "name": "submission refers to one frozen destination and the precise sealed editor revision"
   },
   {

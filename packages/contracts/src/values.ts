@@ -43,7 +43,9 @@ export const Title = z
   .string()
   .min(1)
   .max(256)
-  .refine((value) => value.trim().length > 0);
+  .refine((value) => value.trim().length > 0)
+  // PostgreSQL text represents Unicode scalar values except NUL.
+  .refine((value) => !value.includes('\0') && !/\p{Surrogate}/u.test(value));
 export const ProjectTarget = z.strictObject({projectId: ProjectId});
 export const SessionTarget = ProjectTarget.extend({sessionId: SessionId});
 export const RunTarget = SessionTarget.extend({runId: RunId});
