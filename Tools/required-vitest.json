@@ -236,6 +236,18 @@
     "name": "a delayed terminal epoch inventory page cannot complete an earlier request"
   },
   {
+    "file": "packages/providers/test/stdio-preflight.vitest.mjs",
+    "name": "uses only the pinned non-model handshake and correlates fragmented private RPC replies"
+  },
+  {
+    "file": "packages/providers/test/stdio-preflight.vitest.mjs",
+    "name": "oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed"
+  },
+  {
+    "file": "packages/providers/test/stdio-preflight.vitest.mjs",
+    "name": "a rejected binary, revoked handoff and revocation during a stalled reply issue no later request"
+  },
+  {
     "file": "apps/client/test/message-blocks.vitest.mjs",
     "name": "preserves existing whitespace, ordered list markers and table rows when block types change"
   },
