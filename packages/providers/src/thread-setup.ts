@@ -70,7 +70,20 @@ export function qualifyNewThreadReceipt(bytes: Uint8Array) {
   if (!check) return undefined;
   return async (
     intent: NewThreadIntent,
-    source: Pick<NewThreadIntent, 'channelId' | 'generationId'>,
+    source: Pick<NewThreadIntent, 'channelId' | 'generationId'> & {
+      /** Supplied by the host that confines this worker. The legacy sandbox
+       * reply reports additional writable roots but cannot prove read scope. */
+      readonly confinement?: {
+        readonly generationId: string;
+        readonly channelId: string;
+        readonly cwd: string;
+        readonly mode: NewThreadIntent['mode'];
+        readonly profile: string | null;
+        readonly readableRoots: readonly string[];
+        readonly writableRoots: readonly string[];
+        readonly networkAccess: boolean;
+      };
+    },
     frame: unknown,
     signal: AbortSignal,
     commit: (
@@ -108,12 +121,29 @@ export function qualifyNewThreadReceipt(bytes: Uint8Array) {
       roots[0] !== intent.cwd
     )
       return {kind: 'unknown'};
+    const confinement = source.confinement;
+    if (
+      !confinement ||
+      confinement.generationId !== intent.generationId ||
+      confinement.channelId !== intent.channelId ||
+      confinement.cwd !== intent.cwd ||
+      confinement.mode !== intent.mode ||
+      confinement.profile !== intent.profile ||
+      confinement.networkAccess ||
+      !isDeepStrictEqual(confinement.readableRoots, [intent.cwd]) ||
+      !isDeepStrictEqual(
+        confinement.writableRoots,
+        intent.mode === 'readOnly' ? [] : [intent.cwd],
+      )
+    )
+      return {kind: 'unknown'};
+
     const sandbox =
       intent.mode === 'readOnly'
         ? {type: 'readOnly', networkAccess: false}
         : {
             type: 'workspaceWrite',
-            writableRoots: [intent.cwd],
+            writableRoots: [],
             networkAccess: false,
             excludeSlashTmp: true,
             excludeTmpdirEnvVar: true,

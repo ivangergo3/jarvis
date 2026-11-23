@@ -9,9 +9,21 @@ it('durably binds only the exact idle new thread with its frozen checkout and pe
   expect(qualifyNewThreadReceipt(Buffer.from('{}'))).toBeUndefined();
   const cwd = '/synthetic/checkout';
   const target = {projectId: 'project', sessionId: 'session', runId: 'run'};
-  const source = {channelId: 'owned-channel', generationId: 'worker-1'};
+  const worker = {channelId: 'owned-channel', generationId: 'worker-1'};
+  const source = {
+    ...worker,
+    confinement: {
+      ...worker,
+      cwd,
+      mode: 'workspaceWrite',
+      profile: null,
+      readableRoots: [cwd],
+      writableRoots: [cwd],
+      networkAccess: false,
+    },
+  };
   const intent = {
-    ...source,
+    ...worker,
     target,
     ownerId: 'owner',
     rpcId: 'original',
@@ -33,7 +45,7 @@ it('durably binds only the exact idle new thread with its frozen checkout and pe
       runtimeWorkspaceRoots: [cwd],
       sandbox: {
         type: 'workspaceWrite',
-        writableRoots: [cwd],
+        writableRoots: [],
         networkAccess: false,
         excludeSlashTmp: true,
         excludeTmpdirEnvVar: true,
@@ -131,6 +143,46 @@ it('durably binds only the exact idle new thread with its frozen checkout and pe
   expect(
     await receive(intent, source, valid, live(), async () => false),
   ).toEqual({kind: 'unknown'});
+  for (const confinement of [
+    undefined,
+    {...source.confinement, generationId: 'previous'},
+    {...source.confinement, readableRoots: ['/']},
+    {...source.confinement, writableRoots: [cwd, '/tmp']},
+    {...source.confinement, networkAccess: true},
+  ]) {
+    expect(
+      await receive(intent, {...worker, confinement}, valid, live(), persist),
+    ).toEqual({kind: 'unknown'});
+  }
+  const readOnly = {...intent, mode: 'readOnly', profile: ':read-only'};
+  const ro = structuredClone(valid);
+  ro.result.activePermissionProfile = {id: ':read-only'};
+  ro.result.sandbox = {type: 'readOnly', networkAccess: false};
+  const broad = {
+    ...source.confinement,
+    mode: 'readOnly',
+    profile: ':read-only',
+    readableRoots: ['/'],
+    writableRoots: [],
+  };
+  expect(
+    await receive(
+      readOnly,
+      {...worker, confinement: broad},
+      ro,
+      live(),
+      persist,
+    ),
+  ).toEqual({kind: 'unknown'});
+  expect(
+    await receive(
+      readOnly,
+      {...worker, confinement: {...broad, readableRoots: [cwd]}},
+      ro,
+      live(),
+      async () => true,
+    ),
+  ).toEqual({kind: 'bound', threadId: 'new-thread'});
   const revoked = new AbortController();
   expect(
     await receive(intent, source, valid, revoked.signal, async (saved) => {
