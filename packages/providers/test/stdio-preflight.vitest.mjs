@@ -55,6 +55,17 @@ it('uses only the pinned non-model handshake and correlates fragmented private R
   expect(stream.stdout.listenerCount('data')).toBe(0);
 });
 it('oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed', async () => {
+  for (const when of ['initialize', 'getAuthStatus']) {
+    const stream = exchange((frame, output) => {
+      if (frame.method === 'initialized') return;
+      const result = frame.method === 'initialize' ? hello : signedOut;
+      output.write(JSON.stringify({id: frame.id, result}) + '\n');
+      if (frame.method === when)
+        output.destroy(new Error('private pipe error'));
+    });
+    expect(await inspect(stream)).toEqual({kind: 'unavailable'});
+    expect(stream.frames.at(-1).method).toBe(when);
+  }
   for (const send of [
     (id, output) => output.write(Buffer.alloc(65537, 120)),
     (id, output) => output.write(Buffer.from([255, 10])),
@@ -91,5 +102,10 @@ it('a rejected binary, revoked handoff and revocation during a stalled reply iss
     expect(await result).toEqual({kind: 'cancelled'});
     expect(stream.frames).toHaveLength(1);
     expect(stream.stdout.listenerCount('data')).toBe(0);
+    const closed = new Promise((resolve) =>
+      stream.stdout.once('close', resolve),
+    );
+    stream.stdout.destroy(new Error('private delayed retirement'));
+    await closed;
   }
 });

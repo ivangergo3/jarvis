@@ -15,6 +15,10 @@ export interface OwnedPreflightStream {
 const frameLimit = 64 * 1024;
 const totalLimit = 4 * frameLimit;
 
+// A retired probe owns its stream until the supervisor disposes of the worker.
+// Errors during disposal must never escape as uncaught, private OS messages.
+function ignoreRetiredError() {}
+
 /** Qualify the wire protocol without exposing a general-purpose RPC writer. */
 export async function inspectCodexStdio(
   stream: OwnedPreflightStream,
@@ -48,7 +52,13 @@ export async function inspectCodexStdio(
   });
 
   function ensureCurrent() {
-    if (signal.aborted || performance.now() >= deadline) throw failure;
+    if (
+      signal.aborted ||
+      performance.now() >= deadline ||
+      stream.stdout.destroyed ||
+      stream.stdout.readableEnded
+    )
+      throw failure;
   }
   function fail() {
     stop.abort();
@@ -116,7 +126,7 @@ export async function inspectCodexStdio(
     )
       throw failure;
     attached = true;
-    input.once('error', fail);
+    input.on('error', fail);
     input.once('end', fail);
     input.once('close', fail);
     input.on('data', receive);
@@ -151,13 +161,19 @@ export async function inspectCodexStdio(
       signal,
     );
     if (parent.aborted) return {kind: 'cancelled'} as const;
-    if (signal.aborted || performance.now() >= deadline || length !== 0)
+    if (
+      signal.aborted ||
+      performance.now() >= deadline ||
+      (attached && (stream.stdout.destroyed || stream.stdout.readableEnded)) ||
+      length !== 0
+    )
       return {kind: 'unavailable'} as const;
     return result;
   } finally {
     listener.abort();
     pending = undefined;
     if (attached) {
+      stream.stdout.on('error', ignoreRetiredError);
       stream.stdout.off('data', receive);
       stream.stdout.off('close', fail);
       stream.stdout.off('end', fail);
