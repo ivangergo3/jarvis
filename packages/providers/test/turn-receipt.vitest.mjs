@@ -125,6 +125,18 @@ it('a conflicting binding, lost persistence response or revoked original run sta
     expect(
       await acceptTurnReceipt(intent, source, response, signal(), confirm),
     ).toEqual({kind: 'unknown'});
+  const stalled = new AbortController();
+  const write = Promise.withResolvers();
+  const pending = acceptTurnReceipt(
+    intent,
+    source,
+    response,
+    stalled.signal,
+    () => write.promise,
+  );
+  stalled.abort();
+  expect(await pending).toEqual({kind: 'unknown'});
+  write.reject(new Error('late storage failure'));
   const owner = new AbortController();
   const confirm = vi.fn(async () => {
     owner.abort();

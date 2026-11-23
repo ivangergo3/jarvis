@@ -1,3 +1,4 @@
+import {acknowledgedWhileActive} from './receipt-write.js';
 import {isDeepStrictEqual} from 'node:util';
 import {z} from 'zod';
 import {compilePinnedReply} from './pinned-schema.js';
@@ -153,12 +154,11 @@ export function qualifyNewThreadReceipt(bytes: Uint8Array) {
       ...intent,
       target: Object.freeze({...intent.target}),
     });
-    try {
-      if ((await commit(original, thread.id, signal)) && !signal.aborted)
-        return {kind: 'bound', threadId: thread.id};
-    } catch {
-      // A failed acknowledgement may follow a committed binding.
-    }
-    return {kind: 'unknown'};
+    const saved = await acknowledgedWhileActive(signal, () =>
+      commit(original, thread.id, signal),
+    );
+    return saved && !signal.aborted
+      ? {kind: 'bound', threadId: thread.id}
+      : {kind: 'unknown'};
   };
 }

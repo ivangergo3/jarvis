@@ -1,3 +1,4 @@
+import {acknowledgedWhileActive} from './receipt-write.js';
 import {z} from 'zod';
 import type {CodexRunBinding} from './run-notification.js';
 
@@ -69,12 +70,10 @@ export async function acceptTurnReceipt(
     ...pending,
     target: Object.freeze({...pending.target}),
   });
-  try {
-    const bound = await bindOriginal(original, turnId, signal);
-    if (!bound || signal.aborted) return {kind: 'unknown'};
-  } catch {
-    return {kind: 'unknown'};
-  }
+  const bound = await acknowledgedWhileActive(signal, () =>
+    bindOriginal(original, turnId, signal),
+  );
+  if (!bound || signal.aborted) return {kind: 'unknown'};
   return {
     kind: 'bound',
     binding: {

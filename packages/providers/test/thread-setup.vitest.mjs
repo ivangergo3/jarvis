@@ -189,6 +189,18 @@ it('durably binds only the exact idle new thread with its frozen checkout and pe
       async () => true,
     ),
   ).toEqual({kind: 'bound', threadId: 'new-thread'});
+  const stalled = new AbortController();
+  const write = Promise.withResolvers();
+  const pending = receive(
+    intent,
+    source,
+    valid,
+    stalled.signal,
+    () => write.promise,
+  );
+  stalled.abort();
+  expect(await pending).toEqual({kind: 'unknown'});
+  write.reject(new Error('late storage failure'));
   const revoked = new AbortController();
   expect(
     await receive(intent, source, valid, revoked.signal, async (saved) => {
