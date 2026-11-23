@@ -55,7 +55,12 @@ test('submission refers to one frozen destination and the precise sealed editor 
   for (const invalid of [
     {...imageOnly, images: []},
     {...imageOnly, images: [...images, images[0]]},
-    {...imageOnly, images: [images[0], images[0]]},
+    {...imageOnly, images: [{...images[0], attachmentId: id(150)}, images[0]]},
+    {...imageOnly, images: [{...images[0], contentId: id(150)}, images[0]]},
+    {
+      ...imageOnly,
+      images: [{...images[0], contentId: imageOnly.text.contentId}],
+    },
     {...imageOnly, images: [{...images[0], bytes: 20 * 1024 * 1024 + 1}]},
     {...imageOnly, text: 'new text'},
     {...imageOnly, text: {...imageOnly.text, sha256: digest}},
@@ -64,13 +69,23 @@ test('submission refers to one frozen destination and the precise sealed editor 
 });
 
 test('run control operations require the expected revision and make no new run or approval', () => {
+  const acknowledge = {
+    ...header,
+    operation: 'run.acknowledge_unknown_effect',
+    target: {...run, revision: '2'},
+    payload: {repositoryId: id(18), fenceRevision: '6'},
+  };
   for (const operation of [
+    'run.acknowledge_unknown_effect',
     'run.cancel',
     'run.resume_queued',
     'run.settle_unsent',
     'run.reconcile',
   ]) {
-    const command = {...header, operation, target: {...run, revision: '2'}};
+    const command =
+      operation === acknowledge.operation
+        ? acknowledge
+        : {...header, operation, target: {...run, revision: '2'}};
     const parsed = Command.parse(command);
     expect(parsed).toEqual(command);
     const current = {...run, revision: '2'};
@@ -87,12 +102,6 @@ test('run control operations require the expected revision and make no new run o
     }
     expect(Command.safeParse({...command, target: run}).success).toBe(false);
   }
-  const acknowledge = {
-    ...header,
-    operation: 'run.acknowledge_unknown_effect',
-    target: {...run, revision: '2'},
-    payload: {repositoryId: id(18), fenceRevision: '6'},
-  };
   expect(Command.parse(acknowledge)).toEqual(acknowledge);
   expect(
     Command.safeParse({...acknowledge, payload: {retry: true}}).success,
