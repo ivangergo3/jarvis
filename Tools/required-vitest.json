@@ -106,5 +106,17 @@
   {
     "file": "fixtures/desktop-smoke/supervisor.vitest.mjs",
     "name": "interrupting a stopped Playwright check after CDP connects waits for its exit"
+  },
+  {
+    "file": "packages/providers/test/stdio-preflight.vitest.mjs",
+    "name": "uses only the pinned non-model handshake and correlates fragmented private RPC replies"
+  },
+  {
+    "file": "packages/providers/test/stdio-preflight.vitest.mjs",
+    "name": "oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed"
+  },
+  {
+    "file": "packages/providers/test/stdio-preflight.vitest.mjs",
+    "name": "a rejected binary, revoked handoff and revocation during a stalled reply issue no later request"
   }
 ]
