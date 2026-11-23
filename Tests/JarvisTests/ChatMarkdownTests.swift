@@ -4,6 +4,14 @@ import Testing
 @testable import Jarvis
 
 @Suite("Chat Markdown") struct ChatMarkdownTests {
+    @Test func orderedListRequiresACompleteDelimiterCharacter() {
+        for marker in ["12. ", "٤) "] {
+            let line = marker + "\u{0301}item"
+            #expect(ChatMarkdown.blocks(line) == [.paragraph(line)])
+        }
+        #expect(ChatMarkdown.blocks("12. item") == [.list("12.", "item")])
+    }
+
     @Test func paragraphsAndLists() {
         #expect(
             ChatMarkdown.blocks("Done.\n\n- **Resize:** drag it\n- Refresh\n\n1. First\n2. Second")
