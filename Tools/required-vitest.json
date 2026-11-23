@@ -122,5 +122,9 @@
   {
     "file": "packages/contracts/test/commands.vitest.mjs",
     "name": "run control operations require the expected revision and make no new run or approval"
+  },
+  {
+    "file": "packages/contracts/test/events.vitest.mjs",
+    "name": "persisted output exposes only scoped content references and command receipts preserve refusal"
   }
 ]
