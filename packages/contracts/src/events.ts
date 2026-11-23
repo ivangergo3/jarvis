@@ -114,9 +114,16 @@ const kindHeader = z.object({
   schemaVersion: z.int().nonnegative(),
   kind: z.string().min(1),
 });
+// Unknown kinds keep the original routing boundary as new known kinds gain targets.
+const fallbackTarget = z.union([
+  ProjectTarget,
+  SessionTarget,
+  RunTarget,
+  RequestTarget,
+]);
 const unknownEnvelope = z.strictObject({
   ...kindHeader.shape,
-  target: z.union(variants.options.map((option) => option.shape.target)),
+  target: z.unknown(),
   payload: z.custom<object>(
     (value) =>
       typeof value === 'object' && value !== null && !Array.isArray(value),
@@ -144,7 +151,7 @@ function decodedEvent(value: unknown, futureBatch = false): DecodedEvent {
     const frame = unknownEnvelope.safeParse(value);
     if (
       !frame.success ||
-      (target && !target.safeParse(frame.data.target).success)
+      !(target ?? fallbackTarget).safeParse(frame.data.target).success
     )
       return {status: 'malformed'};
     return {

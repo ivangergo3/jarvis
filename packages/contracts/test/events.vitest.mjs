@@ -361,6 +361,23 @@ test('persisted output exposes only scoped content references and command receip
     target: {commandId: id(14)},
     payload: {status: 'definitively_refused'},
   };
+  const stream = {
+    ownerId: envelope.ownerId,
+    after: String(BigInt(envelope.sequence) - 1n),
+  };
+  for (const version of [1, 2]) {
+    const unknown = {...ledger, schemaVersion: version, kind: 'future'};
+    expect(decodeEvent(unknown).status).toBe('malformed');
+    expect(
+      readEventBatch(
+        {schemaVersion: version, ...stream, events: [unknown]},
+        stream,
+      ).status,
+    ).toBe('malformed');
+  }
+  expect(decodeEvent({...ledger, schemaVersion: 2}).status).toBe(
+    'unsupported_version',
+  );
   const staged = '00000000-0000-8000-8000-000000000001';
   for (const commandId of [id(14), staged])
     for (const status of [
