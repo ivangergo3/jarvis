@@ -22,6 +22,8 @@ import {
   RunObservation,
   SessionBinding,
 } from './lifecycle.js';
+import {HistoryContent} from './retained-content.js';
+import {StagingId} from './staging-id.js';
 
 const envelope = {
   schemaVersion: Version,
@@ -32,6 +34,24 @@ const envelope = {
 };
 const accepted = z.strictObject({commandId: CommandId});
 const variants = z.discriminatedUnion('kind', [
+  z.strictObject({
+    ...envelope,
+    kind: z.literal('command.recorded'),
+    target: z.strictObject({commandId: z.union([CommandId, StagingId])}),
+    payload: z.strictObject({
+      status: z.enum(['accepted', 'definitively_refused', 'retired_unsent']),
+    }),
+  }),
+  z.strictObject({
+    ...envelope,
+    kind: z.literal('run.output'),
+    target: RunTarget,
+    payload: z.strictObject({
+      entryId: z.uuid().lowercase(),
+      entryRevision: Sequence,
+      content: HistoryContent,
+    }),
+  }),
   z.strictObject({
     ...envelope,
     kind: z.literal('project.created'),
@@ -80,6 +100,11 @@ export const Event = variants.refine(
   'Event exceeds 64 KiB',
 );
 export type Event = z.infer<typeof Event>;
+/** A validated kind, destination and payload before the owner ledger assigns its envelope. */
+type WithoutEnvelope<T> = T extends Event
+  ? Omit<T, keyof typeof envelope>
+  : never;
+export type EventBody = WithoutEnvelope<Event>;
 export type DecodedEvent =
   | {status: 'ok'; event: Event}
   | {status: 'unsupported_version' | 'unsupported_event' | 'malformed'};
@@ -89,9 +114,16 @@ const kindHeader = z.object({
   schemaVersion: z.int().nonnegative(),
   kind: z.string().min(1),
 });
+// Unknown kinds keep the original routing boundary as new known kinds gain targets.
+const fallbackTarget = z.union([
+  ProjectTarget,
+  SessionTarget,
+  RunTarget,
+  RequestTarget,
+]);
 const unknownEnvelope = z.strictObject({
   ...kindHeader.shape,
-  target: z.union(variants.options.map((option) => option.shape.target)),
+  target: z.unknown(),
   payload: z.custom<object>(
     (value) =>
       typeof value === 'object' && value !== null && !Array.isArray(value),
@@ -119,7 +151,7 @@ function decodedEvent(value: unknown, futureBatch = false): DecodedEvent {
     const frame = unknownEnvelope.safeParse(value);
     if (
       !frame.success ||
-      (target && !target.safeParse(frame.data.target).success)
+      !(target ?? fallbackTarget).safeParse(frame.data.target).success
     )
       return {status: 'malformed'};
     return {
