@@ -56,15 +56,20 @@ it('uses only the pinned non-model handshake and correlates fragmented private R
 });
 it('oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed', async () => {
   for (const when of ['initialize', 'getAuthStatus']) {
-    const stream = exchange((frame, output) => {
-      if (frame.method === 'initialized') return;
-      const result = frame.method === 'initialize' ? hello : signedOut;
-      output.write(JSON.stringify({id: frame.id, result}) + '\n');
-      if (frame.method === when)
-        output.destroy(new Error('private pipe error'));
-    });
-    expect(await inspect(stream)).toEqual({kind: 'unavailable'});
-    expect(stream.frames.at(-1).method).toBe(when);
+    for (const close of [
+      (output) => output.destroy(new Error('private pipe error')),
+      (output) => output.push(null),
+    ]) {
+      const stream = exchange(async (frame, output) => {
+        if (frame.method === 'initialized') return;
+        const result = frame.method === 'initialize' ? hello : signedOut;
+        output.write(JSON.stringify({id: frame.id, result}) + '\n');
+        await Promise.resolve();
+        if (frame.method === when) close(output);
+      });
+      expect(await inspect(stream)).toEqual({kind: 'unavailable'});
+      expect(stream.frames.at(-1).method).toBe(when);
+    }
   }
   for (const send of [
     (id, output) => output.write(Buffer.alloc(65537, 120)),
@@ -89,6 +94,9 @@ it('a rejected binary, revoked handoff and revocation during a stalled reply iss
     await inspect(no, new AbortController(), {...pin, sha256: 'c'.repeat(64)}),
   ).toEqual({kind: 'unsupported-build'});
   expect(no.frames).toHaveLength(0);
+  const disposed = new Promise((resolve) => no.stdout.once('close', resolve));
+  no.stdout.destroy(new Error('private failed-pin disposal'));
+  await disposed;
   for (const stallWriter of [true, false]) {
     const stop = new AbortController();
     const touched = Promise.withResolvers();

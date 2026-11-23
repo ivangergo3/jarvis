@@ -1,4 +1,5 @@
 import type {Readable} from 'node:stream';
+import {setImmediate as nextTurn} from 'node:timers/promises';
 import {probeCodexWorker} from './preflight.js';
 import type {BinaryPin} from './preflight.js';
 
@@ -26,6 +27,10 @@ export async function inspectCodexStdio(
   origin: string,
   parent: AbortSignal,
 ) {
+  // A rejected pin never attaches a data reader, but the supervisor still
+  // retires its exclusive stream. Cover delayed disposal in that case too.
+  if (!stream.stdout.listeners('error').includes(ignoreRetiredError))
+    stream.stdout.on('error', ignoreRetiredError);
   const stop = new AbortController();
   const signal = AbortSignal.any([
     parent,
@@ -137,6 +142,9 @@ export async function inspectCodexStdio(
     ensureCurrent();
     const bytes = Buffer.from(JSON.stringify(message) + '\n');
     await Promise.race([stream.handOff(bytes, signal), cancelled]);
+    // Stream EOF and close may follow the final bytes on Node's next tick.
+    // Observe them before accepting this response or handing off another RPC.
+    await nextTurn();
     ensureCurrent();
   }
   try {
@@ -173,7 +181,6 @@ export async function inspectCodexStdio(
     listener.abort();
     pending = undefined;
     if (attached) {
-      stream.stdout.on('error', ignoreRetiredError);
       stream.stdout.off('data', receive);
       stream.stdout.off('close', fail);
       stream.stdout.off('end', fail);
