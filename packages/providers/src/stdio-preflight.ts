@@ -138,7 +138,11 @@ export async function inspectCodexStdio(
   }
   async function send(message: object) {
     ensureCurrent();
-    listen();
+    if (!attached) {
+      listen();
+      // A readable with an already queued EOF emits 'end' only when consumed.
+      await nextTurn();
+    }
     ensureCurrent();
     const bytes = Buffer.from(JSON.stringify(message) + '\n');
     await Promise.race([stream.handOff(bytes, signal), cancelled]);

@@ -55,6 +55,10 @@ it('uses only the pinned non-model handshake and correlates fragmented private R
   expect(stream.stdout.listenerCount('data')).toBe(0);
 });
 it('oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed', async () => {
+  const alreadyEnded = exchange(() => {});
+  alreadyEnded.stdout.push(null);
+  expect(await inspect(alreadyEnded)).toEqual({kind: 'unavailable'});
+  expect(alreadyEnded.frames).toHaveLength(0);
   for (const when of ['initialize', 'getAuthStatus']) {
     const late = exchange((frame, output) => {
       if (frame.method === 'initialized') return;
