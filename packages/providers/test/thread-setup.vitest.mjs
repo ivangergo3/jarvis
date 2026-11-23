@@ -143,16 +143,22 @@ it('durably binds only the exact idle new thread with its frozen checkout and pe
   expect(
     await receive(intent, source, valid, live(), async () => false),
   ).toEqual({kind: 'unknown'});
+  const unobservedNetwork = {...source.confinement};
+  delete unobservedNetwork.networkAccess;
   for (const confinement of [
     undefined,
+    unobservedNetwork,
+    {...source.confinement, networkAccess: null},
     {...source.confinement, generationId: 'previous'},
     {...source.confinement, readableRoots: ['/']},
     {...source.confinement, writableRoots: [cwd, '/tmp']},
     {...source.confinement, networkAccess: true},
   ]) {
+    const before = persist.mock.calls.length;
     expect(
       await receive(intent, {...worker, confinement}, valid, live(), persist),
     ).toEqual({kind: 'unknown'});
+    expect(persist).toHaveBeenCalledTimes(before);
   }
   const readOnly = {...intent, mode: 'readOnly', profile: ':read-only'};
   const ro = structuredClone(valid);

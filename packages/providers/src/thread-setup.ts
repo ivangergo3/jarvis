@@ -129,7 +129,7 @@ export function qualifyNewThreadReceipt(bytes: Uint8Array) {
       confinement.cwd !== intent.cwd ||
       confinement.mode !== intent.mode ||
       confinement.profile !== intent.profile ||
-      confinement.networkAccess ||
+      confinement.networkAccess !== false ||
       !isDeepStrictEqual(confinement.readableRoots, [intent.cwd]) ||
       !isDeepStrictEqual(
         confinement.writableRoots,
