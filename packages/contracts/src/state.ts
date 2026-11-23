@@ -1,9 +1,9 @@
 import {z} from 'zod';
 import {batchLimit, parseWire} from './wire.js';
+import {pageHeader, validPageRange} from './paging.js';
+import type {OwnerId} from './values.js';
 import {
   CommandId,
-  Cursor,
-  OwnerId,
   ProjectTarget,
   RequestTarget,
   RunTarget,
@@ -12,7 +12,6 @@ import {
   SnapshotId,
   Timestamp,
   Title,
-  Version,
   wireBytes,
   wireVersion,
 } from './values.js';
@@ -26,18 +25,22 @@ import {
 
 // Snapshots and replays contain public metadata. Private prompt and answer content
 // belongs to the separately authorized live request transport.
+export const ProjectRecord = z.strictObject({
+  kind: z.literal('project'),
+  target: ProjectTarget,
+  title: Title,
+});
+export const SessionRecord = z.strictObject({
+  kind: z.literal('session'),
+  target: SessionTarget,
+  title: Title,
+  binding: SessionBinding,
+});
+export type ProjectRecord = z.infer<typeof ProjectRecord>;
+export type SessionRecord = z.infer<typeof SessionRecord>;
 export const SnapshotRecord = z.discriminatedUnion('kind', [
-  z.strictObject({
-    kind: z.literal('project'),
-    target: ProjectTarget,
-    title: Title,
-  }),
-  z.strictObject({
-    kind: z.literal('session'),
-    target: SessionTarget,
-    title: Title,
-    binding: SessionBinding,
-  }),
+  ProjectRecord,
+  SessionRecord,
   z.strictObject({
     kind: z.literal('run'),
     target: RunTarget,
@@ -75,36 +78,20 @@ export function snapshotRecordKey(record: SnapshotRecord): string {
   }
 }
 const snapshotHeader = z.strictObject({
+  ...pageHeader,
   schemaVersion: z.int().nonnegative(),
-  ownerId: OwnerId,
   snapshotId: SnapshotId,
-  highWater: Cursor,
-  offset: Cursor,
-  totalRecords: Cursor,
   records: z.array(z.unknown()).max(100),
-  pageToken: z.string().min(1).max(2048).nullable(),
-  next: z.string().min(1).max(2048).nullable(),
 });
-function hasValidRange(page: z.infer<typeof snapshotHeader>): boolean {
-  if (
-    !Cursor.safeParse(page.offset).success ||
-    !Cursor.safeParse(page.totalRecords).success
-  )
-    return false;
-  const end = BigInt(page.offset) + BigInt(page.records.length);
-  const total = BigInt(page.totalRecords);
-  return (
-    end <= total &&
-    (page.highWater !== '0' || total === 0n) &&
-    (end === total) === (page.next === null) &&
-    (page.offset === '0') === (page.pageToken === null) &&
-    (page.records.length > 0 || total === 0n) &&
-    (page.next === null || page.next !== page.pageToken)
-  );
-}
 export const SnapshotPage = snapshotHeader
-  .extend({schemaVersion: Version, records: z.array(SnapshotRecord).max(100)})
-  .refine(hasValidRange, 'Invalid snapshot range or continuation')
+  .extend({
+    schemaVersion: pageHeader.schemaVersion,
+    records: z.array(SnapshotRecord).max(100),
+  })
+  .refine(
+    (page) => validPageRange(page, page.records.length),
+    'Invalid snapshot range or continuation',
+  )
   .refine(
     (page) => wireBytes(page) <= batchLimit,
     'Snapshot page exceeds 1 MiB',
@@ -142,7 +129,7 @@ export function createSnapshotReader(
     const header = snapshotHeader.safeParse(value);
     if (
       !header.success ||
-      !hasValidRange(header.data) ||
+      !validPageRange(header.data, header.data.records.length) ||
       header.data.ownerId !== ownerId ||
       header.data.snapshotId !== snapshotId ||
       header.data.offset !== offset.toString() ||
