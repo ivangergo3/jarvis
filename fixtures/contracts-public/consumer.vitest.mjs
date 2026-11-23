@@ -40,9 +40,13 @@ test('public contracts import in browser and Node consumers with branded destina
     writeFileSync(
       path.join(directory, 'consumer.mts'),
       [
-        "import {ProjectId, RunTarget} from '@jarvis/contracts';",
+        "import {Command, ProjectId, RunTarget} from '@jarvis/contracts';",
         'export function owns(projectId: ProjectId, value: unknown): boolean {',
         '  return RunTarget.parse(value).projectId === projectId;',
+        '}',
+        'export function submittedSession(value: unknown) {',
+        '  const command = Command.parse(value);',
+        "  return command.operation === 'run.submit' ? command.target.sessionId : undefined;",
         '}',
       ].join('\n'),
     );
