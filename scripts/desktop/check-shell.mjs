@@ -63,7 +63,101 @@ async function checkShell(state, profile, evidence) {
     await expect(
       page.getByText('Shell verification', {exact: true}),
     ).toBeVisible();
+    const session = page.getByRole('button', {name: /Shell verification/});
+    await expect(
+      page.getByRole('button', {name: 'Graph', exact: true}),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect
+      .poll(() =>
+        page
+          .locator('.team-reactor')
+          .evaluate((image) => image.complete && image.naturalWidth > 0),
+      )
+      .toBe(true);
+    await page.getByRole('button', {name: 'Cards', exact: true}).focus();
+    await page.keyboard.press('Tab');
+    await expect(session).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(session).toHaveAttribute('aria-pressed', 'true');
+    const endpointError = await session.evaluate((card) => {
+      const canvas = card.closest('.team-canvas');
+      const wire = canvas.querySelector('polyline.selected');
+      const endpoint = wire.points.getItem(wire.points.numberOfItems - 1);
+      const point = new DOMPoint(endpoint.x, endpoint.y).matrixTransform(
+        wire.getScreenCTM(),
+      );
+      const rect = card.getBoundingClientRect();
+      return Math.max(
+        Math.min(Math.abs(point.x - rect.left), Math.abs(point.x - rect.right)),
+        Math.abs(point.y - (rect.top + rect.height / 2)),
+      );
+    });
+    assert.ok(
+      endpointError <= 1,
+      'The highlighted connector must reach the selected card edge',
+    );
+    await page.getByRole('button', {name: 'Cards', exact: true}).click();
+    await expect(session).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.team-wires')).toHaveCount(0);
+    await page.getByRole('button', {name: 'Graph', exact: true}).click();
+    await expect(session).toHaveAttribute('aria-pressed', 'true');
+    await expect(session.locator('.team-port')).toBeVisible();
+    const heading = page.getByRole('heading', {name: 'Observatory'});
+    await heading.scrollIntoViewIfNeeded();
+    await expect(heading).toBeInViewport();
     await page.screenshot({path: path.join(evidence, 'project.png')});
+    const originalViewport = await page.evaluate(() => ({
+      width: innerWidth,
+      height: innerHeight,
+    }));
+    await page.setViewportSize({width: 480, height: 360});
+    await expect
+      .poll(() =>
+        page
+          .locator('.team-viewport')
+          .evaluate(
+            (viewport) =>
+              window.innerWidth === 480 &&
+              viewport.clientWidth > 0 &&
+              viewport.clientWidth <= window.innerWidth &&
+              viewport.querySelector('.team-canvas').clientWidth ===
+                viewport.clientWidth,
+          ),
+      )
+      .toBe(true);
+    await expect
+      .poll(() =>
+        session.locator('strong').evaluate((label) => {
+          const box = label.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          return [...range.getClientRects()].every(
+            (rect) =>
+              rect.left >= box.left - 1 &&
+              rect.right <= box.right + 1 &&
+              rect.bottom <= box.bottom + 1,
+          );
+        }),
+      )
+      .toBe(true);
+    // Move a physical wheel over the scrollport after its own vertical range
+    // has been exhausted. The rest of the window must remain reachable.
+    const wheel = await page.locator('.team-viewport').evaluate((el) => {
+      el.scrollIntoView({block: 'start'});
+      el.scrollTop = el.scrollHeight;
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + Math.min(24, rect.width / 2);
+      const y = Math.max(0, rect.top) + 16;
+      if (!el.contains(document.elementFromPoint(x, y)))
+        throw new Error('Wheel target is hidden');
+      return {x, y, start: document.scrollingElement.scrollTop};
+    });
+    await page.mouse.move(wheel.x, wheel.y);
+    await page.mouse.wheel(0, 240);
+    await expect
+      .poll(() => page.evaluate(() => document.scrollingElement.scrollTop))
+      .toBeGreaterThan(wheel.start);
+    await page.setViewportSize(originalViewport);
     const destinations = [
       'jarvis-preview://fixture/navigation-check',
       'https://jarvis-preview.invalid/navigation-check',

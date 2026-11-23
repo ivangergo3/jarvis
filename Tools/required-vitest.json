@@ -124,6 +124,10 @@
     "name": "run control operations require the expected revision and make no new run or approval"
   },
   {
+    "file": "apps/client/test/team-graph-layout.vitest.mjs",
+    "name": "routes every connector to its own card in compact and scrollable team layouts"
+  },
+  {
     "file": "packages/contracts/test/events.vitest.mjs",
     "name": "persisted output exposes only scoped content references and command receipts preserve refusal"
   }
