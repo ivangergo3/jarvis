@@ -11,6 +11,8 @@ verdict=$(awk '
 test -n "$verdict"
 export SWIFT_LANES=unit/hover/release/static NATIVE_SHARDS=1/2
 for scope in full docs ''; do
+    export DESKTOP_RESULT=success
+    if [[ "$scope" == docs ]]; then export DESKTOP_RESULT=skipped; fi
     for classifier in success failure skipped cancelled ''; do
         for swift in success failure skipped cancelled ''; do
             for native in success failure skipped cancelled ''; do
@@ -30,6 +32,18 @@ for scope in full docs ''; do
         done
     done
 done
+for scope in full docs; do
+    required=success
+    if [[ "$scope" == docs ]]; then required=skipped; fi
+    for desktop in success failure skipped cancelled ''; do
+        [[ "$desktop" != "$required" ]] || continue
+        if SCOPE_RESULT=success SCOPE="$scope" SWIFT_RESULT="$required" NATIVE_RESULT="$required" \
+            TS_RESULT="$required" DESKTOP_RESULT="$desktop" bash -e -c "$verdict" >/dev/null; then
+            echo "Unexpected desktop result accepted: $scope $desktop" >&2; exit 1
+        fi
+    done
+done
+export DESKTOP_RESULT=success
 for missing in unit hover release static 1 2; do
     if SCOPE_RESULT=success SCOPE=full SWIFT_RESULT=success NATIVE_RESULT=success TS_RESULT=success \
         SWIFT_LANES="${SWIFT_LANES/$missing/}" NATIVE_SHARDS="${NATIVE_SHARDS/$missing/}" \
