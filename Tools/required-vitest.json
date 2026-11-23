@@ -142,5 +142,9 @@
   {
     "file": "packages/providers/test/turn-receipt.vitest.mjs",
     "name": "a conflicting binding, lost persistence response or revoked original run stays uncertain"
+  },
+  {
+    "file": "packages/providers/test/pinned-receipt.vitest.mjs",
+    "name": "the qualified turn receipt validates every item using the real pinned offline CLI schema"
   }
 ]
