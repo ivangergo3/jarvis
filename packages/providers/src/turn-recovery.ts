@@ -79,7 +79,7 @@ const turnsPage = z.object({
         id,
         status: z.enum(['completed', 'interrupted', 'failed', 'inProgress']),
         items: z.tuple([]),
-        itemsView: z.literal('notLoaded').optional(),
+        itemsView: z.literal('notLoaded'),
       }),
     )
     .max(pageSize),
