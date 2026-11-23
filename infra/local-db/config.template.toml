@@ -1,0 +1,15 @@
+# CLI migration workdirs are generated privately from this local-only template.
+project_id = "@PROJECT@"
+
+[api]
+port = @API_PORT@
+schemas = ["public"]
+
+[db]
+port = @DB_PORT@
+shadow_port = @SHADOW_PORT@
+major_version = 17
+password = "@DB_PASSWORD@"
+
+[db.seed]
+enabled = false
