@@ -41,6 +41,18 @@ test('recover private prompt descriptors through the original request before fet
     content: reference,
   };
   expect(LiveRequestDescriptor.parse(descriptor)).toEqual(descriptor);
+  for (const [bytes, allowed] of [
+    [0, false],
+    [1024 * 1024, true],
+    [1024 * 1024 + 1, false],
+  ]) {
+    expect(
+      LiveRequestDescriptor.safeParse({
+        ...descriptor,
+        content: {...reference, bytes},
+      }).success,
+    ).toBe(allowed);
+  }
   expect(
     LiveRequestDescriptor.safeParse({...descriptor, target: request}).success,
   ).toBe(false);

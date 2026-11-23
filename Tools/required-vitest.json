@@ -178,5 +178,13 @@
   {
     "file": "packages/contracts/test/reads.vitest.mjs",
     "name": "project and session listings bind bounded selection records to their owner and destination"
+  },
+  {
+    "file": "packages/contracts/test/read-page.vitest.mjs",
+    "name": "catalog readers bind the original owner, project, continuation and limit"
+  },
+  {
+    "file": "packages/contracts/test/read-page.vitest.mjs",
+    "name": "recovery pages check the original wire byte budget and requested scope"
   }
 ]

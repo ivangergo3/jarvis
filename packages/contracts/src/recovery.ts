@@ -21,6 +21,7 @@ import {DraftChunkRef} from './staging.js';
 import {Receipt} from './receipt.js';
 import {HistoryContent} from './retained-content.js';
 import {type PageRange, pageHeader, validPageRange} from './paging.js';
+import {batchLimit} from './wire.js';
 
 /** Available only to the original authenticated session while the channel and requested revision are current. */
 export const LiveRequestDescriptor = z.strictObject({
@@ -28,7 +29,7 @@ export const LiveRequestDescriptor = z.strictObject({
   ownerId: OwnerId,
   target: LiveRequestTarget,
   kind: RequestKind,
-  content: ContentRef.refine((ref) => ref.bytes > 0),
+  content: ContentRef.refine((ref) => ref.bytes > 0 && ref.bytes <= batchLimit),
 });
 export type LiveRequestDescriptor = z.infer<typeof LiveRequestDescriptor>;
 
