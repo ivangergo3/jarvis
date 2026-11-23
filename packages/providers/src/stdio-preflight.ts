@@ -159,6 +159,9 @@ export async function inspectCodexStdio(
           });
           await send({id, ...message});
           const observed = await Promise.race([reply, cancelled]);
+          // Replies may arrive long after the write completes. Let Node deliver
+          // EOF queued with those bytes before advancing the handshake.
+          await nextTurn();
           ensureCurrent();
           return observed;
         },

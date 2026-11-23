@@ -56,6 +56,16 @@ it('uses only the pinned non-model handshake and correlates fragmented private R
 });
 it('oversize, malformed or wrong-ID frames, private errors and partial trailing frames fail closed', async () => {
   for (const when of ['initialize', 'getAuthStatus']) {
+    const late = exchange((frame, output) => {
+      if (frame.method === 'initialized') return;
+      setTimeout(() => {
+        const result = frame.method === 'initialize' ? hello : signedOut;
+        output.write(JSON.stringify({id: frame.id, result}) + '\n');
+        if (frame.method === when) output.push(null);
+      }, 15);
+    });
+    expect(await inspect(late)).toEqual({kind: 'unavailable'});
+    expect(late.frames.at(-1).method).toBe(when);
     for (const close of [
       (output) => output.destroy(new Error('private pipe error')),
       (output) => output.push(null),
